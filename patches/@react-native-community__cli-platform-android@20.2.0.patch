@@ -1,0 +1,172 @@
+diff --git a/build/commands/buildAndroid/index.d.ts b/build/commands/buildAndroid/index.d.ts
+deleted file mode 100644
+index 0cd510c418e381c25498fa0772721a47a9d14eb7..0000000000000000000000000000000000000000
+diff --git a/build/commands/buildAndroid/index.d.ts.map b/build/commands/buildAndroid/index.d.ts.map
+deleted file mode 100644
+index d9b2db312158414f95297ca67dcecb9c038b916a..0000000000000000000000000000000000000000
+diff --git a/build/commands/buildAndroid/index.js b/build/commands/buildAndroid/index.js
+index 3472f62432b0447c79cece12bf214aee6bc11f6f..a84a8bb33bf6abe088543112d18a282ab91d41ae 100644
+--- a/build/commands/buildAndroid/index.js
++++ b/build/commands/buildAndroid/index.js
+@@ -67,7 +67,7 @@ async function buildAndroid(_argv, config, args) {
+ }
+ function build(gradleArgs, sourceDir) {
+   process.chdir(sourceDir);
+-  const cmd = process.platform.startsWith('win') ? 'gradlew.bat' : './gradlew';
++  const cmd = process.platform.startsWith('win') ? require('path').join(sourceDir, 'gradlew.bat') : './gradlew';
+   _cliTools().logger.info('Building the app...');
+   _cliTools().logger.debug(`Running command "${cmd} ${gradleArgs.join(' ')}"`);
+   try {
+diff --git a/build/commands/buildAndroid/index.js.map b/build/commands/buildAndroid/index.js.map
+deleted file mode 100644
+index d6f28028f62608263ceb7e45da6165a65a1a130e..0000000000000000000000000000000000000000
+diff --git a/build/commands/index.d.ts b/build/commands/index.d.ts
+deleted file mode 100644
+index 26a60dc65da7c123fd3feae4306f9c781f9fb301..0000000000000000000000000000000000000000
+diff --git a/build/commands/index.d.ts.map b/build/commands/index.d.ts.map
+deleted file mode 100644
+index ca618b8674d439d324a3980702058a4ce4c2d880..0000000000000000000000000000000000000000
+diff --git a/build/commands/index.js.map b/build/commands/index.js.map
+deleted file mode 100644
+index 0a930be0e760e36d543304526913e4d99cc43f45..0000000000000000000000000000000000000000
+diff --git a/build/commands/logAndroid/index.d.ts b/build/commands/logAndroid/index.d.ts
+deleted file mode 100644
+index 92804d1504966837e7494a6da7cc78d37f3010db..0000000000000000000000000000000000000000
+diff --git a/build/commands/logAndroid/index.d.ts.map b/build/commands/logAndroid/index.d.ts.map
+deleted file mode 100644
+index f77cd636fec6c68c1f56dba222cb2486d127529d..0000000000000000000000000000000000000000
+diff --git a/build/commands/logAndroid/index.js.map b/build/commands/logAndroid/index.js.map
+deleted file mode 100644
+index 3e40d8f3f637aeadadc3601052e4ffe8454f13d0..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/__mocks__/tryLaunchEmulator.d.ts b/build/commands/runAndroid/__mocks__/tryLaunchEmulator.d.ts
+deleted file mode 100644
+index 2b23ff509797792eb8ad3e1278439d7ad7c5e985..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/__mocks__/tryLaunchEmulator.d.ts.map b/build/commands/runAndroid/__mocks__/tryLaunchEmulator.d.ts.map
+deleted file mode 100644
+index 1b6790e4a5966676b7826c7c147d6ae20608137a..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/adb.d.ts b/build/commands/runAndroid/adb.d.ts
+deleted file mode 100644
+index 791ff6da36919080f74644901ac9999bdf99c626..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/adb.d.ts.map b/build/commands/runAndroid/adb.d.ts.map
+deleted file mode 100644
+index 7f54452a776c6898da82051bc4d1e2077c350e31..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/adb.js.map b/build/commands/runAndroid/adb.js.map
+deleted file mode 100644
+index ff99cb7dd2d9f23eaa8025a87792ee1ede47e13a..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/getAdbPath.d.ts b/build/commands/runAndroid/getAdbPath.d.ts
+deleted file mode 100644
+index 70caa2e28bc5e45fa6cebc20e7793f26de7bc712..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/getAdbPath.d.ts.map b/build/commands/runAndroid/getAdbPath.d.ts.map
+deleted file mode 100644
+index c13758d82a2a8173b08e0b5156788ddd53e19329..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/getAdbPath.js.map b/build/commands/runAndroid/getAdbPath.js.map
+deleted file mode 100644
+index a2bee5e8ee0f97727dcdc0964ba7a2bd15923563..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/getTaskNames.d.ts b/build/commands/runAndroid/getTaskNames.d.ts
+deleted file mode 100644
+index 7b0a1fea35834f95fa95623a49a8c4ae6da3ddca..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/getTaskNames.d.ts.map b/build/commands/runAndroid/getTaskNames.d.ts.map
+deleted file mode 100644
+index e915d9f6c98b8a3231e1ed31cef24978dc7cd601..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/getTaskNames.js.map b/build/commands/runAndroid/getTaskNames.js.map
+deleted file mode 100644
+index f04154765a20a68311e41c1f8e45f8a51fdd09b5..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/index.d.ts b/build/commands/runAndroid/index.d.ts
+deleted file mode 100644
+index 7941ee2795d0b9f8a94178350debeb800018821f..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/index.d.ts.map b/build/commands/runAndroid/index.d.ts.map
+deleted file mode 100644
+index 5155f41f7d3fffc0ad5ac6caa8b3708486dc7ee1..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/index.js.map b/build/commands/runAndroid/index.js.map
+deleted file mode 100644
+index b3b7e7ac8016ab1eb62bc8834bce3f3e283b8add..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidDevices.d.ts b/build/commands/runAndroid/listAndroidDevices.d.ts
+deleted file mode 100644
+index abe4259b7e3742fad791e629aef21189ffe990ca..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidDevices.d.ts.map b/build/commands/runAndroid/listAndroidDevices.d.ts.map
+deleted file mode 100644
+index 186f7a9efd45c9ad196ee44f489e0057b8bbe563..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidDevices.js.map b/build/commands/runAndroid/listAndroidDevices.js.map
+deleted file mode 100644
+index e5f044cf79d34d66d73ed158e4b87a7d6ffe0078..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidTasks.d.ts b/build/commands/runAndroid/listAndroidTasks.d.ts
+deleted file mode 100644
+index cfe588c25caf726373da80e0af0c484a9c9e8dd1..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidTasks.d.ts.map b/build/commands/runAndroid/listAndroidTasks.d.ts.map
+deleted file mode 100644
+index 03a8bcdd178197be6f9900aa3d8d64cf2511cb33..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidTasks.js.map b/build/commands/runAndroid/listAndroidTasks.js.map
+deleted file mode 100644
+index ded5e29e614282e72b36e79ae4c050ca9eae154b..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidUsers.d.ts b/build/commands/runAndroid/listAndroidUsers.d.ts
+deleted file mode 100644
+index 17db0c068c0ffc06381e229c8be21b094bc2f65c..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidUsers.d.ts.map b/build/commands/runAndroid/listAndroidUsers.d.ts.map
+deleted file mode 100644
+index 9e7a5d45c7288ce64b6b66b18dc3d3269ab87c72..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/listAndroidUsers.js.map b/build/commands/runAndroid/listAndroidUsers.js.map
+deleted file mode 100644
+index 8bfa696d489705ab3d64292ccae1d69dc9404183..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/runOnAllDevices.d.ts b/build/commands/runAndroid/runOnAllDevices.d.ts
+deleted file mode 100644
+index 675534566836f21fb4c40a739f2860549d759189..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/runOnAllDevices.d.ts.map b/build/commands/runAndroid/runOnAllDevices.d.ts.map
+deleted file mode 100644
+index ba1d327c526c8f8b561bd9ad98aa118947a1c75a..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/runOnAllDevices.js.map b/build/commands/runAndroid/runOnAllDevices.js.map
+deleted file mode 100644
+index 6171050ec0102df30f5201617ae50bf932037e66..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/toPascalCase.d.ts b/build/commands/runAndroid/toPascalCase.d.ts
+deleted file mode 100644
+index f3ece4e99c45c70a020ee2454803425b8e319769..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/toPascalCase.d.ts.map b/build/commands/runAndroid/toPascalCase.d.ts.map
+deleted file mode 100644
+index 276c92a44d1873d6e326ca4df570134625999ada..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/toPascalCase.js.map b/build/commands/runAndroid/toPascalCase.js.map
+deleted file mode 100644
+index f0e8e9e502fa12051faaf11f8e960c6c8b843cb1..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryInstallAppOnDevice.d.ts b/build/commands/runAndroid/tryInstallAppOnDevice.d.ts
+deleted file mode 100644
+index df60fc0ae94f3935d2b0d8619c6a23052ab6a506..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryInstallAppOnDevice.d.ts.map b/build/commands/runAndroid/tryInstallAppOnDevice.d.ts.map
+deleted file mode 100644
+index 791bc6364b357747ec049b715c7cd867de3d292a..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryInstallAppOnDevice.js.map b/build/commands/runAndroid/tryInstallAppOnDevice.js.map
+deleted file mode 100644
+index 08a302803ea3a5e1562b4ea13de2a58a931691a5..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryLaunchAppOnDevice.d.ts b/build/commands/runAndroid/tryLaunchAppOnDevice.d.ts
+deleted file mode 100644
+index 7c1426cc854ca1368c76c40f8929b86de89a2a13..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryLaunchAppOnDevice.d.ts.map b/build/commands/runAndroid/tryLaunchAppOnDevice.d.ts.map
+deleted file mode 100644
+index 252415dd4c64e0eb771c66490b2e7df9f839b843..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryLaunchAppOnDevice.js.map b/build/commands/runAndroid/tryLaunchAppOnDevice.js.map
+deleted file mode 100644
+index 2d30c3224df668d0d9478cc4116538ea2c2ca031..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryLaunchEmulator.d.ts b/build/commands/runAndroid/tryLaunchEmulator.d.ts
+deleted file mode 100644
+index cde6b42da7e4892d4fda16f340e54bd72f72bb59..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryLaunchEmulator.d.ts.map b/build/commands/runAndroid/tryLaunchEmulator.d.ts.map
+deleted file mode 100644
+index 5eb188262eda71de14db63bd60d1f8b019fc90c3..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryLaunchEmulator.js.map b/build/commands/runAndroid/tryLaunchEmulator.js.map
+deleted file mode 100644
+index f2bd2885c03e0d92f1b7c765a1fffe2a7365331a..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryRunAdbReverse.d.ts b/build/commands/runAndroid/tryRunAdbReverse.d.ts
+deleted file mode 100644
+index b5233a71d182c44b20d30140e3c48625c2ca01e5..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryRunAdbReverse.d.ts.map b/build/commands/runAndroid/tryRunAdbReverse.d.ts.map
+deleted file mode 100644
+index e546f392aea149af1d72889c8fff7bc399d0dbe8..0000000000000000000000000000000000000000
+diff --git a/build/commands/runAndroid/tryRunAdbReverse.js.map b/build/commands/runAndroid/tryRunAdbReverse.js.map
+deleted file mode 100644
+index 558e83c03b027370bfa277a0ef791e4e865577c3..0000000000000000000000000000000000000000
+diff --git a/build/index.d.ts b/build/index.d.ts
+deleted file mode 100644
+index 9d2f7c41b7b186db85e2c59025b027d3c9e62396..0000000000000000000000000000000000000000
+diff --git a/build/index.d.ts.map b/build/index.d.ts.map
+deleted file mode 100644
+index d5743edfa8c9e6c6d70067df393097ba478d87f2..0000000000000000000000000000000000000000
+diff --git a/build/index.js.map b/build/index.js.map
+deleted file mode 100644
+index 6dbae6930416df87dafa3d99b09d6697271bb676..0000000000000000000000000000000000000000

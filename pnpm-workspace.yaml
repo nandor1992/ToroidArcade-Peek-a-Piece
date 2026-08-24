@@ -1,0 +1,2 @@
+patchedDependencies:
+  '@react-native-community/cli-platform-android@20.2.0': patches/@react-native-community__cli-platform-android@20.2.0.patch
