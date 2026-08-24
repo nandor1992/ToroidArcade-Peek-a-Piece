@@ -1,8 +1,11 @@
-# FamilyPuzzles
+# Peek-a-Piece
 
 React Native (bare CLI) app: parents upload family photos, the app turns them
 into games (jigsaw puzzles first) for toddlers to play. Local-only storage —
 no backend, no accounts.
+
+See [`docs/architecture.md`](docs/architecture.md#branding) for the name,
+icon, and colour/type identity — sourced from `resources/`.
 
 ## Conventions
 

@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "FamilyPuzzles.app"
-               BlueprintName = "FamilyPuzzles"
-               ReferencedContainer = "container:FamilyPuzzles.xcodeproj">
+               BuildableName = "PeekaPiece.app"
+               BlueprintName = "PeekaPiece"
+               ReferencedContainer = "container:PeekaPiece.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "FamilyPuzzlesTests.xctest"
-               BlueprintName = "FamilyPuzzlesTests"
-               ReferencedContainer = "container:FamilyPuzzles.xcodeproj">
+               BuildableName = "PeekaPieceTests.xctest"
+               BlueprintName = "PeekaPieceTests"
+               ReferencedContainer = "container:PeekaPiece.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "FamilyPuzzles.app"
-            BlueprintName = "FamilyPuzzles"
-            ReferencedContainer = "container:FamilyPuzzles.xcodeproj">
+            BuildableName = "PeekaPiece.app"
+            BlueprintName = "PeekaPiece"
+            ReferencedContainer = "container:PeekaPiece.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "FamilyPuzzles.app"
-            BlueprintName = "FamilyPuzzles"
-            ReferencedContainer = "container:FamilyPuzzles.xcodeproj">
+            BuildableName = "PeekaPiece.app"
+            BlueprintName = "PeekaPiece"
+            ReferencedContainer = "container:PeekaPiece.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

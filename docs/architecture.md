@@ -6,6 +6,66 @@ A React Native app where a parent uploads family photos and the app turns
 them into simple games for a toddler to play. Jigsaw puzzles first; more game
 types later (matching, sliding tiles, spot-the-difference, etc.).
 
+## Branding
+
+The app is called **Peek-a-Piece**. Source files (icon SVG/PNG, colour and
+type spec) live in [`resources/`](../resources/); the app icon and native
+project names are generated from them (see below) rather than hand-copied, so
+`resources/` is the source of truth if the icon or palette changes.
+
+**Name.** Peekaboo is the first game almost every toddler learns, and it
+works on the same idea as a jigsaw: something hidden, then revealed. The name
+says the mechanic and the age group in three syllables.
+
+**Icon.** A jigsaw piece with someone hiding behind it — two eyes peeking
+over the top edge. The eyes do the work: they signal a person, a game, and a
+face to look for, which is what the app is about. One large shape,
+deliberately, so it survives being shrunk to a home-screen icon.
+`resources/peekapiece-icon.svg` is the master vector; `peekapiece-mark.svg`
+is the eyes+piece mark alone (no background), for contexts that need just
+the glyph. The native app icons
+(`android/app/src/main/res/mipmap-*/ic_launcher*.png` and
+`ios/PeekaPiece/Images.xcassets/AppIcon.appiconset/`) are rendered from this
+vector at each required size — Android keeps the icon's own rounded-corner
+silhouette with transparent corners (legacy launcher icons, no adaptive-icon
+XML in this project yet); iOS uses a full-bleed square with no alpha
+channel, since iOS applies its own corner mask and the App Store rejects
+icons with transparency.
+
+**Colour.** Warm, high-contrast, chosen to stay distinguishable under the
+most common forms of colour blindness (the palette differs in lightness as
+well as hue, not just hue):
+
+| Name      | Hex       | Use                                  |
+|-----------|-----------|---------------------------------------|
+| Sunbeam   | `#FFC93C` | icon field, primary background       |
+| Tangerine | `#FF9F1C` | gradient base, active states         |
+| Teal      | `#2EC4B6` | the piece, primary UI                |
+| Navy      | `#26385A` | eyes, all text                       |
+| Coral     | `#FF6B6B` | piece colour 2, celebration           |
+| Violet    | `#9B5DE5` | piece colour 3                       |
+| Leaf      | `#7BC950` | piece colour 4                       |
+| Cream     | `#FFF6E6` | page background                      |
+
+**Type.** [Fredoka](https://fonts.google.com/specimen/Fredoka) (display —
+wordmark, buttons, anything a child sees) and
+[Nunito](https://fonts.google.com/specimen/Nunito) (body — parent-facing
+settings, help text, store listing). Neither is wired into the app yet;
+`src/theme/` is still empty (see below) — pick these up when the theme
+provider is built.
+
+These become real `src/theme/` tokens (colours, type scale) once that layer
+is implemented — see "Open decisions" below. Until then this table is the
+source of truth for any hardcoded styling in early screens.
+
+**Build notes carried over from the brand sheet**, worth keeping in mind
+before the photo-upload feature is built: an app aimed at children has legal
+obligations ordinary apps don't (COPPA in the US, the UK's Children's code,
+GDPR-K in the EU), and app store family-policy programs require declaring a
+target age group — read the relevant policy before writing the upload flow,
+not after. No third-party ad SDKs, no fingerprinting analytics, no external
+links in the child-facing view; keep anything parental behind a simple gate.
+
 ## Key decisions
 
 **Bare React Native CLI, not Expo.** Chosen for full control over native

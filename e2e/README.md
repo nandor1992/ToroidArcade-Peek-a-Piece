@@ -1,6 +1,6 @@
 # e2e/
 
-End-to-end UI flows for FamilyPuzzles, kept as a separate top-level folder
+End-to-end UI flows for Peek-a-Piece, kept as a separate top-level folder
 (distinct from `docs/` and `src/`) so the whole automated-testing story lives
 in one obvious place.
 

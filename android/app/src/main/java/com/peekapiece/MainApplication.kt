@@ -1,4 +1,4 @@
-package com.familypuzzles
+package com.peekapiece
 
 import android.app.Application
 import com.facebook.react.PackageList
