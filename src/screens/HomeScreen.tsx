@@ -19,7 +19,7 @@ const TILE_COLORS = [
   colors.tangerine,
 ] as const;
 
-const STARTER_PUZZLES: Puzzle[] = [
+export const STARTER_PUZZLES: Puzzle[] = [
   { id: 'stock-1', title: 'Puppy', source: 'stock' },
   { id: 'stock-2', title: 'Rocket', source: 'stock' },
   { id: 'stock-3', title: 'Flower', source: 'stock' },

@@ -35,7 +35,12 @@ Every tile is currently a solid-color square (cycling through the palette's
 teal/coral/violet/leaf/tangerine) with a puzzle-piece emoji — a stand-in for
 a real photo thumbnail, since photo storage doesn't exist yet. Tapping a tile
 calls `onSelectPuzzle(puzzle)`; `HomeScreen` has no navigation logic of its
-own, since there's nowhere to navigate to yet.
+own — `App.tsx` is what turns that callback into actually opening
+`PuzzleScreen`.
+
+`STARTER_PUZZLES` is exported so `App.tsx` can combine it with
+`userPuzzles` into the single ordered list `PuzzleScreen` browses with its
+Next button — both screens need to agree on the same list and ordering.
 
 ## Interface
 
@@ -84,8 +89,9 @@ own, since there's nowhere to navigate to yet.
 - No real photo thumbnails yet — tiles are solid-color placeholders with a
   fixed emoji. Swapping in real images (user photos, and a real bundled
   starter-photo set with confirmed redistribution rights) is a follow-up.
-- No navigation: `onSelectPuzzle` is a bare callback since there's no puzzle
-  screen or navigation library wired up yet.
+- No navigation library: `onSelectPuzzle` is a bare callback; `App.tsx`
+  switches between `HomeScreen` and `PuzzleScreen` with a single piece of
+  local state rather than a real nav stack (see `PuzzleScreen`'s spec).
 - No persisted storage: `userPuzzles` must be passed in by whatever renders
   `HomeScreen`; this screen doesn't read `src/storage/` (not implemented).
 - No explicit empty state for "zero puzzles at all" — shouldn't happen in
@@ -99,3 +105,4 @@ own, since there's nowhere to navigate to yet.
 - Tests: `src/screens/HomeScreen.test.tsx`
 - Types: `src/types/puzzle.ts`
 - Palette: `src/theme/colors.ts`
+- Related specs: [[PuzzleScreen]]
