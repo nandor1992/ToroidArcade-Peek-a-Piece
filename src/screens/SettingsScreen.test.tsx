@@ -107,6 +107,35 @@ test('picking Off reports null minutes', async () => {
   expect(props.onChangeTimerMinutes).toHaveBeenCalledWith(null);
 });
 
+test('About button opens a popup with app info, and Close dismisses it', async () => {
+  const props = baseProps();
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...props} />);
+  });
+
+  const findModal = () =>
+    root!.root.findAll(node => 'visible' in node.props)[0];
+
+  expect(findModal().props.visible).toBe(false);
+
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  expect(findModal().props.visible).toBe(true);
+  expect(
+    root!.root.findAll(node => node.props.children === 'Peek-a-Piece')
+      .length,
+  ).toBeGreaterThan(0);
+
+  await act(() => {
+    findByLabel(root!.root, 'Close').props.onPress();
+  });
+
+  expect(findModal().props.visible).toBe(false);
+});
+
 test('back button calls onBack', async () => {
   const props = baseProps();
   let root: ReactTestRenderer.ReactTestRenderer;

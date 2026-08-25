@@ -91,6 +91,11 @@ not on every re-render.
 3. Open with an `initialPuzzleId` not present in `puzzles` → the first
    puzzle in the list is showing.
 
+The end-to-end claim that Next respects the "Show starter puzzles" toggle
+is covered at the `App.tsx` level (`App.test.tsx`), not here, since it
+depends on how `App.tsx` builds `puzzles` — this screen itself has no
+awareness of the toggle at all, only of whatever list it's handed.
+
 ## Non-goals / known limitations
 
 - No real puzzle interaction yet — the image area shows the puzzle's photo

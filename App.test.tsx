@@ -4,7 +4,14 @@
 
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
+import { launchImageLibrary } from 'react-native-image-picker';
 import App from './App';
+
+jest.mock('react-native-image-picker', () => ({
+  launchImageLibrary: jest.fn(),
+}));
+
+const mockedLaunchImageLibrary = launchImageLibrary as jest.Mock;
 
 function findByLabel(
   root: ReactTestRenderer.ReactTestInstance,
@@ -35,6 +42,23 @@ async function solveMathGate(root: ReactTestRenderer.ReactTestInstance) {
   });
   await act(() => {
     findByLabel(root, 'Continue').props.onPress();
+  });
+}
+
+function currentPuzzleLabel(root: ReactTestRenderer.ReactTestInstance) {
+  // The puzzle-screen image area is the only accessibilityLabel-bearing
+  // node that isn't one of the nav buttons (those carry
+  // accessibilityRole "button"; this doesn't).
+  return root.findAll(
+    node =>
+      typeof node.props.accessibilityLabel === 'string' &&
+      node.props.accessibilityRole !== 'button',
+  )[0]?.props.accessibilityLabel;
+}
+
+function addPhoto(fileName: string, uri: string) {
+  mockedLaunchImageLibrary.mockImplementationOnce((_options, callback) => {
+    callback({ assets: [{ uri, fileName }] });
   });
 }
 
@@ -93,4 +117,59 @@ test('setting a screen-time limit locks the app after it elapses, and solving th
   ).toBe(0);
 
   jest.useRealTimers();
+});
+
+test('Next on the puzzle screen only cycles through puzzles currently visible on Home, respecting the starter-puzzles toggle', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<App />);
+  });
+
+  // Home -> parent gate -> parent screen.
+  await act(() => {
+    findByLabel(root!.root, 'Parent settings').props.onPress();
+  });
+  await solveMathGate(root!.root);
+
+  // Add two photos (prepended, so the grid ends up ["b.jpg", "a.jpg"]).
+  addPhoto('a.jpg', 'file:///a.jpg');
+  await act(() => {
+    findByLabel(root!.root, 'Add photo').props.onPress();
+  });
+  addPhoto('b.jpg', 'file:///b.jpg');
+  await act(() => {
+    findByLabel(root!.root, 'Add photo').props.onPress();
+  });
+
+  // Turn starter puzzles off — the "Show starter puzzles" Switch lives on
+  // ParentScreen itself, not under Settings (which has its own unrelated
+  // "Off" preset for the screen-time timer).
+  const starterPuzzlesSwitch = root!.root.findAll(
+    node => node.props.accessibilityLabel === 'Show starter puzzles',
+  )[0];
+  await act(() => {
+    starterPuzzlesSwitch.props.onValueChange(false);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'Back').props.onPress(); // parent -> home
+  });
+
+  // Open the first tile on Home — with starter puzzles off, only the two
+  // uploaded photos are on the grid.
+  await act(() => {
+    findByLabel(root!.root, 'b.jpg').props.onPress();
+  });
+  expect(currentPuzzleLabel(root!.root)).toBe('b.jpg');
+
+  await act(() => {
+    findByLabel(root!.root, 'Next puzzle').props.onPress();
+  });
+  expect(currentPuzzleLabel(root!.root)).toBe('a.jpg');
+
+  // Wraps back to the first uploaded photo — never a starter puzzle,
+  // since those are toggled off.
+  await act(() => {
+    findByLabel(root!.root, 'Next puzzle').props.onPress();
+  });
+  expect(currentPuzzleLabel(root!.root)).toBe('b.jpg');
 });

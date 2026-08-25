@@ -4,9 +4,18 @@
 
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
-import { Text } from 'react-native';
 import { HomeScreen } from './HomeScreen';
 import type { Puzzle } from '../types/puzzle';
+
+function tileOrder(root: ReactTestRenderer.ReactTestInstance): string[] {
+  return root
+    .findAll(node => typeof node.props.onPress === 'function')
+    .map(node => node.props.accessibilityLabel)
+    .filter(
+      (label): label is string =>
+        typeof label === 'string' && label !== 'Parent settings',
+    );
+}
 
 test('renders the starter puzzles when no photos have been uploaded', async () => {
   let root: ReactTestRenderer.ReactTestRenderer;
@@ -14,15 +23,17 @@ test('renders the starter puzzles when no photos have been uploaded', async () =
     root = ReactTestRenderer.create(<HomeScreen />);
   });
 
-  const headers = root!.root
-    .findAllByType(Text)
-    .map(node => node.props.children)
-    .filter(text => text === 'Your Photos' || text === 'Starter Puzzles');
-
-  expect(headers).toEqual(['Starter Puzzles']);
+  expect(tileOrder(root!.root)).toEqual([
+    'Puppy',
+    'Rocket',
+    'Flower',
+    'Beach Ball',
+    'Teddy Bear',
+    'Rainbow',
+  ]);
 });
 
-test('shows uploaded photos first, ahead of the starter puzzles', async () => {
+test('shows uploaded photos first, ahead of the starter puzzles, in one grid', async () => {
   const userPuzzles: Puzzle[] = [
     { id: 'user-1', title: 'Grandma', source: 'user' },
   ];
@@ -32,12 +43,16 @@ test('shows uploaded photos first, ahead of the starter puzzles', async () => {
     root = ReactTestRenderer.create(<HomeScreen userPuzzles={userPuzzles} />);
   });
 
-  const headers = root!.root
-    .findAllByType(Text)
-    .map(node => node.props.children)
-    .filter(text => text === 'Your Photos' || text === 'Starter Puzzles');
-
-  expect(headers).toEqual(['Your Photos', 'Starter Puzzles']);
+  const order = tileOrder(root!.root);
+  expect(order[0]).toBe('Grandma');
+  expect(order.slice(1)).toEqual([
+    'Puppy',
+    'Rocket',
+    'Flower',
+    'Beach Ball',
+    'Teddy Bear',
+    'Rainbow',
+  ]);
 });
 
 test('tapping a tile reports the selected puzzle', async () => {

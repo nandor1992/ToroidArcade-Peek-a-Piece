@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { Slider } from '../components/Slider';
@@ -17,6 +17,14 @@ const TIMER_PRESETS: TimerPreset[] = [
   { label: '20 min', minutes: 20 },
   { label: '30 min', minutes: 30 },
 ];
+
+// Keep in sync with package.json's "version" by hand — there's no build
+// step wiring these together yet.
+const ABOUT_INFO = {
+  appName: 'Peek-a-Piece',
+  version: '0.0.1',
+  credit: 'Created by ToroidSystems / ToroidArcade',
+};
 
 export interface SettingsScreenProps {
   soundVolume: number;
@@ -37,6 +45,8 @@ export function SettingsScreen({
   onChangeTimerMinutes,
   onBack,
 }: SettingsScreenProps) {
+  const [aboutVisible, setAboutVisible] = useState(false);
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
@@ -106,6 +116,45 @@ export function SettingsScreen({
           })}
         </View>
       </View>
+
+      <View style={styles.section}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="About"
+          onPress={() => setAboutVisible(true)}
+          style={({ pressed }) => [
+            styles.aboutButton,
+            pressed && styles.aboutButtonPressed,
+          ]}>
+          <Text style={styles.aboutButtonLabel}>About</Text>
+        </Pressable>
+      </View>
+
+      <Modal
+        visible={aboutVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAboutVisible(false)}>
+        <View style={styles.modalScrim}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{ABOUT_INFO.appName}</Text>
+            <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
+            <Text style={styles.modalVersion}>
+              Version {ABOUT_INFO.version}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              onPress={() => setAboutVisible(false)}
+              style={({ pressed }) => [
+                styles.submitButton,
+                pressed && styles.submitButtonPressed,
+              ]}>
+              <Text style={styles.submitLabel}>Close</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -186,5 +235,68 @@ const styles = StyleSheet.create({
   },
   presetLabelSelected: {
     color: 'white',
+  },
+  aboutButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: colors.navy,
+  },
+  aboutButtonPressed: {
+    opacity: 0.7,
+  },
+  aboutButtonLabel: {
+    color: colors.navy,
+    fontWeight: '600',
+  },
+  modalScrim: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: colors.cream,
+    borderRadius: 24,
+    padding: 24,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: colors.navy,
+    marginBottom: 8,
+  },
+  modalBody: {
+    fontSize: 16,
+    color: colors.navy,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  modalVersion: {
+    fontSize: 14,
+    color: colors.navy,
+    opacity: 0.6,
+    marginBottom: 20,
+  },
+  submitButton: {
+    backgroundColor: colors.teal,
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 24,
+  },
+  submitButtonPressed: {
+    opacity: 0.7,
+  },
+  submitLabel: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

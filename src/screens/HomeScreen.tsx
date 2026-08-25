@@ -1,12 +1,12 @@
 import React from 'react';
 import {
+  FlatList,
   Image,
   Pressable,
-  SectionList,
   StyleSheet,
   Text,
   View,
-  type SectionListRenderItemInfo,
+  type ListRenderItemInfo,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
@@ -82,25 +82,17 @@ export function HomeScreen({
   onSelectPuzzle,
   onOpenParentArea,
 }: HomeScreenProps) {
-  const sections = [
-    { title: 'Your Photos', puzzles: userPuzzles },
-    { title: 'Starter Puzzles', puzzles: stockPuzzles },
-  ]
-    .filter(section => section.puzzles.length > 0)
-    .map(section => ({
-      title: section.title,
-      data: chunk(section.puzzles, COLUMNS),
-    }));
+  // One continuous grid — uploaded photos first, starter puzzles after —
+  // rather than two labeled sections, per the "together, above them" grid
+  // ordering.
+  const rows = chunk([...userPuzzles, ...stockPuzzles], COLUMNS);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <SectionList
-        sections={sections}
+      <FlatList
+        data={rows}
         keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
-        renderSectionHeader={({ section }) => (
-          <Text style={styles.sectionHeader}>{section.title}</Text>
-        )}
-        renderItem={({ item: row }: SectionListRenderItemInfo<Puzzle[]>) => (
+        renderItem={({ item: row }: ListRenderItemInfo<Puzzle[]>) => (
           <View style={styles.row}>
             {row.map((puzzle, index) => (
               <PuzzleTile
@@ -117,7 +109,6 @@ export function HomeScreen({
           </View>
         )}
         contentContainerStyle={styles.content}
-        stickySectionHeadersEnabled={false}
       />
       {/* Deliberately small and low-contrast — this is the parent-only
           entry point, not something a toddler should be drawn to tap. */}
@@ -142,13 +133,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 16,
-  },
-  sectionHeader: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: colors.navy,
-    marginTop: 16,
-    marginBottom: 12,
   },
   row: {
     flexDirection: 'row',

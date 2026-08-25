@@ -19,17 +19,14 @@ app is playable immediately, before any photo has been uploaded.
 ## How it works
 
 `HomeScreen` takes the puzzle lists as props rather than reading storage
-itself (storage isn't implemented yet — see Non-goals). It builds up to two
-sections:
-
-1. **Your Photos** — `userPuzzles`, only rendered if non-empty.
-2. **Starter Puzzles** — `stockPuzzles`, defaults to a hardcoded set of six
-   placeholder puzzles (`STARTER_PUZZLES`) when no prop is passed.
-
-Each section's puzzle list is chunked into rows of two and rendered via
-`SectionList`, so the grid is two tiles wide per row, "Your Photos" above
-"Starter Puzzles" whenever both are present. A trailing odd tile does not
-stretch to fill its row (an invisible spacer fills the other column).
+itself (storage isn't implemented yet — see Non-goals). It renders one
+continuous grid — `[...userPuzzles, ...stockPuzzles]` chunked into rows of
+two — rather than two visually separate sections: uploaded photos always
+come first, starter puzzles (`stockPuzzles`, defaulting to the hardcoded
+six-puzzle `STARTER_PUZZLES` when no prop is passed) fill in after them,
+with no header or divider marking where one group ends and the other
+begins. A trailing odd tile does not stretch to fill its row (an invisible
+spacer fills the other column).
 
 Each tile renders the puzzle's real photo (`Image`, `puzzle.imageUri`) when
 one is set — true for anything added via `ParentScreen` — and otherwise
@@ -53,8 +50,8 @@ between.
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| `userPuzzles` | `Puzzle[]` | No | Defaults to `[]`. Rendered first, section hidden when empty. |
-| `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled `STARTER_PUZZLES` placeholder set. |
+| `userPuzzles` | `Puzzle[]` | No | Defaults to `[]`. Rendered first in the grid. |
+| `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled `STARTER_PUZZLES` placeholder set. Rendered after `userPuzzles`. |
 | `onSelectPuzzle` | `(puzzle: Puzzle) => void` | No | Called with the tapped puzzle. No-op if omitted. |
 | `onOpenParentArea` | `() => void` | No | Called when the corner lock button is pressed. No-op if omitted. |
 
@@ -77,22 +74,22 @@ between.
 
 ## Edge cases & expected behavior
 
-- No `userPuzzles` and no `stockPuzzles` override → only "Starter Puzzles"
-  renders, populated by the default `STARTER_PUZZLES`.
-- `userPuzzles` non-empty → "Your Photos" renders above "Starter Puzzles".
-- `stockPuzzles={[]}` and `userPuzzles={[]}` → both sections are omitted;
-  screen renders an empty list (not currently given its own empty-state
-  message — see Non-goals).
+- No `userPuzzles` and no `stockPuzzles` override → grid is populated by
+  the default `STARTER_PUZZLES` alone.
+- `userPuzzles` non-empty → those tiles render first, immediately followed
+  by `stockPuzzles` in the same grid (no visual break between them).
+- `stockPuzzles={[]}` and `userPuzzles={[]}` → grid renders with zero rows
+  (not currently given its own empty-state message — see Non-goals).
 - Odd-length puzzle list (e.g. 5 items) → last row has one tile plus an
   invisible spacer, not a stretched double-width tile.
 - Tapping a tile with no `onSelectPuzzle` passed → no-op, no crash.
 
 ## Test scenarios
 
-1. Render with no props → only the "Starter Puzzles" header is present, not
-   "Your Photos".
-2. Render with one `userPuzzles` entry → both headers present, "Your Photos"
-   before "Starter Puzzles".
+1. Render with no props → the grid shows exactly the six `STARTER_PUZZLES`,
+   in order.
+2. Render with one `userPuzzles` entry → it's the first tile in the grid,
+   immediately followed by all of `STARTER_PUZZLES` in order.
 3. Tap the first tile → `onSelectPuzzle` is called with that tile's
    `Puzzle`.
 4. Tap the corner lock button → `onOpenParentArea` is called.

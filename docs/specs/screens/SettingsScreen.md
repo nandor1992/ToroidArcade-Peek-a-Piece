@@ -35,6 +35,13 @@ state itself, only rendering what it's given and calling back on change.
   `minutes` (`null` for `Off`); the chip matching the current
   `timerMinutes` is highlighted (`accessibilityState={{ selected }}`
   too).
+- **About**: unlike everything else on this screen, this is local UI state
+  (`aboutVisible`) rather than something `App.tsx` owns — there's nothing
+  for a caller to control or react to. Tapping the About button opens a
+  `Modal` (`transparent`, `animationType="fade"`) showing the app name,
+  a fixed credit line, and a version string (`ABOUT_INFO`, hand-maintained
+  in this file — see Non-goals), with a Close button that dismisses it.
+  `onRequestClose` (Android back button / iOS swipe) also dismisses it.
 
 ## Interface
 
@@ -65,7 +72,9 @@ state itself, only rendering what it's given and calling back on change.
    the button's label is "Unmute" and pressing it calls `onToggleMute(false)`.
 3. Tap a timer preset (e.g. "10 min") → `onChangeTimerMinutes(10)`. Tap
    "Off" → `onChangeTimerMinutes(null)`.
-4. Press Back → `onBack` is called.
+4. Tap the About button → the popup becomes visible and shows the app
+   name. Tap Close → the popup is hidden again.
+5. Press Back → `onBack` is called.
 
 ## Non-goals / known limitations
 
@@ -74,6 +83,11 @@ state itself, only rendering what it's given and calling back on change.
   sound effects yet either).
 - No visual "you have N minutes left" indicator anywhere in the app; the
   limit is invisible until it fires.
+- `ABOUT_INFO.version` is a hardcoded string, not read from `package.json`
+  — nothing keeps it in sync automatically, so it can drift if the app's
+  version bumps without this file being touched too.
+- "Who created the app" is a fixed credit line (`ABOUT_INFO.credit`), not
+  configurable or localized.
 
 ## Related
 
