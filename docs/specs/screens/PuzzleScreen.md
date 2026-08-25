@@ -10,12 +10,10 @@ last_verified: 2026-08-25
 
 ## Purpose
 
-The screen a child lands on after tapping a tile on `HomeScreen`. For now it
-just opens the chosen puzzle's photo full-size with a back button and a next
-button — the actual jigsaw interaction (cutting the photo into draggable
-pieces) is a later step, documented separately once it exists. This screen's
-job today is the frame around that: getting in, browsing to another puzzle,
-and getting back out.
+The screen a child lands on after tapping a tile on `HomeScreen`. It's the
+frame around the actual game: a back button, a next button, a random
+background, and — for any puzzle with a real photo — the interactive
+jigsaw itself ([[PuzzleBoard]]).
 
 ## How it works
 
@@ -51,6 +49,23 @@ placeholders (`BACKGROUND_PLACEHOLDERS`, standing in for real background art
 re-rolls when `index` changes (`useMemo` keyed on the current puzzle's id),
 not on every re-render.
 
+**The game itself.** When the current puzzle has a real photo
+(`puzzle.imageUri` set — true for anything uploaded via `ParentScreen`,
+still not true for `STARTER_PUZZLES`), the image area renders
+`<PuzzleBoard key={puzzle.id} imageUri={...} onSolved={...} />` instead of
+a static photo. The `key` matters: it forces Skia to fully remount (and
+therefore re-scramble) `PuzzleBoard` on every puzzle change, rather than
+reusing one instance across different photos. A puzzle with no photo yet
+(a starter puzzle) still falls back to the emoji placeholder — there's
+nothing to cut into pieces without a source image.
+
+A local `solved` boolean (reset via `useEffect` whenever `puzzle?.id`
+changes) tracks whether the current puzzle's `onSolved` has fired; while
+true, a small "🎉 Great job!" banner overlays the board
+(`pointerEvents="none"`, so it never blocks interaction). Solving a puzzle
+doesn't auto-advance to the next one or navigate anywhere — the banner is
+the only feedback.
+
 ## Interface
 
 | Name | Type | Required | Notes |
@@ -82,6 +97,10 @@ not on every re-render.
   isn't guarded against with a message.
 - Switching puzzles via Next re-picks the random background; re-rendering
   the same puzzle (e.g. parent re-render) does not.
+- Switching puzzles via Next also resets `solved` back to `false` and
+  remounts a fresh, re-scrambled `PuzzleBoard` (via its `key`) — solving
+  one puzzle doesn't leave the banner showing (or the board pre-solved) on
+  the next one.
 
 ## Test scenarios
 
@@ -90,6 +109,11 @@ not on every re-render.
    the list is now showing.
 3. Open with an `initialPuzzleId` not present in `puzzles` → the first
    puzzle in the list is showing.
+4. A puzzle with `imageUri` set renders the interactive board (detected by
+   the presence of its Responder System props), not the emoji fallback;
+   a puzzle with no `imageUri` renders the fallback, not a board.
+5. Solving the board (dragging all its pieces into place) shows the
+   "🎉 Great job!" banner.
 
 The end-to-end claim that Next respects the "Show starter puzzles" toggle
 is covered at the `App.tsx` level (`App.test.tsx`), not here, since it
@@ -98,10 +122,11 @@ awareness of the toggle at all, only of whatever list it's handed.
 
 ## Non-goals / known limitations
 
-- No real puzzle interaction yet — the image area shows the puzzle's photo
-  (or, for starter puzzles with no `imageUri` yet, a fixed glyph) full-size,
-  not cut into pieces. That becomes a `src/games/puzzle/` component per the
-  self-contained-game-plugin convention once it exists.
+- Starter puzzles (`STARTER_PUZZLES`, no `imageUri`) still can't be played
+  as a real jigsaw — no source photo to cut up — and fall back to the
+  static emoji placeholder, same as before `PuzzleBoard` existed.
+- No difficulty selection — `PuzzleBoard` is always opened at its default
+  2x2 grid; this screen has no UI to change piece count.
 - No real background art — `BACKGROUND_PLACEHOLDERS` is four solid palette
   colors standing in for a bundled set of background images (same
   redistribution-rights caveat as `HomeScreen`'s starter photos).
@@ -117,4 +142,4 @@ awareness of the toggle at all, only of whatever list it's handed.
 
 - Code: `src/screens/PuzzleScreen.tsx`
 - Tests: `src/screens/PuzzleScreen.test.tsx`
-- Related specs: [[HomeScreen]], [[SessionLockOverlay]]
+- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]]

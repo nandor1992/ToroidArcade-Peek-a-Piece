@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
+import { PuzzleBoard } from '../games/puzzle/components/PuzzleBoard';
 import type { Puzzle } from '../types/puzzle';
 
 // Stand-ins for bundled background art. Swap for real images once that
@@ -30,6 +31,11 @@ export function PuzzleScreen({
   });
 
   const puzzle = puzzles[index];
+  const [solved, setSolved] = useState(false);
+
+  useEffect(() => {
+    setSolved(false);
+  }, [puzzle?.id]);
 
   const background = useMemo(
     () =>
@@ -72,21 +78,26 @@ export function PuzzleScreen({
         </Pressable>
       </View>
       <View style={styles.imageArea}>
-        {/* Shows the puzzle's photo full-size for now — becomes the actual
-            jigsaw game component later. */}
         <View
           style={styles.imagePlaceholder}
           accessibilityLabel={puzzle.title}>
           {puzzle.imageUri ? (
-            <Image
-              source={{ uri: puzzle.imageUri }}
-              style={styles.image}
-              resizeMode="cover"
+            <PuzzleBoard
+              key={puzzle.id}
+              imageUri={puzzle.imageUri}
+              onSolved={() => setSolved(true)}
             />
           ) : (
+            // Starter puzzles have no real photo yet, so there's nothing
+            // to cut into pieces — see docs/specs/screens/PuzzleScreen.md.
             <Text style={styles.imageGlyph}>🧩</Text>
           )}
         </View>
+        {solved && (
+          <View style={styles.solvedBanner} pointerEvents="none">
+            <Text style={styles.solvedBannerText}>🎉 Great job!</Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -131,13 +142,23 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   imageGlyph: {
     fontSize: 96,
   },
-  image: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 32,
+  solvedBanner: {
+    position: 'absolute',
+    top: 12,
+    alignSelf: 'center',
+    backgroundColor: colors.teal,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
+  solvedBannerText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: '700',
   },
 });
