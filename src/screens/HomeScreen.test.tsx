@@ -67,3 +67,26 @@ test('tapping a tile reports the selected puzzle', async () => {
     expect.objectContaining({ id: 'stock-1' }),
   );
 });
+
+test('tapping the parent button opens the parent area', async () => {
+  const onOpenParentArea = jest.fn();
+
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <HomeScreen onOpenParentArea={onOpenParentArea} />,
+    );
+  });
+
+  const button = root!.root.findAll(
+    node =>
+      node.props.accessibilityLabel === 'Parent settings' &&
+      typeof node.props.onPress === 'function',
+  )[0];
+
+  await act(() => {
+    button.props.onPress();
+  });
+
+  expect(onOpenParentArea).toHaveBeenCalledTimes(1);
+});

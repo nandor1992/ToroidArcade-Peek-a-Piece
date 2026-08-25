@@ -19,13 +19,12 @@ and getting back out.
 
 ## How it works
 
-`App.tsx` holds a single piece of navigation state — `openPuzzleId: string |
-null` — and swaps between rendering `HomeScreen` and `PuzzleScreen` based on
-it, rather than pulling in a navigation library. `HomeScreen`'s
-`onSelectPuzzle` sets `openPuzzleId`; `PuzzleScreen`'s `onBack` clears it
-back to `null`. There's no back-stack or deep-linking, which is fine for a
-two-screen app but worth revisiting if a third screen gets added (see
-Non-goals).
+`App.tsx` holds a small discriminated-union `screen` state (`'home' |
+'puzzle' | 'parentGate' | 'parent'`) and swaps which screen it renders based
+on it, rather than pulling in a navigation library. `HomeScreen`'s
+`onSelectPuzzle` sets `screen` to `{ name: 'puzzle', puzzleId }`;
+`PuzzleScreen`'s `onBack` sets it back to `{ name: 'home' }`. There's no
+back-stack or deep-linking; see Non-goals for when that'd need revisiting.
 
 `PuzzleScreen` receives the full puzzle list (`puzzles`, same
 user-photos-then-starter-puzzles order as the `HomeScreen` grid) plus which
@@ -33,6 +32,11 @@ one to open (`initialPuzzleId`), and tracks its own `index` into that list.
 The back button calls `onBack` (returns to `HomeScreen`); the next button
 advances `index`, wrapping from the last puzzle back to the first rather
 than disabling itself at the end.
+
+`puzzles` is built by `App.tsx` as `[...userPuzzles, ...stockPuzzles]`,
+where `stockPuzzles` is `STARTER_PUZZLES` or `[]` depending on the parent's
+"Show starter puzzles" toggle (see `ParentScreen`) — so Next only cycles
+through whatever's currently visible on `HomeScreen`, never a hidden set.
 
 The whole screen's background is one of a handful of solid-color
 placeholders (`BACKGROUND_PLACEHOLDERS`, standing in for real background art
@@ -82,18 +86,18 @@ not on every re-render.
 
 ## Non-goals / known limitations
 
-- No real puzzle interaction yet — the image area is a static placeholder
-  showing the puzzle's title and a fixed glyph, not the actual photo cut
-  into pieces. That becomes a `src/games/puzzle/` component per the
+- No real puzzle interaction yet — the image area shows the puzzle's photo
+  (or, for starter puzzles with no `imageUri` yet, a fixed glyph) full-size,
+  not cut into pieces. That becomes a `src/games/puzzle/` component per the
   self-contained-game-plugin convention once it exists.
 - No real background art — `BACKGROUND_PLACEHOLDERS` is four solid palette
   colors standing in for a bundled set of background images (same
   redistribution-rights caveat as `HomeScreen`'s starter photos).
-- Navigation is a single boolean-ish `openPuzzleId` in `App.tsx`, not a real
-  navigation stack. Fine for two screens; would need revisiting (likely
-  adding a navigation library) if the app grows a third screen or needs
-  Android hardware-back-button handling beyond what this pattern gives for
-  free.
+- Navigation is a small hand-rolled `screen` union in `App.tsx`, not a real
+  navigation stack — no back-stack, no Android hardware-back-button
+  handling beyond whatever the OS gives for free. Fine at four screens;
+  would need revisiting (likely adding a navigation library) if it grows
+  much further.
 - `puzzles` and `initialPuzzleId` are passed in by the caller; this screen
   doesn't read `src/storage/` itself (not implemented).
 

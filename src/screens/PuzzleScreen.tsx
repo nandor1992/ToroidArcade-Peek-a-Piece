@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import type { Puzzle } from '../types/puzzle';
@@ -72,12 +72,20 @@ export function PuzzleScreen({
         </Pressable>
       </View>
       <View style={styles.imageArea}>
-        {/* Placeholder for the opened puzzle photo — becomes the actual
+        {/* Shows the puzzle's photo full-size for now — becomes the actual
             jigsaw game component later. */}
         <View
           style={styles.imagePlaceholder}
           accessibilityLabel={puzzle.title}>
-          <Text style={styles.imageGlyph}>🧩</Text>
+          {puzzle.imageUri ? (
+            <Image
+              source={{ uri: puzzle.imageUri }}
+              style={styles.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={styles.imageGlyph}>🧩</Text>
+          )}
         </View>
       </View>
     </SafeAreaView>
@@ -126,5 +134,10 @@ const styles = StyleSheet.create({
   },
   imageGlyph: {
     fontSize: 96,
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
   },
 });

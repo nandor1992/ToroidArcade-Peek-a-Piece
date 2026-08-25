@@ -31,16 +31,23 @@ Each section's puzzle list is chunked into rows of two and rendered via
 "Starter Puzzles" whenever both are present. A trailing odd tile does not
 stretch to fill its row (an invisible spacer fills the other column).
 
-Every tile is currently a solid-color square (cycling through the palette's
-teal/coral/violet/leaf/tangerine) with a puzzle-piece emoji — a stand-in for
-a real photo thumbnail, since photo storage doesn't exist yet. Tapping a tile
-calls `onSelectPuzzle(puzzle)`; `HomeScreen` has no navigation logic of its
-own — `App.tsx` is what turns that callback into actually opening
-`PuzzleScreen`.
+Each tile renders the puzzle's real photo (`Image`, `puzzle.imageUri`) when
+one is set — true for anything added via `ParentScreen` — and otherwise
+falls back to a solid-color square (cycling through the palette's
+teal/coral/violet/leaf/tangerine) with a puzzle-piece emoji; that's still
+what every `STARTER_PUZZLES` entry uses, since there's no real starter photo
+set yet. Tapping a tile calls `onSelectPuzzle(puzzle)`; `HomeScreen` has no
+navigation logic of its own — `App.tsx` is what turns that callback into
+actually opening `PuzzleScreen`.
 
 `STARTER_PUZZLES` is exported so `App.tsx` can combine it with
 `userPuzzles` into the single ordered list `PuzzleScreen` browses with its
 Next button — both screens need to agree on the same list and ordering.
+
+A small lock button floats over the bottom-right corner of the grid and
+calls `onOpenParentArea`. `App.tsx` routes it to `ParentGateScreen`, not
+directly to `ParentScreen` — see that spec for the math-gate step in
+between.
 
 ## Interface
 
@@ -49,6 +56,7 @@ Next button — both screens need to agree on the same list and ordering.
 | `userPuzzles` | `Puzzle[]` | No | Defaults to `[]`. Rendered first, section hidden when empty. |
 | `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled `STARTER_PUZZLES` placeholder set. |
 | `onSelectPuzzle` | `(puzzle: Puzzle) => void` | No | Called with the tapped puzzle. No-op if omitted. |
+| `onOpenParentArea` | `() => void` | No | Called when the corner lock button is pressed. No-op if omitted. |
 
 ## Toddler UX constraints
 
@@ -62,6 +70,10 @@ Next button — both screens need to agree on the same list and ordering.
   readers but never required to identify or select a tile visually.
 - Visual feedback on press: the tile dims (`opacity: 0.7`) while held. There
   is no audio feedback yet — no sound asset pipeline exists (see Non-goals).
+- The parent-area lock button is a deliberate exception to the
+  large-touch-target rule: it's small (40x40) and low-contrast
+  (`opacity: 0.55` at rest), on purpose, since it's the one control on this
+  screen that should *not* be easy for a toddler to find or hit.
 
 ## Edge cases & expected behavior
 
@@ -83,12 +95,14 @@ Next button — both screens need to agree on the same list and ordering.
    before "Starter Puzzles".
 3. Tap the first tile → `onSelectPuzzle` is called with that tile's
    `Puzzle`.
+4. Tap the corner lock button → `onOpenParentArea` is called.
 
 ## Non-goals / known limitations
 
-- No real photo thumbnails yet — tiles are solid-color placeholders with a
-  fixed emoji. Swapping in real images (user photos, and a real bundled
-  starter-photo set with confirmed redistribution rights) is a follow-up.
+- Starter puzzles still have no real photos — those tiles are solid-color
+  placeholders with a fixed emoji, pending a bundled starter-photo set with
+  confirmed redistribution rights. User-uploaded tiles do show the real
+  photo now (see `ParentScreen`).
 - No navigation library: `onSelectPuzzle` is a bare callback; `App.tsx`
   switches between `HomeScreen` and `PuzzleScreen` with a single piece of
   local state rather than a real nav stack (see `PuzzleScreen`'s spec).
@@ -105,4 +119,4 @@ Next button — both screens need to agree on the same list and ordering.
 - Tests: `src/screens/HomeScreen.test.tsx`
 - Types: `src/types/puzzle.ts`
 - Palette: `src/theme/colors.ts`
-- Related specs: [[PuzzleScreen]]
+- Related specs: [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]]

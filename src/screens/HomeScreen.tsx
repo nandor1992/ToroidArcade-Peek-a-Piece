@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  Image,
   Pressable,
   SectionList,
   StyleSheet,
@@ -55,7 +56,15 @@ function PuzzleTile({ puzzle, color, onPress }: PuzzleTileProps) {
         { backgroundColor: color },
         pressed && styles.tilePressed,
       ]}>
-      <Text style={styles.tileGlyph}>🧩</Text>
+      {puzzle.imageUri ? (
+        <Image
+          source={{ uri: puzzle.imageUri }}
+          style={styles.tileImage}
+          resizeMode="cover"
+        />
+      ) : (
+        <Text style={styles.tileGlyph}>🧩</Text>
+      )}
     </Pressable>
   );
 }
@@ -64,12 +73,14 @@ export interface HomeScreenProps {
   userPuzzles?: Puzzle[];
   stockPuzzles?: Puzzle[];
   onSelectPuzzle?: (puzzle: Puzzle) => void;
+  onOpenParentArea?: () => void;
 }
 
 export function HomeScreen({
   userPuzzles = [],
   stockPuzzles = STARTER_PUZZLES,
   onSelectPuzzle,
+  onOpenParentArea,
 }: HomeScreenProps) {
   const sections = [
     { title: 'Your Photos', puzzles: userPuzzles },
@@ -108,6 +119,18 @@ export function HomeScreen({
         contentContainerStyle={styles.content}
         stickySectionHeadersEnabled={false}
       />
+      {/* Deliberately small and low-contrast — this is the parent-only
+          entry point, not something a toddler should be drawn to tap. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Parent settings"
+        onPress={onOpenParentArea}
+        style={({ pressed }) => [
+          styles.parentButton,
+          pressed && styles.parentButtonPressed,
+        ]}>
+        <Text style={styles.parentButtonGlyph}>🔒</Text>
+      </Pressable>
     </SafeAreaView>
   );
 }
@@ -148,5 +171,28 @@ const styles = StyleSheet.create({
   },
   tileGlyph: {
     fontSize: 48,
+  },
+  tileImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 24,
+  },
+  parentButton: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cream,
+    opacity: 0.55,
+  },
+  parentButtonPressed: {
+    opacity: 0.85,
+  },
+  parentButtonGlyph: {
+    fontSize: 18,
   },
 });
