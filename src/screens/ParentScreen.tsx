@@ -21,6 +21,7 @@ export interface ParentScreenProps {
   defaultImagesEnabled: boolean;
   onToggleDefaultImages: (enabled: boolean) => void;
   onBack?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function ParentScreen({
@@ -30,6 +31,7 @@ export function ParentScreen({
   defaultImagesEnabled,
   onToggleDefaultImages,
   onBack,
+  onOpenSettings,
 }: ParentScreenProps) {
   const handleAddPhoto = () => {
     launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, response => {
@@ -60,10 +62,6 @@ export function ParentScreen({
     ]);
   };
 
-  const handleOpenSettings = () => {
-    Alert.alert('Settings', 'Coming soon.');
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.header}>
@@ -81,7 +79,7 @@ export function ParentScreen({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Settings"
-          onPress={handleOpenSettings}
+          onPress={onOpenSettings}
           style={({ pressed }) => [
             styles.iconButton,
             pressed && styles.iconButtonPressed,

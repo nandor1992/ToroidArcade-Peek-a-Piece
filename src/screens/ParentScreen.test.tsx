@@ -26,6 +26,29 @@ beforeEach(() => {
   mockedLaunchImageLibrary.mockReset();
 });
 
+test('settings button calls onOpenSettings', async () => {
+  const onOpenSettings = jest.fn();
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <ParentScreen
+        userPuzzles={[]}
+        onAddPuzzle={jest.fn()}
+        onDeletePuzzle={jest.fn()}
+        defaultImagesEnabled={true}
+        onToggleDefaultImages={jest.fn()}
+        onOpenSettings={onOpenSettings}
+      />,
+    );
+  });
+
+  await act(() => {
+    findByLabel(root!.root, 'Settings').props.onPress();
+  });
+
+  expect(onOpenSettings).toHaveBeenCalledTimes(1);
+});
+
 test('toggling the switch reports the new value', async () => {
   const onToggleDefaultImages = jest.fn();
   let root: ReactTestRenderer.ReactTestRenderer;

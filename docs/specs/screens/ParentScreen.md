@@ -33,8 +33,8 @@ calling back to whatever owns the list (`App.tsx`):
 - **Show starter puzzles** is a `Switch` that directly reports its new
   value via `onToggleDefaultImages`; `ParentScreen` doesn't own that
   state either.
-- **Settings** (⚙️, top-right) is a placeholder — it just shows an
-  `Alert.alert('Settings', 'Coming soon.')` and does nothing else yet.
+- **Settings** (⚙️, top-right) calls `onOpenSettings` — `App.tsx` routes it
+  to [[SettingsScreen]] (background-music volume/mute, screen-time limit).
 
 Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 `numColumns={3}`); an empty grid shows "No photos uploaded yet." instead.
@@ -49,6 +49,7 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 | `defaultImagesEnabled` | `boolean` | Yes | Current value of the starter-puzzles toggle. |
 | `onToggleDefaultImages` | `(enabled: boolean) => void` | Yes | Called with the switch's new value. |
 | `onBack` | `() => void` | No | Called when the back button is pressed. No-op if omitted. |
+| `onOpenSettings` | `() => void` | No | Called when the ⚙️ button is pressed. No-op if omitted. |
 
 ## Edge cases & expected behavior
 
@@ -70,13 +71,14 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 3. Cancel the picker → `onAddPuzzle` is not called.
 4. Tap a photo's delete badge, confirm the alert's "Delete" option →
    `onDeletePuzzle` is called with that photo's id.
+5. Tap the ⚙️ settings button → `onOpenSettings` is called.
 
 ## Non-goals / known limitations
 
 - No persisted storage: puzzles added here live only in `App.tsx`'s
   in-memory state and are lost on app restart, same limitation as
-  `HomeScreen`/`PuzzleScreen`.
-- Settings button is a placeholder with no real destination yet.
+  `HomeScreen`/`PuzzleScreen`. The same is true of everything
+  `SettingsScreen` controls (volume, mute, timer minutes).
 - No editing of a puzzle's title, no reordering, no multi-select delete.
 - `launchImageLibrary` is called with `selectionLimit: 1` — one photo per
   tap, not a batch upload flow.
@@ -88,4 +90,4 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 
 - Code: `src/screens/ParentScreen.tsx`
 - Tests: `src/screens/ParentScreen.test.tsx`
-- Related specs: [[ParentGateScreen]], [[HomeScreen]]
+- Related specs: [[ParentGateScreen]], [[HomeScreen]], [[SettingsScreen]]

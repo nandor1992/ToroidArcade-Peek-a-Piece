@@ -119,4 +119,4 @@ between.
 - Tests: `src/screens/HomeScreen.test.tsx`
 - Types: `src/types/puzzle.ts`
 - Palette: `src/theme/colors.ts`
-- Related specs: [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]]
+- Related specs: [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]]

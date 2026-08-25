@@ -5,20 +5,46 @@
  * @format
  */
 
-import { useState } from 'react';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import {
+  Dimensions,
+  StatusBar,
+  StyleSheet,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HomeScreen, STARTER_PUZZLES } from './src/screens/HomeScreen';
 import { PuzzleScreen } from './src/screens/PuzzleScreen';
 import { ParentGateScreen } from './src/screens/ParentGateScreen';
 import { ParentScreen } from './src/screens/ParentScreen';
+import { SettingsScreen } from './src/screens/SettingsScreen';
+import { SessionLockOverlay } from './src/screens/SessionLockOverlay';
+import { useBackgroundMusic } from './src/hooks/useBackgroundMusic';
 import type { Puzzle } from './src/types/puzzle';
+
+// Lets the app render immediately with zero insets instead of nothing at
+// all, since SafeAreaProvider otherwise renders no children until a real
+// native onInsetsChange event arrives (which real devices deliver almost
+// instantly, but which never arrives at all in the Jest test renderer).
+// Real insets (notch, home indicator, etc.) still override this moments
+// later on an actual device.
+const FALLBACK_SAFE_AREA_METRICS = {
+  frame: {
+    x: 0,
+    y: 0,
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
+  },
+  insets: { top: 0, right: 0, bottom: 0, left: 0 },
+};
 
 type Screen =
   | { name: 'home' }
   | { name: 'puzzle'; puzzleId: string }
   | { name: 'parentGate' }
-  | { name: 'parent' };
+  | { name: 'parent' }
+  | { name: 'settings' };
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -27,10 +53,33 @@ function App() {
   // every app launch until that layer exists.
   const [userPuzzles, setUserPuzzles] = useState<Puzzle[]>([]);
   const [defaultImagesEnabled, setDefaultImagesEnabled] = useState(true);
+  const [soundVolume, setSoundVolume] = useState(0.6);
+  const [soundMuted, setSoundMuted] = useState(false);
+  const [timerMinutes, setTimerMinutes] = useState<number | null>(null);
+  const [locked, setLocked] = useState(false);
 
   const stockPuzzles = defaultImagesEnabled ? STARTER_PUZZLES : [];
   const puzzles = [...userPuzzles, ...stockPuzzles];
   const goHome = () => setScreen({ name: 'home' });
+  const inChildSession = screen.name === 'home' || screen.name === 'puzzle';
+
+  // Re-locks every `timerMinutes` for as long as a child-facing screen is
+  // showing. Leaving to a parent-only screen (or unlocking) clears the
+  // pending timeout; re-entering a child screen — including via unlock —
+  // starts a fresh full-length countdown, since `locked` is a dependency.
+  useEffect(() => {
+    if (!timerMinutes || !inChildSession || locked) {
+      return;
+    }
+    const timeout = setTimeout(() => setLocked(true), timerMinutes * 60_000);
+    return () => clearTimeout(timeout);
+  }, [inChildSession, timerMinutes, locked]);
+
+  useBackgroundMusic({
+    enabled: inChildSession && !locked,
+    volume: soundVolume,
+    muted: soundMuted,
+  });
 
   let content;
   if (screen.name === 'puzzle') {
@@ -61,6 +110,19 @@ function App() {
         defaultImagesEnabled={defaultImagesEnabled}
         onToggleDefaultImages={setDefaultImagesEnabled}
         onBack={goHome}
+        onOpenSettings={() => setScreen({ name: 'settings' })}
+      />
+    );
+  } else if (screen.name === 'settings') {
+    content = (
+      <SettingsScreen
+        soundVolume={soundVolume}
+        onChangeSoundVolume={setSoundVolume}
+        soundMuted={soundMuted}
+        onToggleMute={setSoundMuted}
+        timerMinutes={timerMinutes}
+        onChangeTimerMinutes={setTimerMinutes}
+        onBack={() => setScreen({ name: 'parent' })}
       />
     );
   } else {
@@ -68,16 +130,27 @@ function App() {
       <HomeScreen
         userPuzzles={userPuzzles}
         stockPuzzles={stockPuzzles}
-        onSelectPuzzle={puzzle => setScreen({ name: 'puzzle', puzzleId: puzzle.id })}
+        onSelectPuzzle={puzzle =>
+          setScreen({ name: 'puzzle', puzzleId: puzzle.id })
+        }
         onOpenParentArea={() => setScreen({ name: 'parentGate' })}
       />
     );
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider initialMetrics={FALLBACK_SAFE_AREA_METRICS}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <View style={styles.container}>{content}</View>
+      <View style={styles.container}>
+        <View
+          style={[styles.container, locked && styles.dimmed]}
+          pointerEvents={locked ? 'none' : 'auto'}>
+          {content}
+        </View>
+        {locked && (
+          <SessionLockOverlay onUnlock={() => setLocked(false)} />
+        )}
+      </View>
     </SafeAreaProvider>
   );
 }
@@ -85,6 +158,9 @@ function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  dimmed: {
+    opacity: 0.4,
   },
 });
 

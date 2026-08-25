@@ -20,11 +20,18 @@ and getting back out.
 ## How it works
 
 `App.tsx` holds a small discriminated-union `screen` state (`'home' |
-'puzzle' | 'parentGate' | 'parent'`) and swaps which screen it renders based
-on it, rather than pulling in a navigation library. `HomeScreen`'s
-`onSelectPuzzle` sets `screen` to `{ name: 'puzzle', puzzleId }`;
-`PuzzleScreen`'s `onBack` sets it back to `{ name: 'home' }`. There's no
-back-stack or deep-linking; see Non-goals for when that'd need revisiting.
+'puzzle' | 'parentGate' | 'parent' | 'settings'`) and swaps which screen it
+renders based on it, rather than pulling in a navigation library.
+`HomeScreen`'s `onSelectPuzzle` sets `screen` to `{ name: 'puzzle',
+puzzleId }`; `PuzzleScreen`'s `onBack` sets it back to `{ name: 'home' }`.
+There's no back-stack or deep-linking; see Non-goals for when that'd need
+revisiting.
+
+This screen counts as a "child-facing screen" for two other pieces of
+`App.tsx` state it doesn't otherwise know about: background music
+(`useBackgroundMusic`) plays while it's showing, and the session timer (see
+[[SessionLockOverlay]]) keeps counting down while it's showing, same as
+`HomeScreen`.
 
 `PuzzleScreen` receives the full puzzle list (`puzzles`, same
 user-photos-then-starter-puzzles order as the `HomeScreen` grid) plus which
@@ -95,7 +102,7 @@ not on every re-render.
   redistribution-rights caveat as `HomeScreen`'s starter photos).
 - Navigation is a small hand-rolled `screen` union in `App.tsx`, not a real
   navigation stack — no back-stack, no Android hardware-back-button
-  handling beyond whatever the OS gives for free. Fine at four screens;
+  handling beyond whatever the OS gives for free. Fine at five screens;
   would need revisiting (likely adding a navigation library) if it grows
   much further.
 - `puzzles` and `initialPuzzleId` are passed in by the caller; this screen
@@ -105,4 +112,4 @@ not on every re-render.
 
 - Code: `src/screens/PuzzleScreen.tsx`
 - Tests: `src/screens/PuzzleScreen.test.tsx`
-- Related specs: [[HomeScreen]]
+- Related specs: [[HomeScreen]], [[SessionLockOverlay]]

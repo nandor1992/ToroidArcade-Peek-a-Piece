@@ -93,3 +93,27 @@ test('back button calls onBack', async () => {
 
   expect(onBack).toHaveBeenCalledTimes(1);
 });
+
+test('no back button is rendered when onBack is omitted', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<ParentGateScreen onSuccess={jest.fn()} />);
+  });
+
+  expect(findByLabel(root!.root, 'Back')).toBeUndefined();
+});
+
+test('a custom title overrides the default', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <ParentGateScreen onSuccess={jest.fn()} title="Time's Up!" />,
+    );
+  });
+
+  const titles = root!.root
+    .findAll(node => node.props.children === "Time's Up!")
+    .length;
+
+  expect(titles).toBeGreaterThan(0);
+});

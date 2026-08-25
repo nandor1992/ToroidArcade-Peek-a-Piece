@@ -19,32 +19,27 @@ toddler can't clear.
 
 ## How it works
 
-On mount (and after every wrong answer), `ParentGateScreen` generates a
-fresh problem: two random two-digit numbers (10–99), added together.
-The parent types an answer into a numeric `TextInput` and presses
-Continue (or submits from the keyboard). If `parseInt(answer) === a + b`,
-`onSuccess` fires. Otherwise: the input clears, an inline error shows, and
-a *new* problem is generated — so there's no way to retry the same sum
-repeatedly.
+The addition-problem logic itself lives in [[MathGateForm]] (extracted so
+`SessionLockOverlay` can reuse it without this screen's full-screen chrome).
+`ParentGateScreen` is that chrome: a `SafeAreaView`, an optional back
+button, a title, and the form.
 
-The back button (top-left) calls `onBack` unconditionally, letting anyone
-back out to `HomeScreen` without solving the problem.
+The back button only renders when `onBack` is provided — used for the
+`HomeScreen` → gate flow (cancel back out without solving), but omitted
+when this screen's caller wants no escape route besides solving it.
 
 ## Interface
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| `onSuccess` | `() => void` | Yes | Called once the correct sum is entered. |
-| `onBack` | `() => void` | No | Called when the back button is pressed. No-op if omitted. |
+| `onSuccess` | `() => void` | Yes | Called once the correct sum is entered (forwarded to `MathGateForm`). |
+| `onBack` | `() => void` | No | Called when the back button is pressed. Back button isn't rendered at all if omitted, rather than rendered as a no-op. |
+| `title` | `string` | No | Defaults to `"Parents Only"`. |
 
 ## Edge cases & expected behavior
 
-- Empty or non-numeric input submitted → treated as wrong (`parseInt`
-  yields `NaN`, which never equals the sum) → new problem issued.
-- Correct answer → `onSuccess` called exactly once; no further problem is
-  generated (the screen is expected to be unmounted by the caller).
-- Wrong answer → `onSuccess` is never called; a new `{a, b}` pair replaces
-  the old one, so the previously-displayed sum can't be reused.
+- `onBack` omitted → no back button renders (not merely a disabled one).
+- Answer correctness/retry behavior is `MathGateForm`'s — see its spec.
 
 ## Test scenarios
 
@@ -52,6 +47,9 @@ back out to `HomeScreen` without solving the problem.
 2. Answer the displayed problem incorrectly → `onSuccess` is not called;
    answering the newly-issued problem correctly does succeed.
 3. Press Back → `onBack` is called.
+4. No `onBack` passed → no element with the "Back" accessibility label
+   renders at all.
+5. A custom `title` is passed → it replaces the default "Parents Only".
 
 ## Non-goals / known limitations
 
@@ -65,4 +63,4 @@ back out to `HomeScreen` without solving the problem.
 
 - Code: `src/screens/ParentGateScreen.tsx`
 - Tests: `src/screens/ParentGateScreen.test.tsx`
-- Related specs: [[HomeScreen]], [[ParentScreen]]
+- Related specs: [[HomeScreen]], [[ParentScreen]], [[MathGateForm]], [[SessionLockOverlay]]
