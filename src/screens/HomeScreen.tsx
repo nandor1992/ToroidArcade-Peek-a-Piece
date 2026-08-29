@@ -11,6 +11,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import type { Puzzle } from '../types/puzzle';
+import { puzzleImageSource } from '../utils/puzzleImage';
 
 const TILE_COLORS = [
   colors.teal,
@@ -20,13 +21,54 @@ const TILE_COLORS = [
   colors.tangerine,
 ] as const;
 
+// The bundled starter set, so the app is playable before a parent has
+// uploaded any photo. Each one carries a hand-illustrated cartoon
+// (src/games/puzzle/assets/starter/) — redistribution-safe art, not a real
+// family photo — so these tiles show real pictures and open as real
+// jigsaws now, where they used to be bare emoji placeholders.
 export const STARTER_PUZZLES: Puzzle[] = [
-  { id: 'stock-1', title: 'Puppy', source: 'stock' },
-  { id: 'stock-2', title: 'Rocket', source: 'stock' },
-  { id: 'stock-3', title: 'Flower', source: 'stock' },
-  { id: 'stock-4', title: 'Beach Ball', source: 'stock' },
-  { id: 'stock-5', title: 'Teddy Bear', source: 'stock' },
-  { id: 'stock-6', title: 'Rainbow', source: 'stock' },
+  {
+    id: 'stock-1',
+    title: 'Meadow',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/meadow.png'),
+  },
+  {
+    id: 'stock-2',
+    title: 'Fairground',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/fairground.png'),
+  },
+  {
+    id: 'stock-3',
+    title: 'Climbing',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/climbing.png'),
+  },
+  {
+    id: 'stock-4',
+    title: 'Dinosaur',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/dinosaur.png'),
+  },
+  {
+    id: 'stock-5',
+    title: 'Tractor',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/tractor.png'),
+  },
+  {
+    id: 'stock-6',
+    title: 'Teddies',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/teddies.png'),
+  },
+  {
+    id: 'stock-7',
+    title: 'Christmas',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/christmas.png'),
+  },
 ];
 
 const COLUMNS = 2;
@@ -46,6 +88,7 @@ interface PuzzleTileProps {
 }
 
 function PuzzleTile({ puzzle, color, onPress }: PuzzleTileProps) {
+  const imageSource = puzzleImageSource(puzzle);
   return (
     <Pressable
       accessibilityRole="button"
@@ -56,9 +99,9 @@ function PuzzleTile({ puzzle, color, onPress }: PuzzleTileProps) {
         { backgroundColor: color },
         pressed && styles.tilePressed,
       ]}>
-      {puzzle.imageUri ? (
+      {imageSource ? (
         <Image
-          source={{ uri: puzzle.imageUri }}
+          source={imageSource}
           style={styles.tileImage}
           resizeMode="cover"
         />

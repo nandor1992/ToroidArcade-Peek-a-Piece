@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { PuzzleBoard } from '../games/puzzle/components/PuzzleBoard';
 import type { Puzzle } from '../types/puzzle';
+import { puzzleSkiaSource } from '../utils/puzzleImage';
 
 // Stand-ins for bundled background art. Swap for real images once that
 // asset set exists — see docs/specs/screens/PuzzleScreen.md.
@@ -51,6 +52,8 @@ export function PuzzleScreen({
     return null;
   }
 
+  const imageSource = puzzleSkiaSource(puzzle);
+
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: background }]}
@@ -81,15 +84,15 @@ export function PuzzleScreen({
         <View
           style={styles.imagePlaceholder}
           accessibilityLabel={puzzle.title}>
-          {puzzle.imageUri ? (
+          {imageSource != null ? (
             <PuzzleBoard
               key={puzzle.id}
-              imageUri={puzzle.imageUri}
+              imageSource={imageSource}
               onSolved={() => setSolved(true)}
             />
           ) : (
-            // Starter puzzles have no real photo yet, so there's nothing
-            // to cut into pieces — see docs/specs/screens/PuzzleScreen.md.
+            // A puzzle with no artwork at all — nothing to cut into
+            // pieces. See docs/specs/screens/PuzzleScreen.md.
             <Text style={styles.imageGlyph}>🧩</Text>
           )}
         </View>

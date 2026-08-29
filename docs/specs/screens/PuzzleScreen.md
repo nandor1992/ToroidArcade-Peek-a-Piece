@@ -3,7 +3,7 @@ name: PuzzleScreen
 type: screen
 source: src/screens/PuzzleScreen.tsx
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-08-29
 ---
 
 # PuzzleScreen
@@ -39,9 +39,10 @@ advances `index`, wrapping from the last puzzle back to the first rather
 than disabling itself at the end.
 
 `puzzles` is built by `App.tsx` as `[...userPuzzles, ...stockPuzzles]`,
-where `stockPuzzles` is `STARTER_PUZZLES` or `[]` depending on the parent's
-"Show starter puzzles" toggle (see `ParentScreen`) — so Next only cycles
-through whatever's currently visible on `HomeScreen`, never a hidden set.
+where `stockPuzzles` is `STARTER_PUZZLES` (seven bundled puzzles) or `[]`
+depending on the parent's "Show starter puzzles" toggle (see
+`ParentScreen`) — so Next only cycles through whatever's currently visible
+on `HomeScreen`, never a hidden set.
 
 The whole screen's background is one of a handful of solid-color
 placeholders (`BACKGROUND_PLACEHOLDERS`, standing in for real background art
@@ -49,15 +50,17 @@ placeholders (`BACKGROUND_PLACEHOLDERS`, standing in for real background art
 re-rolls when `index` changes (`useMemo` keyed on the current puzzle's id),
 not on every re-render.
 
-**The game itself.** When the current puzzle has a real photo
-(`puzzle.imageUri` set — true for anything uploaded via `ParentScreen`,
-still not true for `STARTER_PUZZLES`), the image area renders
-`<PuzzleBoard key={puzzle.id} imageUri={...} onSolved={...} />` instead of
-a static photo. The `key` matters: it forces Skia to fully remount (and
+**The game itself.** When the current puzzle has artwork —
+`puzzleSkiaSource(puzzle)` returns non-null, which it now does for both
+parent-uploaded photos (`imageUri`) and every `STARTER_PUZZLES` entry
+(`imageAsset`, bundled cartoon art) — the image area renders
+`<PuzzleBoard key={puzzle.id} imageSource={...} onSolved={...} />` instead
+of a static photo. The `key` matters: it forces Skia to fully remount (and
 therefore re-scramble) `PuzzleBoard` on every puzzle change, rather than
-reusing one instance across different photos. A puzzle with no photo yet
-(a starter puzzle) still falls back to the emoji placeholder — there's
-nothing to cut into pieces without a source image.
+reusing one instance across different images. A puzzle with no artwork at
+all falls back to the emoji placeholder — there's nothing to cut into
+pieces without a source image — but nothing in the current data hits that
+path. See [[puzzleImage]] for how the source is resolved.
 
 A local `solved` boolean (reset via `useEffect` whenever `puzzle?.id`
 changes) tracks whether the current puzzle's `onSolved` has fired; while
@@ -109,9 +112,10 @@ the only feedback.
    the list is now showing.
 3. Open with an `initialPuzzleId` not present in `puzzles` → the first
    puzzle in the list is showing.
-4. A puzzle with `imageUri` set renders the interactive board (detected by
-   the presence of its Responder System props), not the emoji fallback;
-   a puzzle with no `imageUri` renders the fallback, not a board.
+4. A puzzle with artwork (`imageUri` or `imageAsset`) renders the
+   interactive board (detected by the presence of its Responder System
+   props), not the emoji fallback; a puzzle with neither renders the
+   fallback, not a board.
 5. Solving the board (dragging all its pieces into place) shows the
    "🎉 Great job!" banner.
 
@@ -122,14 +126,16 @@ awareness of the toggle at all, only of whatever list it's handed.
 
 ## Non-goals / known limitations
 
-- Starter puzzles (`STARTER_PUZZLES`, no `imageUri`) still can't be played
-  as a real jigsaw — no source photo to cut up — and fall back to the
-  static emoji placeholder, same as before `PuzzleBoard` existed.
+- Starter puzzles now *can* be played as a real jigsaw — each carries
+  bundled cartoon art (`imageAsset`). The art is still flat-color
+  placeholder PNGs pending real illustrations (see [[HomeScreen]]), but the
+  pipeline is wired end to end.
 - No difficulty selection — `PuzzleBoard` is always opened at its default
   2x2 grid; this screen has no UI to change piece count.
 - No real background art — `BACKGROUND_PLACEHOLDERS` is four solid palette
-  colors standing in for a bundled set of background images (same
-  redistribution-rights caveat as `HomeScreen`'s starter photos).
+  colors standing in for a bundled set of background images. (The starter
+  *puzzle* art is now bundled — see [[HomeScreen]] — but the screen
+  background behind it still isn't.)
 - Navigation is a small hand-rolled `screen` union in `App.tsx`, not a real
   navigation stack — no back-stack, no Android hardware-back-button
   handling beyond whatever the OS gives for free. Fine at five screens;
@@ -142,4 +148,4 @@ awareness of the toggle at all, only of whatever list it's handed.
 
 - Code: `src/screens/PuzzleScreen.tsx`
 - Tests: `src/screens/PuzzleScreen.test.tsx`
-- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]]
+- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]]

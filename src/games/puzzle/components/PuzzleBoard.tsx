@@ -12,7 +12,12 @@ import { pathCommandsToSvgPath } from '../logic/pathCommandsToSvgPath';
 import { computeCoverRect } from '../logic/coverRect';
 
 export interface PuzzleBoardProps {
-  imageUri: string;
+  /**
+   * The source photo to cut into pieces, in whatever shape Skia's
+   * `useImage` accepts: a bundled asset module (`require()`d number) for a
+   * starter puzzle, or a `file://` URI string for a parent-uploaded photo.
+   */
+  imageSource: number | string;
   rows?: number;
   columns?: number;
   onSolved?: () => void;
@@ -35,19 +40,19 @@ function randomStart(max: number): number {
 }
 
 /**
- * A Skia-rendered jigsaw puzzle: cuts `imageUri` into `rows` x `columns`
+ * A Skia-rendered jigsaw puzzle: cuts `imageSource` into `rows` x `columns`
  * interlocking pieces (see `generatePuzzleGrid`/`pieceShapes`), scrambles
  * them, and lets the player drag pieces back into place. All state is
  * local — nothing here persists once the screen showing it unmounts, by
  * design. See docs/specs/games/puzzle/components/PuzzleBoard.md.
  */
 export function PuzzleBoard({
-  imageUri,
+  imageSource,
   rows = 2,
   columns = 2,
   onSolved,
 }: PuzzleBoardProps) {
-  const image = useImage(imageUri);
+  const image = useImage(imageSource);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
   const [pieces, setPieces] = useState<PieceState[] | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);

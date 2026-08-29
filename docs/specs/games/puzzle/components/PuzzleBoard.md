@@ -3,7 +3,7 @@ name: PuzzleBoard
 type: game
 source: src/games/puzzle/components/PuzzleBoard.tsx
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-08-29
 ---
 
 # PuzzleBoard
@@ -11,7 +11,7 @@ last_verified: 2026-08-25
 ## Purpose
 
 The actual jigsaw game — replaces the plain full-size photo `PuzzleScreen`
-used to show. Cuts `imageUri` into interlocking pieces (real rounded
+used to show. Cuts `imageSource` into interlocking pieces (real rounded
 tab/blank shapes via Skia clip paths, not rectangles — see
 [[pieceShapes]]), scrambles them, and lets the player drag pieces back
 into place. All state lives in this component's own `useState`/`useRef` —
@@ -81,7 +81,7 @@ per mount.
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| `imageUri` | `string` | Yes | Loaded via Skia's `useImage`. |
+| `imageSource` | `number \| string` | Yes | The source image, in whatever shape Skia's `useImage` accepts: a bundled asset module (`require()`d number) for a starter puzzle, or a `file://` URI string for a parent-uploaded photo. Resolved by [[puzzleImage]] before it reaches here. |
 | `rows` | `number` | No | Defaults to `2`. |
 | `columns` | `number` | No | Defaults to `2`. |
 | `onSolved` | `() => void` | No | Called once, the moment every piece is placed. |
@@ -156,4 +156,4 @@ rendering.
 - Code: `src/games/puzzle/components/PuzzleBoard.tsx`
 - Tests: `src/games/puzzle/components/PuzzleBoard.test.tsx`
 - Mock: `__mocks__/@shopify/react-native-skia.js`
-- Related specs: [[pieceShapes]], [[generatePuzzleGrid]], [[pathCommandsToSvgPath]], [[coverRect]], [[Slider]], [[PuzzleScreen]]
+- Related specs: [[pieceShapes]], [[generatePuzzleGrid]], [[pathCommandsToSvgPath]], [[coverRect]], [[Slider]], [[PuzzleScreen]], [[puzzleImage]]

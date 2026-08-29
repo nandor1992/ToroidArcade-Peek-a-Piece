@@ -3,7 +3,7 @@ name: HomeScreen
 type: screen
 source: src/screens/HomeScreen.tsx
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-08-29
 ---
 
 # HomeScreen
@@ -23,21 +23,28 @@ itself (storage isn't implemented yet — see Non-goals). It renders one
 continuous grid — `[...userPuzzles, ...stockPuzzles]` chunked into rows of
 two — rather than two visually separate sections: uploaded photos always
 come first, starter puzzles (`stockPuzzles`, defaulting to the hardcoded
-six-puzzle `STARTER_PUZZLES` when no prop is passed) fill in after them,
+seven-puzzle `STARTER_PUZZLES` when no prop is passed) fill in after them,
 with no header or divider marking where one group ends and the other
 begins. A trailing odd tile does not stretch to fill its row (an invisible
 spacer fills the other column).
 
-Each tile renders the puzzle's real photo (`Image`, `puzzle.imageUri`) when
-one is set — true for anything added via `ParentScreen` — and otherwise
-falls back to a solid-color square (cycling through the palette's
-teal/coral/violet/leaf/tangerine) with a puzzle-piece emoji; that's still
-what every `STARTER_PUZZLES` entry uses, since there's no real starter photo
-set yet. Tapping a tile calls `onSelectPuzzle(puzzle)`; `HomeScreen` has no
-navigation logic of its own — `App.tsx` is what turns that callback into
-actually opening `PuzzleScreen`.
+Each tile renders the puzzle's artwork whenever it has any — resolved via
+`puzzleImageSource` (see [[puzzleImage]]), which returns the bundled asset
+module for a starter puzzle (`puzzle.imageAsset`) or `{ uri }` for a
+parent-uploaded photo (`puzzle.imageUri`). Every `STARTER_PUZZLES` entry
+now ships a hand-illustrated cartoon (`src/games/puzzle/assets/starter/`),
+so starter tiles show a real picture rather than the old emoji stand-in.
+The solid-color square (cycling through the palette's
+teal/coral/violet/leaf/tangerine) with a puzzle-piece emoji is now only a
+fallback for a puzzle with no artwork at all — which shouldn't occur with
+the current data. Tapping a tile calls `onSelectPuzzle(puzzle)`;
+`HomeScreen` has no navigation logic of its own — `App.tsx` is what turns
+that callback into actually opening `PuzzleScreen`.
 
-`STARTER_PUZZLES` is exported so `App.tsx` can combine it with
+`STARTER_PUZZLES` lives here (rather than under `src/games/puzzle/`)
+because it's the Home grid's default data; the artwork it points at does
+live under the puzzle game's folder. It is exported so `App.tsx` can
+combine it with
 `userPuzzles` into the single ordered list `PuzzleScreen` browses with its
 Next button — both screens need to agree on the same list and ordering.
 
@@ -51,7 +58,7 @@ between.
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
 | `userPuzzles` | `Puzzle[]` | No | Defaults to `[]`. Rendered first in the grid. |
-| `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled `STARTER_PUZZLES` placeholder set. Rendered after `userPuzzles`. |
+| `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled seven-puzzle `STARTER_PUZZLES` set. Rendered after `userPuzzles`. |
 | `onSelectPuzzle` | `(puzzle: Puzzle) => void` | No | Called with the tapped puzzle. No-op if omitted. |
 | `onOpenParentArea` | `() => void` | No | Called when the corner lock button is pressed. No-op if omitted. |
 
@@ -75,31 +82,34 @@ between.
 ## Edge cases & expected behavior
 
 - No `userPuzzles` and no `stockPuzzles` override → grid is populated by
-  the default `STARTER_PUZZLES` alone.
+  the default `STARTER_PUZZLES` alone (seven tiles, each with cartoon art).
 - `userPuzzles` non-empty → those tiles render first, immediately followed
   by `stockPuzzles` in the same grid (no visual break between them).
 - `stockPuzzles={[]}` and `userPuzzles={[]}` → grid renders with zero rows
   (not currently given its own empty-state message — see Non-goals).
-- Odd-length puzzle list (e.g. 5 items) → last row has one tile plus an
-  invisible spacer, not a stretched double-width tile.
+- Odd-length puzzle list (e.g. the default seven starter puzzles) → last
+  row has one tile plus an invisible spacer, not a stretched double-width
+  tile.
 - Tapping a tile with no `onSelectPuzzle` passed → no-op, no crash.
 
 ## Test scenarios
 
-1. Render with no props → the grid shows exactly the six `STARTER_PUZZLES`,
-   in order.
+1. Render with no props → the grid shows exactly the seven
+   `STARTER_PUZZLES` (Meadow, Fairground, Climbing, Dinosaur, Tractor,
+   Teddies, Christmas), in order.
 2. Render with one `userPuzzles` entry → it's the first tile in the grid,
    immediately followed by all of `STARTER_PUZZLES` in order.
 3. Tap the first tile → `onSelectPuzzle` is called with that tile's
-   `Puzzle`.
+   `Puzzle` (`id: 'stock-1'`).
 4. Tap the corner lock button → `onOpenParentArea` is called.
 
 ## Non-goals / known limitations
 
-- Starter puzzles still have no real photos — those tiles are solid-color
-  placeholders with a fixed emoji, pending a bundled starter-photo set with
-  confirmed redistribution rights. User-uploaded tiles do show the real
-  photo now (see `ParentScreen`).
+- The bundled starter artwork under `src/games/puzzle/assets/starter/` is
+  currently flat-color placeholder PNGs (a labelled circle per puzzle), to
+  be replaced in-place with real cartoon illustrations — same filenames, no
+  code change. The emoji + solid-color fallback path still exists for a
+  puzzle with no artwork, but nothing in the current data hits it.
 - No navigation library: `onSelectPuzzle` is a bare callback; `App.tsx`
   switches between `HomeScreen` and `PuzzleScreen` with a single piece of
   local state rather than a real nav stack (see `PuzzleScreen`'s spec).
@@ -116,4 +126,5 @@ between.
 - Tests: `src/screens/HomeScreen.test.tsx`
 - Types: `src/types/puzzle.ts`
 - Palette: `src/theme/colors.ts`
-- Related specs: [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]]
+- Starter artwork: `src/games/puzzle/assets/starter/`
+- Related specs: [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]]

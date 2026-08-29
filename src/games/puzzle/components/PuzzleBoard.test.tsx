@@ -19,7 +19,7 @@ async function renderLaidOutBoard(
   await act(() => {
     root = ReactTestRenderer.create(
       <PuzzleBoard
-        imageUri="file:///photo.jpg"
+        imageSource="file:///photo.jpg"
         rows={2}
         columns={2}
         {...props}

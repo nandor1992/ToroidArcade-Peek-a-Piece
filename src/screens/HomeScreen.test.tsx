@@ -24,12 +24,13 @@ test('renders the starter puzzles when no photos have been uploaded', async () =
   });
 
   expect(tileOrder(root!.root)).toEqual([
-    'Puppy',
-    'Rocket',
-    'Flower',
-    'Beach Ball',
-    'Teddy Bear',
-    'Rainbow',
+    'Meadow',
+    'Fairground',
+    'Climbing',
+    'Dinosaur',
+    'Tractor',
+    'Teddies',
+    'Christmas',
   ]);
 });
 
@@ -46,12 +47,13 @@ test('shows uploaded photos first, ahead of the starter puzzles, in one grid', a
   const order = tileOrder(root!.root);
   expect(order[0]).toBe('Grandma');
   expect(order.slice(1)).toEqual([
-    'Puppy',
-    'Rocket',
-    'Flower',
-    'Beach Ball',
-    'Teddy Bear',
-    'Rainbow',
+    'Meadow',
+    'Fairground',
+    'Climbing',
+    'Dinosaur',
+    'Tractor',
+    'Teddies',
+    'Christmas',
   ]);
 });
 
@@ -70,7 +72,7 @@ test('tapping a tile reports the selected puzzle', async () => {
   // with, so match the tile by its onPress handler instead of by type.
   const tile = root!.root.findAll(
     node =>
-      node.props.accessibilityLabel === 'Puppy' &&
+      node.props.accessibilityLabel === 'Meadow' &&
       typeof node.props.onPress === 'function',
   )[0];
 
