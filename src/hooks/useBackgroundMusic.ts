@@ -25,16 +25,37 @@ export function useBackgroundMusic({
   muted,
 }: UseBackgroundMusicOptions): void {
   const soundRef = useRef<Sound | null>(null);
+  // The latest desired state, so the async load callback below can apply
+  // whatever's current by the time the file finishes loading — not the
+  // stale values captured when the sound was constructed.
+  const desiredRef = useRef({ enabled, volume, muted });
+  desiredRef.current = { enabled, volume, muted };
 
   useEffect(() => {
-    // setNumberOfLoops is set right away, not inside the load callback:
-    // that callback's timing isn't guaranteed (real playback loads it
-    // asynchronously; a mock could easily call it synchronously), so
-    // closing over `sound` there is fragile either way.
-    const sound = new Sound(BACKGROUND_MUSIC_FILE, Sound.MAIN_BUNDLE);
-    sound.setNumberOfLoops(-1);
+    let released = false;
+    // `react-native-sound` silently ignores play()/setVolume()/
+    // setNumberOfLoops() until `prepare()` has finished loading the file
+    // (there's no queue — play() before then just no-ops). So all the
+    // initial setup has to run from inside this load callback, once
+    // `isLoaded()` is true, rather than immediately after `new Sound()`.
+    const sound = new Sound(
+      BACKGROUND_MUSIC_FILE,
+      Sound.MAIN_BUNDLE,
+      error => {
+        if (error || released) {
+          return;
+        }
+        sound.setNumberOfLoops(-1);
+        const desired = desiredRef.current;
+        sound.setVolume(desired.muted ? 0 : desired.volume);
+        if (desired.enabled) {
+          sound.play();
+        }
+      },
+    );
     soundRef.current = sound;
     return () => {
+      released = true;
       sound.stop();
       sound.release();
       soundRef.current = null;
@@ -42,14 +63,22 @@ export function useBackgroundMusic({
   }, []);
 
   useEffect(() => {
+    // No-op until loaded (the library guards this internally); the load
+    // callback applies the right volume from `desiredRef` in that case.
     soundRef.current?.setVolume(muted ? 0 : volume);
   }, [volume, muted]);
 
   useEffect(() => {
+    const sound = soundRef.current;
+    // Same story: before the file has loaded there's nothing to play or
+    // pause yet — the load callback starts playback if `enabled` by then.
+    if (!sound || !sound.isLoaded()) {
+      return;
+    }
     if (enabled) {
-      soundRef.current?.play();
+      sound.play();
     } else {
-      soundRef.current?.pause();
+      sound.pause();
     }
   }, [enabled]);
 }

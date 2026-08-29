@@ -2,6 +2,13 @@
 // this up automatically for any `require('react-native-sound')` since it
 // lives in a root-level __mocks__/ directory. See
 // docs/specs/hooks/useBackgroundMusic.md.
+//
+// It mirrors one behaviour of the real `react-native-sound@0.13.x` that
+// `useBackgroundMusic` has to work around: the file loads *asynchronously*
+// (the constructor's callback fires on a later tick), and play/pause/stop/
+// setVolume/setNumberOfLoops are all no-ops until then. Tests `await` an
+// `act()` after mounting, which flushes the microtask the load callback is
+// queued on.
 class Sound {
   constructor(filename, basePath, callback) {
     this.filename = filename;
@@ -9,12 +16,24 @@ class Sound {
     this._volume = 1;
     this._loops = 0;
     this._playing = false;
-    if (callback) {
-      callback(null);
-    }
+    this._loaded = false;
+
+    // Match the real signature: `basePath` is optional and may itself be
+    // the callback.
+    const onLoad = typeof basePath === 'function' ? basePath : callback;
+    queueMicrotask(() => {
+      this._loaded = true;
+      if (onLoad) {
+        onLoad(null);
+      }
+    });
   }
 
   static setCategory() {}
+
+  isLoaded() {
+    return this._loaded;
+  }
 
   setNumberOfLoops(value) {
     this._loops = value;
@@ -26,7 +45,9 @@ class Sound {
   }
 
   setVolume(value) {
-    this._volume = value;
+    if (this._loaded) {
+      this._volume = value;
+    }
     return this;
   }
 
@@ -35,15 +56,21 @@ class Sound {
   }
 
   play(onEnd) {
-    this._playing = true;
-    if (onEnd) {
-      onEnd(true);
+    if (this._loaded) {
+      this._playing = true;
+      if (onEnd) {
+        onEnd(true);
+      }
+    } else if (onEnd) {
+      onEnd(false);
     }
     return this;
   }
 
   pause(cb) {
-    this._playing = false;
+    if (this._loaded) {
+      this._playing = false;
+    }
     if (cb) {
       cb();
     }
@@ -51,7 +78,9 @@ class Sound {
   }
 
   stop(cb) {
-    this._playing = false;
+    if (this._loaded) {
+      this._playing = false;
+    }
     if (cb) {
       cb();
     }
@@ -59,6 +88,7 @@ class Sound {
   }
 
   release() {
+    this._loaded = false;
     return this;
   }
 

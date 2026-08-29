@@ -24,10 +24,10 @@ test('enabled starts playback, disabled pauses it', async () => {
     );
   });
 
-  // Mounting with enabled: false pauses once right away — clear that so
-  // the assertions below are about the toggles, not the initial mount.
+  // Mounted with enabled: false and nothing loaded yet → neither play nor
+  // pause has been called.
   expect(playSpy).not.toHaveBeenCalled();
-  pauseSpy.mockClear();
+  expect(pauseSpy).not.toHaveBeenCalled();
 
   await act(() => {
     root!.update(<Harness enabled={true} volume={0.5} muted={false} />);
@@ -41,6 +41,45 @@ test('enabled starts playback, disabled pauses it', async () => {
 
   playSpy.mockRestore();
   pauseSpy.mockRestore();
+});
+
+test('playback starts once the file finishes loading, even though enabled was set before then', async () => {
+  const playSpy = jest.spyOn(Sound.prototype, 'play');
+
+  let root: ReactTestRenderer.ReactTestRenderer;
+  // Synchronous act body: the sound's async load callback hasn't run yet.
+  act(() => {
+    root = ReactTestRenderer.create(
+      <Harness enabled={true} volume={0.5} muted={false} />,
+    );
+  });
+  expect(playSpy).not.toHaveBeenCalled();
+
+  // Flush the load callback.
+  await act(async () => {});
+  expect(playSpy).toHaveBeenCalledTimes(1);
+
+  await act(() => {
+    root!.unmount();
+  });
+  playSpy.mockRestore();
+});
+
+test('the track is set to loop indefinitely, after it has loaded', async () => {
+  const loopSpy = jest.spyOn(Sound.prototype, 'setNumberOfLoops');
+
+  act(() => {
+    ReactTestRenderer.create(
+      <Harness enabled={true} volume={0.5} muted={false} />,
+    );
+  });
+  // Not before load — the library would silently ignore it.
+  expect(loopSpy).not.toHaveBeenCalled();
+
+  await act(async () => {});
+  expect(loopSpy).toHaveBeenCalledWith(-1);
+
+  loopSpy.mockRestore();
 });
 
 test('muted forces volume to 0 regardless of the volume prop', async () => {
