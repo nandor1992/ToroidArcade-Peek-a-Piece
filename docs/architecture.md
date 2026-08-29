@@ -98,6 +98,27 @@ a new folder, not touching the puzzle game's code. `src/games/puzzle/` is the
 first and, for now, only implementation of this pattern — treat it as the
 reference example when adding the next game.
 
+**Runs full screen, with no system chrome.** The app hides the status bar
+and (Android) the navigation bar / (iOS) home indicator, so the whole
+display is the app and nothing system-drawn overlaps the UI — in
+particular `HomeScreen`'s corner parent-area button, which a bottom
+navigation bar used to cover. This needs small, deliberate native edits
+(the same footing as bundling the music file):
+
+- Android — `MainActivity.onCreate` / `onWindowFocusChanged` call
+  `WindowInsetsControllerCompat.hide(systemBars())` with
+  `BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE` (sticky immersive: a parent can
+  still swipe from an edge to get the bars back briefly). Re-hidden on
+  every focus regain because Android restores the bars after dialogs / the
+  keyboard / recents.
+- iOS — `Info.plist` sets `UIStatusBarHidden` and `UIRequiresFullScreen`;
+  the React root view controller is a `FullScreenViewController` subclass
+  (wired via `createRootViewController` in `AppDelegate.swift`) that
+  returns `true` from `prefersStatusBarHidden` and
+  `prefersHomeIndicatorAutoHidden`.
+- JS — `App.tsx` renders `<StatusBar hidden />` so RN agrees with the
+  native side.
+
 **Toddler-first UX is a first-class constraint, not a detail.** Large touch
 targets, forgiving input (mis-taps do nothing rather than showing an error),
 minimal-to-no text dependency, and clear audio/visual feedback are baseline

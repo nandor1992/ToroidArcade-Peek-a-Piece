@@ -6,13 +6,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import {
-  Dimensions,
-  StatusBar,
-  StyleSheet,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { Dimensions, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { HomeScreen, STARTER_PUZZLES } from './src/screens/HomeScreen';
 import { PuzzleScreen } from './src/screens/PuzzleScreen';
@@ -47,7 +41,6 @@ type Screen =
   | { name: 'settings' };
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
   // No persisted storage yet (src/storage/ is empty) — these reset on
   // every app launch until that layer exists.
@@ -140,7 +133,7 @@ function App() {
 
   return (
     <SafeAreaProvider initialMetrics={FALLBACK_SAFE_AREA_METRICS}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar hidden />
       <View style={styles.container}>
         <View
           style={[styles.container, locked && styles.dimmed]}

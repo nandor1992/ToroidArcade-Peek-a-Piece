@@ -48,10 +48,14 @@ combine it with
 `userPuzzles` into the single ordered list `PuzzleScreen` browses with its
 Next button — both screens need to agree on the same list and ordering.
 
-A small lock button floats over the bottom-right corner of the grid and
-calls `onOpenParentArea`. `App.tsx` routes it to `ParentGateScreen`, not
+A small lock button floats over the bottom-right corner of the grid
+(`position: absolute`, `bottom: 12`, `right: 12`) and calls
+`onOpenParentArea`. `App.tsx` routes it to `ParentGateScreen`, not
 directly to `ParentScreen` — see that spec for the math-gate step in
-between.
+between. Nothing system-drawn sits over that corner because the app runs
+full screen with the status/navigation bars hidden (see
+[`architecture.md`](../../architecture.md) → "Runs full screen"); an
+Android navigation bar there previously covered this button.
 
 ## Interface
 
