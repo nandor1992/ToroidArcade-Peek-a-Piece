@@ -3,7 +3,7 @@ import Sound from 'react-native-sound';
 
 Sound.setCategory('Playback');
 
-const BACKGROUND_MUSIC_FILE = 'background_music.wav';
+const BACKGROUND_MUSIC_FILE = 'background_music.mp3';
 
 export interface UseBackgroundMusicOptions {
   /** Whether music should be audible right now (e.g. a child-facing screen is active). */
@@ -15,9 +15,9 @@ export interface UseBackgroundMusicOptions {
 }
 
 /**
- * Loops a single bundled placeholder track for as long as `enabled` is
- * true, at `muted ? 0 : volume`. See
- * docs/specs/hooks/useBackgroundMusic.md.
+ * Loops the single bundled background track (from
+ * `resources/the_mountain-children.mp3`) for as long as `enabled` is true,
+ * at `muted ? 0 : volume`. See docs/specs/hooks/useBackgroundMusic.md.
  */
 export function useBackgroundMusic({
   enabled,

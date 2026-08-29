@@ -3,23 +3,24 @@ name: useBackgroundMusic
 type: hook
 source: src/hooks/useBackgroundMusic.ts
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-08-29
 ---
 
 # useBackgroundMusic
 
 ## Purpose
 
-Loops a single bundled placeholder background-music track for as long as a
-child-facing screen is active, so `SettingsScreen`'s volume slider and mute
-button have something audible to actually demonstrate — see Non-goals for
-what "placeholder" means here.
+Loops the single bundled background-music track for as long as a
+child-facing screen is active — the soundtrack a toddler hears while
+playing, and what `SettingsScreen`'s volume slider and mute button act on.
 
 ## How it works
 
 Uses `react-native-sound`. On mount, constructs one `Sound` instance
-pointed at `background_music.wav` (`Sound.MAIN_BUNDLE`) and sets it to loop
+pointed at `background_music.mp3` (`Sound.MAIN_BUNDLE`) and sets it to loop
 indefinitely (`setNumberOfLoops(-1)`); on unmount, stops and releases it.
+The bundled file is a copy of `resources/the_mountain-children.mp3` (the
+source of truth), placed at the two per-platform bundle paths below.
 Two more effects keep the live instance in sync with props:
 
 - `volume`/`muted` → `sound.setVolume(muted ? 0 : volume)`. Muting doesn't
@@ -75,17 +76,21 @@ outside a built app.
 
 ## Non-goals / known limitations
 
-- `background_music.wav` is a synthesized placeholder tone (a short major
-  arpeggio, generated locally, not a licensed or composed track) — good
-  enough to prove the mute/volume wiring works, not what should ship.
-  Swapping in real music is a follow-up, same caveat as the starter-puzzle
-  photos.
 - Only one track, no playlist, no per-puzzle music.
-- iOS needs the file added to the Xcode project's bundle resources
-  (`ios/PeekaPiece/background_music.wav` exists on disk, but Xcode project
-  membership has to be added manually — see the note in this feature's
-  commit message); Android picks it up automatically from
-  `android/app/src/main/res/raw/background_music.wav`.
+- Whoever swaps the track must keep redistribution rights in mind — it
+  ships inside the app binary. To replace it: overwrite
+  `resources/the_mountain-children.mp3` and re-copy it to
+  `android/app/src/main/res/raw/background_music.mp3` and
+  `ios/PeekaPiece/background_music.mp3` (keep those bundle filenames, since
+  `BACKGROUND_MUSIC_FILE` and the Android raw-resource lookup depend on
+  them). A different bundle name also needs the iOS `project.pbxproj`
+  reference updated.
+- Bundle wiring: iOS references `PeekaPiece/background_music.mp3` from
+  `project.pbxproj` (PBXFileReference + the Resources build phase); Android
+  picks it up automatically from
+  `android/app/src/main/res/raw/background_music.mp3` (lowercase,
+  `[a-z0-9_]` only — hence the generic bundle name rather than the source
+  file's `the_mountain-children.mp3`).
 - No fade in/out on enable/disable — play/pause is immediate.
 
 ## Related
@@ -93,4 +98,6 @@ outside a built app.
 - Code: `src/hooks/useBackgroundMusic.ts`
 - Tests: `src/hooks/useBackgroundMusic.test.tsx`
 - Mock: `__mocks__/react-native-sound.js`
+- Track source: `resources/the_mountain-children.mp3`
+- Bundled copies: `android/app/src/main/res/raw/background_music.mp3`, `ios/PeekaPiece/background_music.mp3`
 - Related specs: [[SettingsScreen]]
