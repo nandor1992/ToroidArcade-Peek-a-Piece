@@ -3,9 +3,21 @@
  */
 
 import React from 'react';
+import { useWindowDimensions } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { HomeScreen } from './HomeScreen';
 import type { Puzzle } from '../types/puzzle';
+
+const STARTER_TITLES = [
+  'Meadow',
+  'Fairground',
+  'Climbing',
+  'Tractor',
+  'Sandpit',
+  'Train',
+  'Theatre',
+  'Teddies',
+];
 
 function tileOrder(root: ReactTestRenderer.ReactTestInstance): string[] {
   return root
@@ -17,21 +29,39 @@ function tileOrder(root: ReactTestRenderer.ReactTestInstance): string[] {
     );
 }
 
+// The grid is built by chunking the puzzle list into rows; the FlatList's
+// `data` prop is that array of rows, so its shape tells us how many
+// columns were used (spacer padding on a short last row is separate).
+function rowSizes(root: ReactTestRenderer.ReactTestInstance): number[] {
+  const list = root.findAll(node => Array.isArray(node.props.data))[0];
+  return (list.props.data as unknown[][]).map(row => row.length);
+}
+
+function mockWidth(width: number) {
+  (useWindowDimensions as jest.Mock).mockReturnValue({
+    width,
+    height: 1024,
+    scale: 2,
+    fontScale: 2,
+  });
+}
+
+jest.mock('react-native/Libraries/Utilities/useWindowDimensions', () => ({
+  __esModule: true,
+  default: jest.fn(),
+}));
+
+beforeEach(() => {
+  mockWidth(400); // phone by default
+});
+
 test('renders the starter puzzles when no photos have been uploaded', async () => {
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
     root = ReactTestRenderer.create(<HomeScreen />);
   });
 
-  expect(tileOrder(root!.root)).toEqual([
-    'Meadow',
-    'Fairground',
-    'Climbing',
-    'Dinosaur',
-    'Tractor',
-    'Teddies',
-    'Christmas',
-  ]);
+  expect(tileOrder(root!.root)).toEqual(STARTER_TITLES);
 });
 
 test('shows uploaded photos first, ahead of the starter puzzles, in one grid', async () => {
@@ -46,15 +76,48 @@ test('shows uploaded photos first, ahead of the starter puzzles, in one grid', a
 
   const order = tileOrder(root!.root);
   expect(order[0]).toBe('Grandma');
-  expect(order.slice(1)).toEqual([
-    'Meadow',
-    'Fairground',
-    'Climbing',
-    'Dinosaur',
-    'Tractor',
-    'Teddies',
-    'Christmas',
-  ]);
+  expect(order.slice(1)).toEqual(STARTER_TITLES);
+});
+
+test('lays the grid out 2-wide on a phone and 4-wide on a tablet', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+
+  mockWidth(400);
+  await act(() => {
+    root = ReactTestRenderer.create(<HomeScreen />);
+  });
+  // 8 starter puzzles → four rows of two.
+  expect(rowSizes(root!.root)).toEqual([2, 2, 2, 2]);
+
+  mockWidth(900);
+  await act(() => {
+    root!.update(<HomeScreen />);
+  });
+  // Same eight → two rows of four.
+  expect(rowSizes(root!.root)).toEqual([4, 4]);
+
+  mockWidth(600);
+  await act(() => {
+    root!.update(<HomeScreen />);
+  });
+  // In between → rows of three (3, 3, 2).
+  expect(rowSizes(root!.root)).toEqual([3, 3, 2]);
+});
+
+test('a short last row keeps its real tile count (spacers fill the rest)', async () => {
+  mockWidth(900); // 4 columns
+  const userPuzzles: Puzzle[] = [
+    { id: 'user-1', title: 'Grandma', source: 'user' },
+  ];
+
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<HomeScreen userPuzzles={userPuzzles} />);
+  });
+
+  // 9 tiles across 4 columns → rows of 4, 4, 1.
+  expect(rowSizes(root!.root)).toEqual([4, 4, 1]);
+  expect(tileOrder(root!.root)).toHaveLength(9);
 });
 
 test('tapping a tile reports the selected puzzle', async () => {

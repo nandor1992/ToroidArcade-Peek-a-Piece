@@ -39,7 +39,7 @@ advances `index`, wrapping from the last puzzle back to the first rather
 than disabling itself at the end.
 
 `puzzles` is built by `App.tsx` as `[...userPuzzles, ...stockPuzzles]`,
-where `stockPuzzles` is `STARTER_PUZZLES` (seven bundled puzzles) or `[]`
+where `stockPuzzles` is `STARTER_PUZZLES` (eight bundled puzzles) or `[]`
 depending on the parent's "Show starter puzzles" toggle (see
 `ParentScreen`) — so Next only cycles through whatever's currently visible
 on `HomeScreen`, never a hidden set.
@@ -127,9 +127,8 @@ awareness of the toggle at all, only of whatever list it's handed.
 ## Non-goals / known limitations
 
 - Starter puzzles now *can* be played as a real jigsaw — each carries
-  bundled cartoon art (`imageAsset`). The art is still flat-color
-  placeholder PNGs pending real illustrations (see [[HomeScreen]]), but the
-  pipeline is wired end to end.
+  bundled cartoon art (`imageAsset`, a hand-illustrated JPEG — see
+  [[HomeScreen]]).
 - No difficulty selection — `PuzzleBoard` is always opened at its default
   2x2 grid; this screen has no UI to change piece count.
 - No real background art — `BACKGROUND_PLACEHOLDERS` is four solid palette

@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
   type ListRenderItemInfo,
 } from 'react-native';
@@ -25,53 +26,72 @@ const TILE_COLORS = [
 // uploaded any photo. Each one carries a hand-illustrated cartoon
 // (src/games/puzzle/assets/starter/) — redistribution-safe art, not a real
 // family photo — so these tiles show real pictures and open as real
-// jigsaws now, where they used to be bare emoji placeholders.
+// jigsaws now, where they used to be bare emoji placeholders. Eight of
+// them: a full 4x2 grid on a tablet.
 export const STARTER_PUZZLES: Puzzle[] = [
   {
     id: 'stock-1',
     title: 'Meadow',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/meadow.png'),
+    imageAsset: require('../games/puzzle/assets/starter/meadow.jpg'),
   },
   {
     id: 'stock-2',
     title: 'Fairground',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/fairground.png'),
+    imageAsset: require('../games/puzzle/assets/starter/fairground.jpg'),
   },
   {
     id: 'stock-3',
     title: 'Climbing',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/climbing.png'),
+    imageAsset: require('../games/puzzle/assets/starter/climbing.jpg'),
   },
   {
     id: 'stock-4',
-    title: 'Dinosaur',
+    title: 'Tractor',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/dinosaur.png'),
+    imageAsset: require('../games/puzzle/assets/starter/tractor.jpg'),
   },
   {
     id: 'stock-5',
-    title: 'Tractor',
+    title: 'Sandpit',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/tractor.png'),
+    imageAsset: require('../games/puzzle/assets/starter/sandpit.jpg'),
   },
   {
     id: 'stock-6',
-    title: 'Teddies',
+    title: 'Train',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/teddies.png'),
+    imageAsset: require('../games/puzzle/assets/starter/train.jpg'),
   },
   {
     id: 'stock-7',
-    title: 'Christmas',
+    title: 'Theatre',
     source: 'stock',
-    imageAsset: require('../games/puzzle/assets/starter/christmas.png'),
+    imageAsset: require('../games/puzzle/assets/starter/theatre.jpg'),
+  },
+  {
+    id: 'stock-8',
+    title: 'Teddies',
+    source: 'stock',
+    imageAsset: require('../games/puzzle/assets/starter/teddies.jpg'),
   },
 ];
 
-const COLUMNS = 2;
+// How many tiles sit side by side, by available width. A typical tablet
+// (>= 700dp) gets 4 across — so the eight starter puzzles land as a tidy
+// 4x2 — a small tablet / large phone gets 3, a phone gets 2. Recomputed
+// on rotation/resize via `useWindowDimensions`.
+function columnsForWidth(width: number): number {
+  if (width >= 700) {
+    return 4;
+  }
+  if (width >= 520) {
+    return 3;
+  }
+  return 2;
+}
 
 function chunk<T>(items: T[], size: number): T[][] {
   const rows: T[][] = [];
@@ -125,30 +145,48 @@ export function HomeScreen({
   onSelectPuzzle,
   onOpenParentArea,
 }: HomeScreenProps) {
+  const { width } = useWindowDimensions();
+  const columns = columnsForWidth(width);
+
   // One continuous grid — uploaded photos first, starter puzzles after —
   // rather than two labeled sections, per the "together, above them" grid
   // ordering.
-  const rows = chunk([...userPuzzles, ...stockPuzzles], COLUMNS);
+  const rows = chunk([...userPuzzles, ...stockPuzzles], columns);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <FlatList
+        // `key` forces a fresh list when the column count changes (rotate
+        // a tablet, resize a window) so every row re-chunks cleanly.
+        key={`cols-${columns}`}
         data={rows}
         keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
-        renderItem={({ item: row }: ListRenderItemInfo<Puzzle[]>) => (
+        renderItem={({
+          item: row,
+          index: rowIndex,
+        }: ListRenderItemInfo<Puzzle[]>) => (
           <View style={styles.row}>
-            {row.map((puzzle, index) => (
+            {row.map((puzzle, colIndex) => (
               <PuzzleTile
                 key={puzzle.id}
                 puzzle={puzzle}
-                color={TILE_COLORS[index % TILE_COLORS.length]}
+                color={
+                  TILE_COLORS[
+                    (rowIndex * columns + colIndex) % TILE_COLORS.length
+                  ]
+                }
                 onPress={onSelectPuzzle}
               />
             ))}
-            {row.length < COLUMNS && (
-              // Keeps a trailing odd tile from stretching to fill the row.
-              <View style={styles.spacer} pointerEvents="none" />
-            )}
+            {Array.from({ length: columns - row.length }).map((_, i) => (
+              // Keep a short last row's tiles their natural size instead of
+              // letting them stretch to fill the width.
+              <View
+                key={`spacer-${i}`}
+                style={styles.spacer}
+                pointerEvents="none"
+              />
+            ))}
           </View>
         )}
         contentContainerStyle={styles.content}
