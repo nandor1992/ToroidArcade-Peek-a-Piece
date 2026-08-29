@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Linking,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { Slider } from '../components/Slider';
@@ -24,6 +31,17 @@ const ABOUT_INFO = {
   appName: 'Peek-a-Piece',
   version: '0.0.1',
   credit: 'Created by ToroidSystems / ToroidArcade',
+  // Pixabay Content License attribution for the bundled background track
+  // (resources/the_mountain-children.mp3). utm params are the referral
+  // attribution Pixabay asks linkers to keep.
+  music: {
+    artist: 'Dmitrii Kolesnikov',
+    artistUrl:
+      'https://pixabay.com/users/the_mountain-3616498/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=522447',
+    sourceName: 'Pixabay',
+    sourceUrl:
+      'https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=522447',
+  },
 };
 
 export interface SettingsScreenProps {
@@ -139,6 +157,22 @@ export function SettingsScreen({
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{ABOUT_INFO.appName}</Text>
             <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
+            <Text style={styles.modalBody}>
+              Music by{' '}
+              <Text
+                accessibilityRole="link"
+                style={styles.modalLink}
+                onPress={() => Linking.openURL(ABOUT_INFO.music.artistUrl)}>
+                {ABOUT_INFO.music.artist}
+              </Text>{' '}
+              from{' '}
+              <Text
+                accessibilityRole="link"
+                style={styles.modalLink}
+                onPress={() => Linking.openURL(ABOUT_INFO.music.sourceUrl)}>
+                {ABOUT_INFO.music.sourceName}
+              </Text>
+            </Text>
             <Text style={styles.modalVersion}>
               Version {ABOUT_INFO.version}
             </Text>
@@ -279,10 +313,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 4,
   },
+  modalLink: {
+    color: colors.teal,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
   modalVersion: {
     fontSize: 14,
     color: colors.navy,
     opacity: 0.6,
+    marginTop: 12,
     marginBottom: 20,
   },
   submitButton: {

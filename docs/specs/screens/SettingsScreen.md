@@ -3,7 +3,7 @@ name: SettingsScreen
 type: screen
 source: src/screens/SettingsScreen.tsx
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-08-30
 ---
 
 # SettingsScreen
@@ -39,9 +39,14 @@ state itself, only rendering what it's given and calling back on change.
   (`aboutVisible`) rather than something `App.tsx` owns — there's nothing
   for a caller to control or react to. Tapping the About button opens a
   `Modal` (`transparent`, `animationType="fade"`) showing the app name,
-  a fixed credit line, and a version string (`ABOUT_INFO`, hand-maintained
-  in this file — see Non-goals), with a Close button that dismisses it.
-  `onRequestClose` (Android back button / iOS swipe) also dismisses it.
+  a fixed credit line, a background-music attribution line ("Music by
+  *Dmitrii Kolesnikov* from *Pixabay*", the two names being
+  `accessibilityRole="link"` `Text` spans that `Linking.openURL` their
+  Pixabay URLs), and a version string (all from `ABOUT_INFO`,
+  hand-maintained in this file — see Non-goals), with a Close button that
+  dismisses it. `onRequestClose` (Android back button / iOS swipe) also
+  dismisses it. This is the one place in the app that opens an external
+  link, and it's fine here because Settings sits behind the parent gate.
 
 ## Interface
 
@@ -74,7 +79,9 @@ state itself, only rendering what it's given and calling back on change.
    "Off" → `onChangeTimerMinutes(null)`.
 4. Tap the About button → the popup becomes visible and shows the app
    name. Tap Close → the popup is hidden again.
-5. Press Back → `onBack` is called.
+5. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
+   → `Linking.openURL` is called with the matching Pixabay URL.
+6. Press Back → `onBack` is called.
 
 ## Non-goals / known limitations
 
@@ -88,6 +95,10 @@ state itself, only rendering what it's given and calling back on change.
   version bumps without this file being touched too.
 - "Who created the app" is a fixed credit line (`ABOUT_INFO.credit`), not
   configurable or localized.
+- The music attribution (`ABOUT_INFO.music`) is likewise hardcoded for the
+  one bundled track; swapping the track (see [[useBackgroundMusic]]) means
+  updating this line by hand too. The `utm_*` params on the URLs are
+  Pixabay's referral-attribution string, kept verbatim.
 
 ## Related
 

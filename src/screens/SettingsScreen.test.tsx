@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { Linking } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -134,6 +135,50 @@ test('About button opens a popup with app info, and Close dismisses it', async (
   });
 
   expect(findModal().props.visible).toBe(false);
+});
+
+test('the About popup credits the background music with tappable links', async () => {
+  const openURL = jest
+    .spyOn(Linking, 'openURL')
+    .mockResolvedValue(undefined as never);
+
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  const linkByText = (text: string) =>
+    root!.root.findAll(
+      node =>
+        node.props.accessibilityRole === 'link' &&
+        typeof node.props.onPress === 'function' &&
+        node.props.children === text,
+    )[0];
+
+  const artistLink = linkByText('Dmitrii Kolesnikov');
+  const sourceLink = linkByText('Pixabay');
+  expect(artistLink).toBeDefined();
+  expect(sourceLink).toBeDefined();
+
+  await act(() => {
+    artistLink.props.onPress();
+  });
+  expect(openURL).toHaveBeenCalledWith(
+    expect.stringContaining('pixabay.com/users/the_mountain-3616498/'),
+  );
+
+  await act(() => {
+    sourceLink.props.onPress();
+  });
+  expect(openURL).toHaveBeenLastCalledWith(
+    expect.stringContaining('pixabay.com/?utm_source=link-attribution'),
+  );
+
+  openURL.mockRestore();
 });
 
 test('back button calls onBack', async () => {

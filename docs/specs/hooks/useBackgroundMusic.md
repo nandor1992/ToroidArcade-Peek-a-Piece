@@ -78,7 +78,11 @@ outside a built app.
 
 - Only one track, no playlist, no per-puzzle music.
 - Whoever swaps the track must keep redistribution rights in mind — it
-  ships inside the app binary. To replace it: overwrite
+  ships inside the app binary. The current track is licensed under the
+  Pixabay Content License; its attribution ("Music by Dmitrii Kolesnikov
+  from Pixabay") is shown in the About popup — see [[SettingsScreen]]
+  (`ABOUT_INFO.music`) — and must be updated there too when the track
+  changes. To replace it: overwrite
   `resources/the_mountain-children.mp3` and re-copy it to
   `android/app/src/main/res/raw/background_music.mp3` and
   `ios/PeekaPiece/background_music.mp3` (keep those bundle filenames, since
