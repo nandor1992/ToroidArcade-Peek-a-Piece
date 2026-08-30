@@ -12,6 +12,15 @@ pnpm web:build     # static site -> web/dist/
 `web/dist/` is self-contained — upload it to any static host (GitHub Pages,
 Netlify, Cloudflare Pages, S3). No server-side anything.
 
+> **`react-dom` must be pinned to exactly the same version as `react`.**
+> React refuses to start otherwise ("Incompatible React versions"), and it
+> only shows up in the browser — the native build and the Jest suite never
+> load `react-dom`, so every other check stays green. React Native pins
+> `react` to an exact version, so `react-dom` is pinned exactly too (no
+> caret). If you ever `pnpm add react-dom`, it will resolve to the latest
+> patch and silently break the demo — use `pnpm add -E react-dom@<react's
+> version>`.
+
 All emitted URLs are **relative** (`publicPath: 'auto'`, a relative
 `@font-face` src, and a `locateFile` that resolves `canvaskit.wasm` against
 `document.baseURI`), so the same build works at a domain root *and* under a
