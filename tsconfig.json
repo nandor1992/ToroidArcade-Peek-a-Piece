@@ -1,5 +1,11 @@
 {
   "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    // The base RN config omits "dom", but the web build's platform files
+    // (src/**/*.web.ts, web/) use Audio, document and window. Note this makes
+    // DOM globals visible to native files too — they must not be used there.
+    "lib": ["esnext", "dom"]
+  },
   "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["**/node_modules", "**/Pods"]
+  "exclude": ["**/node_modules", "**/Pods", "web/dist"]
 }

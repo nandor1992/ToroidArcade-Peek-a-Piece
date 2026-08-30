@@ -18,6 +18,7 @@ const GLYPHS = {
   volumeOn: 'volume-high',
   volumeOff: 'volume-off',
   close: 'close',
+  check: 'check-bold',
 } as const;
 
 export type IconName = keyof typeof GLYPHS;

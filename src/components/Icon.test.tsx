@@ -17,6 +17,7 @@ const NAMES: IconName[] = [
   'volumeOn',
   'volumeOff',
   'close',
+  'check',
 ];
 
 test('maps semantic names to Material Design Icons glyphs', async () => {
@@ -49,5 +50,6 @@ test('maps semantic names to Material Design Icons glyphs', async () => {
     'volume-high',
     'volume-off',
     'close',
+    'check-bold', // check
   ]);
 });

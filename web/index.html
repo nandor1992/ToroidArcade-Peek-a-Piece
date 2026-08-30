@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta
+      name="description"
+      content="Peek-a-Piece — jigsaw puzzles for toddlers. Try the starter puzzles in your browser."
+    />
+    <title>Peek-a-Piece</title>
+    <style>
+      /* The icon font. `createIconSet` resolves fontFamily to the PostScript
+         name on web; the TTF is copied to fonts/ by CopyWebpackPlugin
+         (see webpack.config.js). The URL is relative on purpose — an
+         absolute '/fonts/...' would 404 when hosted under a sub-path such
+         as a GitHub Pages project site. */
+      @font-face {
+        font-family: 'MaterialDesignIcons';
+        src: url('fonts/MaterialDesignIcons.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: block;
+      }
+
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        /* colors.cream — matches the app's page background so there's no
+           white flash before React mounts. */
+        background-color: #fff6e6;
+        overflow: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* The puzzle board is a drag surface: stop the browser turning a drag
+         into a text selection or a pull-to-refresh. */
+      #root {
+        overscroll-behavior: none;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: manipulation;
+      }
+
+      /* Shown until the JS bundle + CanvasKit are ready; React replaces it. */
+      .boot {
+        display: flex;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #26385a;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root">
+      <div class="boot">Retrieving Memories…</div>
+    </div>
+  </body>
+</html>

@@ -1,11 +1,20 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   StyleSheet,
+  Text,
   View,
   type GestureResponderEvent,
   type LayoutChangeEvent,
 } from 'react-native';
-import { Canvas, Group, Image, Path, useImage } from '@shopify/react-native-skia';
+import {
+  Canvas,
+  Group,
+  Image,
+  Path,
+  RoundedRect,
+  useImage,
+} from '@shopify/react-native-skia';
 import { generatePuzzleGrid } from '../logic/generatePuzzleGrid';
 import type { PuzzlePieceDescriptor } from '../logic/generatePuzzleGrid';
 import { pathCommandsToSvgPath } from '../logic/pathCommandsToSvgPath';
@@ -21,10 +30,21 @@ export interface PuzzleBoardProps {
   rows?: number;
   columns?: number;
   onSolved?: () => void;
+  /**
+   * Bump this (any new number) to re-scatter the pieces in place — the
+   * Reset button. Doing it this way instead of remounting keeps the
+   * decoded Skia image in memory, so a reset is instant rather than
+   * re-triggering the "Retrieving Memories…" load.
+   */
+  resetSignal?: number;
 }
 
 interface PieceState {
   descriptor: PuzzlePieceDescriptor;
+  /** The piece outline as an SVG path string, in the piece's own local
+   * space — precomputed once here so it isn't re-serialized on every
+   * drag frame. */
+  clipPath: string;
   /** Absolute (board-space) position of the piece's top-left corner. */
   x: number;
   y: number;
@@ -49,14 +69,22 @@ interface PuzzleBox {
 }
 
 // The assembled picture never fills more than this fraction of the play
-// area in either dimension — so there's room to scatter the pieces around
-// it, and it never dominates the screen.
-const MAX_PUZZLE_FRACTION = 0.6;
+// area in either dimension — big enough to be the star of the screen,
+// with just a sliver of margin left for pieces to sit in.
+const MAX_PUZZLE_FRACTION = 0.9;
+
+// Corner radius (board px) of the white backing square that marks where
+// the finished picture goes.
+const BACKING_RADIUS = 12;
 
 // Snap radius as a fraction of the smaller piece dimension, floored so
-// even small pieces on a fine grid stay catchable.
-const SNAP_RATIO = 0.4;
+// even small pieces on a fine grid stay catchable, and capped so a big
+// 2x2 piece doesn't get a magnet radius so wide that a piece still in the
+// scatter pile lands "correctly" next to a placed neighbour and
+// auto-merges.
+const SNAP_RATIO = 0.3;
 const MIN_SNAP_DISTANCE = 18;
+const MAX_SNAP_DISTANCE = 48;
 
 // How close (board px) a piece has to be to its target to count as
 // "placed" once snapping/merging has settled.
@@ -112,25 +140,36 @@ function fitPuzzleBox(
 }
 
 /**
- * A random top-left position for a piece: somewhere in the play area, but
- * with its centre *outside* the central assembled-picture box — i.e.
- * scattered toward the edges. Falls back to the top-left corner if it
- * can't find a free spot (only realistically happens when `random` is a
- * constant, e.g. mocked in tests).
+ * A random top-left position for a scattered piece. Preference order:
+ *
+ * 1. a spot whose centre is *outside* the assembled-picture box — pieces
+ *    ringed around the picture, the classic look;
+ * 2. failing that (at a high {@link MAX_PUZZLE_FRACTION} the box leaves
+ *    almost no room outside it), any spot that's at least a piece-width
+ *    away from this piece's own solved position, so the board never opens
+ *    up half-assembled;
+ * 3. failing both, the top-left corner — only realistically hit when
+ *    `random` is a constant, e.g. mocked in tests.
  */
 function scatterPosition(
   pieceWidth: number,
   pieceHeight: number,
   area: { width: number; height: number },
   box: PuzzleBox,
+  target: { x: number; y: number },
   random: () => number,
 ): { x: number; y: number } {
   const maxX = Math.max(0, area.width - pieceWidth);
   const maxY = Math.max(0, area.height - pieceHeight);
-  for (let i = 0; i < 30; i++) {
+  const minGapFromHome = Math.max(pieceWidth, pieceHeight) * 0.6;
+  let awayFromHome: { x: number; y: number } | null = null;
+  for (let i = 0; i < 40; i++) {
     const x = random() * maxX;
     const y = random() * maxY;
-    const inBox = rectContainsPoint(
+    if (Math.hypot(x - target.x, y - target.y) < minGapFromHome) {
+      continue;
+    }
+    const centreInBox = rectContainsPoint(
       box.originX,
       box.originY,
       box.width,
@@ -138,11 +177,14 @@ function scatterPosition(
       x + pieceWidth / 2,
       y + pieceHeight / 2,
     );
-    if (!inBox) {
+    if (!centreInBox) {
       return { x, y };
     }
+    if (!awayFromHome) {
+      awayFromHome = { x, y };
+    }
   }
-  return { x: 0, y: 0 };
+  return awayFromHome ?? { x: 0, y: 0 };
 }
 
 function buildPieces(
@@ -162,13 +204,25 @@ function buildPieces(
   const pieceWidth = box.width / columns;
   const pieceHeight = box.height / rows;
   return descriptors.map((descriptor, index) => {
-    const { x, y } = scatterPosition(pieceWidth, pieceHeight, area, box, random);
+    const target = {
+      x: box.originX + descriptor.targetX,
+      y: box.originY + descriptor.targetY,
+    };
+    const { x, y } = scatterPosition(
+      pieceWidth,
+      pieceHeight,
+      area,
+      box,
+      target,
+      random,
+    );
     return {
       descriptor,
+      clipPath: pathCommandsToSvgPath(descriptor.path),
       x,
       y,
-      targetX: box.originX + descriptor.targetX,
-      targetY: box.originY + descriptor.targetY,
+      targetX: target.x,
+      targetY: target.y,
       groupId: index,
       placed: false,
     };
@@ -273,9 +327,9 @@ function markPlaced(pieces: PieceState[]): PieceState[] {
  * scatters them around the edges of the play area, and lets the player
  * drag them back together — pieces snap to their final spot *or* to a
  * matching neighbour, connected pieces drag as one group, and a piece
- * that's landed in its final place is locked (only a remount / Reset
- * scatters it again). All state is local; nothing persists once the
- * screen unmounts, by design.
+ * that's landed in its final place is locked (bumping `resetSignal`, or a
+ * remount, scatters it again). All state is local; nothing persists once
+ * the screen unmounts, by design.
  * See docs/specs/games/puzzle/components/PuzzleBoard.md.
  */
 export function PuzzleBoard({
@@ -283,6 +337,7 @@ export function PuzzleBoard({
   rows = 2,
   columns = 2,
   onSolved,
+  resetSignal = 0,
 }: PuzzleBoardProps) {
   const image = useImage(imageSource);
   const [boardSize, setBoardSize] = useState({ width: 0, height: 0 });
@@ -309,9 +364,9 @@ export function PuzzleBoard({
 
   const pieceWidth = box ? box.width / columns : 0;
   const pieceHeight = box ? box.height / rows : 0;
-  const snapDistance = Math.max(
-    MIN_SNAP_DISTANCE,
-    Math.min(pieceWidth, pieceHeight) * SNAP_RATIO,
+  const snapDistance = Math.min(
+    MAX_SNAP_DISTANCE,
+    Math.max(MIN_SNAP_DISTANCE, Math.min(pieceWidth, pieceHeight) * SNAP_RATIO),
   );
 
   const handleLayout = (event: LayoutChangeEvent) => {
@@ -323,16 +378,28 @@ export function PuzzleBoard({
     );
   };
 
-  // Builds and scatters the grid once, when both the play-area size and
-  // the image are known. Only once per mount — a reset / a new puzzle
-  // remounts the component (via its `key` in PuzzleScreen).
+  // Builds and scatters the grid when the play-area size and the image are
+  // both known, and re-scatters (in place, no remount) whenever the parent
+  // bumps `resetSignal`. A plain resize doesn't regenerate it — only a
+  // first build or an explicit reset does.
+  const builtSignalRef = useRef<number | null>(null);
   useEffect(() => {
-    if (pieces || !box) {
+    if (!box) {
       return;
     }
+    if (builtSignalRef.current === resetSignal && pieces) {
+      return;
+    }
+    builtSignalRef.current = resetSignal;
+    setDraggingGroupId(null);
+    setSnapReady(false);
+    // `solvedRef` is re-armed by the solved-detection effect once the
+    // freshly scattered (non-solved) pieces land — doing it here instead
+    // would let that effect re-fire `onSolved` on the stale still-solved
+    // pieces in this same render pass.
     setPieces(buildPieces(rows, columns, boardSize, box, Math.random));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [box]);
+  }, [box, resetSignal]);
 
   const handleGrant = (event: GestureResponderEvent) => {
     if (!pieces || solvedRef.current) {
@@ -431,13 +498,20 @@ export function PuzzleBoard({
   }, [pieces, draggingGroupId, snapDistance]);
 
   useEffect(() => {
-    if (!pieces || solvedRef.current) {
+    if (!pieces) {
       return;
     }
-    if (new Set(pieces.map(p => p.groupId)).size === 1) {
-      solvedRef.current = true;
-      onSolved?.();
+    const oneGroup = new Set(pieces.map(p => p.groupId)).size === 1;
+    if (!oneGroup) {
+      // A fresh scatter (mount or Reset) re-arms the one-shot.
+      solvedRef.current = false;
+      return;
     }
+    if (solvedRef.current) {
+      return;
+    }
+    solvedRef.current = true;
+    onSolved?.();
   }, [pieces, onSolved]);
 
   return (
@@ -449,12 +523,23 @@ export function PuzzleBoard({
       onResponderGrant={handleGrant}
       onResponderMove={handleMove}
       onResponderRelease={handleRelease}>
-      {image && pieces && box && (
+      {image && pieces && box ? (
         <Canvas style={{ width: boardSize.width, height: boardSize.height }}>
+          {/* The white "tray" the finished picture sits on — a fixed
+              target in the middle of the play area that the pieces snap
+              onto, so the goal is obvious to a toddler. */}
+          <RoundedRect
+            x={box.originX}
+            y={box.originY}
+            width={box.width}
+            height={box.height}
+            r={BACKING_RADIUS}
+            color="white"
+          />
           {pieces.map(piece => (
             <Group
               key={piece.descriptor.id}
-              clip={pathCommandsToSvgPath(piece.descriptor.path)}
+              clip={piece.clipPath}
               transform={[{ translateX: piece.x }, { translateY: piece.y }]}>
               <Image
                 image={image}
@@ -471,7 +556,7 @@ export function PuzzleBoard({
               .map(piece => (
                 <Path
                   key={`snap-${piece.descriptor.id}`}
-                  path={pathCommandsToSvgPath(piece.descriptor.path)}
+                  path={piece.clipPath}
                   transform={[
                     { translateX: piece.x },
                     { translateY: piece.y },
@@ -482,6 +567,13 @@ export function PuzzleBoard({
                 />
               ))}
         </Canvas>
+      ) : (
+        // Decoding the photo into a Skia image is the slow step on open /
+        // after Reset — hold a friendly placeholder until it's ready.
+        <View style={styles.loading} pointerEvents="none">
+          <ActivityIndicator size="large" color={colors.teal} />
+          <Text style={styles.loadingText}>Retrieving Memories…</Text>
+        </View>
       )}
     </View>
   );
@@ -494,5 +586,20 @@ const styles = StyleSheet.create({
     // zero cross-axis size and nothing to ever measure via onLayout.
     width: '100%',
     height: '100%',
+  },
+  loading: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    color: colors.navy,
+    fontSize: 20,
+    fontWeight: '700',
   },
 });

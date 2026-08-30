@@ -3,6 +3,7 @@
  */
 
 import React from 'react';
+import { AppState } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import Sound from 'react-native-sound';
 import { useBackgroundMusic } from './useBackgroundMusic';
@@ -39,6 +40,45 @@ test('enabled starts playback, disabled pauses it', async () => {
   });
   expect(pauseSpy).toHaveBeenCalledTimes(1);
 
+  playSpy.mockRestore();
+  pauseSpy.mockRestore();
+});
+
+test('backgrounding the app pauses playback; returning to the foreground resumes it', async () => {
+  const playSpy = jest.spyOn(Sound.prototype, 'play');
+  const pauseSpy = jest.spyOn(Sound.prototype, 'pause');
+  let changeHandler: ((state: string) => void) | undefined;
+  const addSpy = jest
+    .spyOn(AppState, 'addEventListener')
+    .mockImplementation(((_event: string, handler: (s: string) => void) => {
+      changeHandler = handler;
+      return { remove: jest.fn() };
+    }) as typeof AppState.addEventListener);
+
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <Harness enabled={true} volume={0.5} muted={false} />,
+    );
+  });
+  expect(playSpy).toHaveBeenCalledTimes(1);
+
+  // App sent to the background → paused, even though `enabled` is still true.
+  await act(() => {
+    changeHandler!('background');
+  });
+  expect(pauseSpy).toHaveBeenCalledTimes(1);
+
+  // Back to the foreground → playback resumes.
+  await act(() => {
+    changeHandler!('active');
+  });
+  expect(playSpy).toHaveBeenCalledTimes(2);
+
+  await act(() => {
+    root!.unmount();
+  });
+  addSpy.mockRestore();
   playSpy.mockRestore();
   pauseSpy.mockRestore();
 });

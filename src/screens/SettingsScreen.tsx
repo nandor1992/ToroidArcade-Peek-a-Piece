@@ -47,6 +47,10 @@ const ABOUT_INFO = {
     sourceUrl:
       'https://pixabay.com/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=522447',
   },
+  sourceCode: {
+    label: 'Source code on GitHub',
+    url: 'https://github.com/nandor1992/ToroidArcade-Peek-a-Piece',
+  },
 };
 
 export interface SettingsScreenProps {
@@ -218,6 +222,13 @@ export function SettingsScreen({
                 onPress={() => Linking.openURL(ABOUT_INFO.music.sourceUrl)}>
                 {ABOUT_INFO.music.sourceName}
               </Text>
+            </Text>
+            <Text
+              accessibilityRole="link"
+              accessibilityLabel={ABOUT_INFO.sourceCode.label}
+              style={[styles.modalBody, styles.modalLink]}
+              onPress={() => Linking.openURL(ABOUT_INFO.sourceCode.url)}>
+              {ABOUT_INFO.sourceCode.label}
             </Text>
             <Text style={styles.modalVersion}>
               Version {ABOUT_INFO.version}

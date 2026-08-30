@@ -40,14 +40,15 @@ is decoration, the button carries the label.
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| `name` | `IconName` | Yes | `back` \| `home` \| `previous` \| `next` \| `reset` \| `parents` \| `settings` \| `volumeOn` \| `volumeOff` \| `close` |
+| `name` | `IconName` | Yes | `back` \| `home` \| `previous` \| `next` \| `reset` \| `parents` \| `settings` \| `volumeOn` \| `volumeOff` \| `close` \| `check` |
 | `size` | `number` | No | Default 24. |
 | `color` | `string` | No | Default `colors.navy`. |
 
 Current mapping: `back` / `previous` → `chevron-left`, `next` →
 `chevron-right`, `home` → `home`, `reset` → `restart`, `parents` →
 `account-supervisor`, `settings` → `cog`, `volumeOn` → `volume-high`,
-`volumeOff` → `volume-off`, `close` → `close`. (`back` and `previous`
+`volumeOff` → `volume-off`, `close` → `close`, `check` → `check-bold`
+(the green "solved" badge on [[HomeScreen]] tiles). (`back` and `previous`
 share a glyph but are kept distinct so callers read right: `back` = up one
 screen, `previous` = the earlier puzzle.)
 
@@ -75,7 +76,7 @@ which renders the glyph name as text).
 - No image-source / nav-bar-icon use (`Icon.getImageSource`) — just inline
   glyphs.
 - Material Design Icons ships a ~1.3 MB font; that's the whole set bundled
-  for the seven glyphs actually used. Acceptable for now.
+  for the handful of glyphs actually used. Acceptable for now.
 
 ## Related
 

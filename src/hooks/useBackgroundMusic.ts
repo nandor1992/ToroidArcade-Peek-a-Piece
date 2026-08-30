@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import Sound from 'react-native-sound';
 
 Sound.setCategory('Playback');
@@ -16,8 +17,11 @@ export interface UseBackgroundMusicOptions {
 
 /**
  * Loops the single bundled background track (from
- * `resources/the_mountain-children.mp3`) for as long as `enabled` is true,
- * at `muted ? 0 : volume`. See docs/specs/hooks/useBackgroundMusic.md.
+ * `resources/the_mountain-children.mp3`) for as long as `enabled` is true
+ * *and the app is in the foreground*, at `muted ? 0 : volume`. Sending the
+ * app to the background (home button, app switcher, screen lock) pauses
+ * it; returning resumes it if `enabled`. See
+ * docs/specs/hooks/useBackgroundMusic.md.
  */
 export function useBackgroundMusic({
   enabled,
@@ -25,11 +29,27 @@ export function useBackgroundMusic({
   muted,
 }: UseBackgroundMusicOptions): void {
   const soundRef = useRef<Sound | null>(null);
+
+  // `AppState` starts 'active' on a foregrounded app; treat an unknown
+  // initial value as active too so music isn't suppressed on launch.
+  const [appActive, setAppActive] = useState(
+    () => AppState.currentState !== 'background',
+  );
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', nextState => {
+      setAppActive(nextState === 'active');
+    });
+    // RN returns an { remove } subscription; guard for older / mocked
+    // shapes that return nothing.
+    return () => subscription?.remove?.();
+  }, []);
+  const shouldPlay = enabled && appActive;
+
   // The latest desired state, so the async load callback below can apply
   // whatever's current by the time the file finishes loading — not the
   // stale values captured when the sound was constructed.
-  const desiredRef = useRef({ enabled, volume, muted });
-  desiredRef.current = { enabled, volume, muted };
+  const desiredRef = useRef({ shouldPlay, volume, muted });
+  desiredRef.current = { shouldPlay, volume, muted };
 
   useEffect(() => {
     let released = false;
@@ -48,7 +68,7 @@ export function useBackgroundMusic({
         sound.setNumberOfLoops(-1);
         const desired = desiredRef.current;
         sound.setVolume(desired.muted ? 0 : desired.volume);
-        if (desired.enabled) {
+        if (desired.shouldPlay) {
           sound.play();
         }
       },
@@ -71,14 +91,14 @@ export function useBackgroundMusic({
   useEffect(() => {
     const sound = soundRef.current;
     // Same story: before the file has loaded there's nothing to play or
-    // pause yet — the load callback starts playback if `enabled` by then.
+    // pause yet — the load callback starts playback if `shouldPlay` by then.
     if (!sound || !sound.isLoaded()) {
       return;
     }
-    if (enabled) {
+    if (shouldPlay) {
       sound.play();
     } else {
       sound.pause();
     }
-  }, [enabled]);
+  }, [shouldPlay]);
 }

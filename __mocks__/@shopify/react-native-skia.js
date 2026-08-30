@@ -28,6 +28,10 @@ function Path() {
   return null;
 }
 
+function RoundedRect() {
+  return null;
+}
+
 function useImage() {
   return {
     width: () => 200,
@@ -35,4 +39,4 @@ function useImage() {
   };
 }
 
-module.exports = { Canvas, Group, Image, Path, useImage };
+module.exports = { Canvas, Group, Image, Path, RoundedRect, useImage };

@@ -1,0 +1,71 @@
+# Builds the web demo (see docs/specs/app/DemoApp.md) and publishes it to
+# GitHub Pages. The build output (web/dist/) is gitignored on purpose — this
+# workflow produces it on every push, so nothing generated is ever committed.
+#
+# One-time setup in the repo: Settings -> Pages -> Source = "GitHub Actions".
+name: Deploy web demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'web/**'
+      - 'resources/**'
+      - 'webpack.config.js'
+      - 'babel.config.js'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/deploy-web.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two Pages deploys race; drop superseded runs.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Cheap guard: a broken bundle shouldn't reach the demo page.
+      - name: Typecheck
+        run: pnpm exec tsc --noEmit
+
+      - name: Build web demo
+        run: pnpm web:build
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

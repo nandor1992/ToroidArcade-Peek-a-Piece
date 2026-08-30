@@ -1,0 +1,6 @@
+# Generated web bundle (webpack.config.js -> pnpm web:build)
+web/dist/
+
+# Native build output
+android/app/build/
+ios/Pods/

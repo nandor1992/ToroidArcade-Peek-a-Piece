@@ -6,4 +6,11 @@
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 
+    <!-- Cold-start theme: the window shows the brand launch screen while
+         Hermes + Skia start up, instead of a white flash. MainActivity
+         swaps to AppTheme in onCreate() before super.onCreate(). -->
+    <style name="Theme.App.SplashScreen" parent="AppTheme">
+        <item name="android:windowBackground">@drawable/launch_screen</item>
+    </style>
+
 </resources>

@@ -5,6 +5,8 @@
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { launchImageLibrary } from 'react-native-image-picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as RNFS from '@dr.pogodin/react-native-fs';
 import App from './App';
 
 jest.mock('react-native-image-picker', () => ({
@@ -12,6 +14,11 @@ jest.mock('react-native-image-picker', () => ({
 }));
 
 const mockedLaunchImageLibrary = launchImageLibrary as jest.Mock;
+
+beforeEach(() => {
+  (AsyncStorage as unknown as { __reset?: () => void }).__reset?.();
+  (RNFS as unknown as { __reset?: () => void }).__reset?.();
+});
 
 function findByLabel(
   root: ReactTestRenderer.ReactTestInstance,
@@ -63,8 +70,15 @@ function addPhoto(fileName: string, uri: string) {
 }
 
 test('renders correctly', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
-    ReactTestRenderer.create(<App />);
+    root = ReactTestRenderer.create(<App />);
+  });
+  // Let the AsyncStorage hydration in usePersistentPuzzles settle so its
+  // state update lands inside act().
+  await act(async () => {});
+  await act(() => {
+    root!.unmount();
   });
 });
 
@@ -132,12 +146,14 @@ test('Next on the puzzle screen only cycles through puzzles currently visible on
   await solveMathGate(root!.root);
 
   // Add two photos (prepended, so the grid ends up ["b.jpg", "a.jpg"]).
+  // Each add now runs through the async persist-to-storage path, so flush
+  // microtasks after each.
   addPhoto('a.jpg', 'file:///a.jpg');
-  await act(() => {
+  await act(async () => {
     findByLabel(root!.root, 'Add photos').props.onPress();
   });
   addPhoto('b.jpg', 'file:///b.jpg');
-  await act(() => {
+  await act(async () => {
     findByLabel(root!.root, 'Add photos').props.onPress();
   });
 

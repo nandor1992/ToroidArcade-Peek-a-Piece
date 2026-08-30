@@ -32,8 +32,13 @@ local.properties
 *.hprof
 .cxx/
 *.keystore
+*.jks
 !debug.keystore
 .kotlin/
+
+# Release signing — never commit the upload key or its passwords
+android/keystore.properties
+!android/keystore.properties.example
 
 # node.js
 #
@@ -55,6 +60,15 @@ yarn-error.log
 
 # Bundle artifact
 *.jsbundle
+
+# Web demo build output (webpack.config.js -> pnpm web:build)
+web/dist/
+
+# Local-only notes, kept on disk but deliberately not published:
+#   *.local.md          — e.g. docs/PLAY-STORE.local.md (release/signing plan)
+#   user-shortcuts.txt  — personal device serials and adb commands
+*.local.md
+docs/user-shortcuts.txt
 
 # Ruby / CocoaPods
 **/Pods/

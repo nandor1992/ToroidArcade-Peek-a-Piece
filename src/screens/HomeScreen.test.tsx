@@ -53,10 +53,13 @@ function dividerCount(root: ReactTestRenderer.ReactTestInstance): number {
   return gridData(root).filter(item => item.kind === 'divider').length;
 }
 
-function mockWidth(width: number) {
+// `height` defaults to a landscape value (shorter than every width used
+// below) so `mockWidth(n)` exercises the plain width breakpoints; pass an
+// explicit taller height to test the portrait column halving.
+function mockWidth(width: number, height = 480) {
   (useWindowDimensions as jest.Mock).mockReturnValue({
     width,
-    height: 1024,
+    height,
     scale: 2,
     fontScale: 2,
   });
@@ -118,6 +121,73 @@ test('lays the grid out 2-wide on a phone and 4-wide on a tablet', async () => {
   });
   // In between → rows of three (3, 3, 2).
   expect(rowSizes(root!.root)).toEqual([3, 3, 2]);
+});
+
+test('portrait halves the column count: a 4-wide tablet grid becomes 2-wide', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+
+  // Tablet in landscape: 4 across → 4x2.
+  mockWidth(1100, 800);
+  await act(() => {
+    root = ReactTestRenderer.create(<HomeScreen />);
+  });
+  expect(rowSizes(root!.root)).toEqual([4, 4]);
+
+  // Same tablet rotated to portrait (taller than wide): 2 across → 2x4.
+  mockWidth(800, 1100);
+  await act(() => {
+    root!.update(<HomeScreen />);
+  });
+  expect(rowSizes(root!.root)).toEqual([2, 2, 2, 2]);
+
+  // A phone in portrait still floors at 2 rather than dropping to 1.
+  mockWidth(400, 800);
+  await act(() => {
+    root!.update(<HomeScreen />);
+  });
+  expect(rowSizes(root!.root)).toEqual([2, 2, 2, 2]);
+});
+
+function completedTileLabels(
+  root: ReactTestRenderer.ReactTestInstance,
+): string[] {
+  return root
+    .findAll(
+      node =>
+        typeof node.props.onPress === 'function' &&
+        node.props.accessibilityState?.selected === true,
+    )
+    .map(node => node.props.accessibilityLabel as string);
+}
+
+test('a green check badge marks every puzzle whose id is in completedPuzzleIds', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <HomeScreen completedPuzzleIds={['stock-2', 'stock-5']} />,
+    );
+  });
+
+  // The two named starter puzzles carry the badge; nothing else does.
+  expect(completedTileLabels(root!.root).sort()).toEqual([
+    'Fairground',
+    'Sandpit',
+  ]);
+  // ...and the badge renders the check glyph.
+  expect(
+    root!.root.findAll(node => node.props.children === 'check-bold').length,
+  ).toBeGreaterThan(0);
+});
+
+test('no badges (and no check glyph) when completedPuzzleIds is empty / omitted', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<HomeScreen />);
+  });
+  expect(completedTileLabels(root!.root)).toEqual([]);
+  expect(
+    root!.root.findAll(node => node.props.children === 'check-bold').length,
+  ).toBe(0);
 });
 
 test('no divider when there are no uploaded photos', async () => {
@@ -196,6 +266,21 @@ test('tapping a tile reports the selected puzzle', async () => {
   expect(onSelectPuzzle).toHaveBeenCalledWith(
     expect.objectContaining({ id: 'stock-1' }),
   );
+});
+
+test('the parent button is hidden when there is no parent area to open', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<HomeScreen />);
+  });
+
+  // The web demo renders HomeScreen without `onOpenParentArea`; a dead
+  // button would just be something for a toddler to poke at.
+  expect(
+    root!.root.findAll(
+      node => node.props.accessibilityLabel === 'Parent settings',
+    ),
+  ).toEqual([]);
 });
 
 test('tapping the parent button opens the parent area', async () => {

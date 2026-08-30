@@ -83,8 +83,7 @@ export const STARTER_PUZZLES: Puzzle[] = [
 
 // How many tiles sit side by side, by available width. A typical tablet
 // (>= 700dp) gets 4 across — so the eight starter puzzles land as a tidy
-// 4x2 — a small tablet / large phone gets 3, a phone gets 2. Recomputed
-// on rotation/resize via `useWindowDimensions`.
+// 4x2 — a small tablet / large phone gets 3, a phone gets 2.
 function columnsForWidth(width: number): number {
   if (width >= 700) {
     return 4;
@@ -93,6 +92,19 @@ function columnsForWidth(width: number): number {
     return 3;
   }
   return 2;
+}
+
+// The column count for the current viewport. In portrait the grid
+// "rotates": it shows half as many columns as the same width would give
+// in landscape (floored at 2), so a tablet's 4-wide layout becomes 2-wide
+// and the eight starters run 2x4 instead of 4x2. Recomputed on
+// rotation/resize via `useWindowDimensions`.
+function columnsForViewport(width: number, height: number): number {
+  const columns = columnsForWidth(width);
+  if (height > width) {
+    return Math.max(2, Math.round(columns / 2));
+  }
+  return columns;
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -135,15 +147,18 @@ function buildGrid(
 interface PuzzleTileProps {
   puzzle: Puzzle;
   color: string;
+  /** Show the green "solved" check badge. */
+  completed?: boolean;
   onPress?: (puzzle: Puzzle) => void;
 }
 
-function PuzzleTile({ puzzle, color, onPress }: PuzzleTileProps) {
+function PuzzleTile({ puzzle, color, completed, onPress }: PuzzleTileProps) {
   const imageSource = puzzleImageSource(puzzle);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={puzzle.title}
+      accessibilityState={{ selected: completed }}
       onPress={() => onPress?.(puzzle)}
       style={({ pressed }) => [
         styles.tile,
@@ -159,6 +174,11 @@ function PuzzleTile({ puzzle, color, onPress }: PuzzleTileProps) {
       ) : (
         <Text style={styles.tileGlyph}>🧩</Text>
       )}
+      {completed && (
+        <View style={styles.completeBadge} pointerEvents="none">
+          <Icon name="check" size={20} color="white" />
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -166,6 +186,8 @@ function PuzzleTile({ puzzle, color, onPress }: PuzzleTileProps) {
 export interface HomeScreenProps {
   userPuzzles?: Puzzle[];
   stockPuzzles?: Puzzle[];
+  /** Ids of puzzles solved at least once — each gets a green check. */
+  completedPuzzleIds?: string[];
   onSelectPuzzle?: (puzzle: Puzzle) => void;
   onOpenParentArea?: () => void;
 }
@@ -173,21 +195,28 @@ export interface HomeScreenProps {
 export function HomeScreen({
   userPuzzles = [],
   stockPuzzles = STARTER_PUZZLES,
+  completedPuzzleIds = [],
   onSelectPuzzle,
   onOpenParentArea,
 }: HomeScreenProps) {
-  const { width } = useWindowDimensions();
-  const columns = columnsForWidth(width);
+  const { width, height } = useWindowDimensions();
+  const columns = columnsForViewport(width, height);
   const grid = buildGrid(userPuzzles, stockPuzzles, columns);
+  const completed = React.useMemo(
+    () => new Set(completedPuzzleIds),
+    [completedPuzzleIds],
+  );
 
   return (
     <View style={styles.container}>
       {/* The art is pre-blurred and paled; `backgroundImage` fades it
           further so it's a hint of a backdrop behind the tiles, never
-          something that competes with the puzzle photos. */}
+          something that competes with the puzzle photos. Sized to the
+          full window with `cover` so it always fills the screen, with
+          whichever of width/height overflows getting cropped. */}
       <Image
         source={require('../assets/home-bg.jpg')}
-        style={styles.backgroundImage}
+        style={[styles.backgroundImage, { width, height }]}
         resizeMode="cover"
         pointerEvents="none"
       />
@@ -218,6 +247,7 @@ export function HomeScreen({
                         (item.colorBase + colIndex) % TILE_COLORS.length
                       ]
                     }
+                    completed={completed.has(puzzle.id)}
                     onPress={onSelectPuzzle}
                   />
                 ))}
@@ -238,17 +268,21 @@ export function HomeScreen({
           contentContainerStyle={styles.content}
         />
         {/* Deliberately low-contrast — the parent-only entry point, not
-            something a toddler should be drawn to tap. */}
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Parent settings"
-          onPress={onOpenParentArea}
-          style={({ pressed }) => [
-            styles.parentButton,
-            pressed && styles.parentButtonPressed,
-          ]}>
-          <Icon name="parents" size={50} color={colors.navy} />
-        </Pressable>
+            something a toddler should be drawn to tap. Omitted entirely when
+            there's no parent area to open (the web demo), rather than left
+            as a dead button. */}
+        {onOpenParentArea && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Parent settings"
+            onPress={onOpenParentArea}
+            style={({ pressed }) => [
+              styles.parentButton,
+              pressed && styles.parentButtonPressed,
+            ]}>
+            <Icon name="parents" size={50} color={colors.navy} />
+          </Pressable>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -266,8 +300,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
-    right: 0,
-    bottom: 0,
     opacity: 0.5,
   },
   content: {
@@ -308,6 +340,19 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 24,
+  },
+  completeBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.leaf,
+    borderWidth: 2,
+    borderColor: 'white',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   parentButton: {
     position: 'absolute',

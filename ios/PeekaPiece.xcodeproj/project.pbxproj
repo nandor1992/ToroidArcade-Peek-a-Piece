@@ -276,7 +276,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.peekapiece";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.toroidarcade.peekapiece";
 				PRODUCT_NAME = "PeekaPiece";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -306,7 +306,7 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = "com.peekapiece";
+				PRODUCT_BUNDLE_IDENTIFIER = "com.toroidarcade.peekapiece";
 				PRODUCT_NAME = "PeekaPiece";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_VERSION = 5.0;

@@ -8,13 +8,16 @@ import { puzzleSkiaSource } from '../utils/puzzleImage';
 import { AppHeader } from '../components/AppHeader';
 import { Icon } from '../components/Icon';
 
-// Stand-ins for bundled background art. Swap for real images once that
-// asset set exists — see docs/specs/screens/PuzzleScreen.md.
+// Soft pastel washes — a barely-there tint behind the board, not the
+// full-strength brand colours (too loud sitting right behind the photo).
+// Each is a heavily lightened relative of a palette hue. Stand-ins until
+// bundled background art exists — see docs/specs/screens/PuzzleScreen.md.
 const BACKGROUND_PLACEHOLDERS = [
-  colors.sunbeam,
-  colors.leaf,
-  colors.violet,
-  colors.tangerine,
+  '#FBF3DC', // pale sunbeam
+  '#EAF4E0', // pale leaf
+  '#F1EAF9', // pale violet
+  '#FCEEDD', // pale tangerine
+  '#E2F3F0', // pale teal
 ] as const;
 
 export interface PuzzleScreenProps {
@@ -24,6 +27,10 @@ export interface PuzzleScreenProps {
   rows?: number;
   columns?: number;
   onBack?: () => void;
+  /** Called with the puzzle's id the first time it's solved. */
+  onCompleted?: (puzzleId: string) => void;
+  /** Called with the puzzle's id when Reset is pressed — clears its completion. */
+  onReset?: (puzzleId: string) => void;
 }
 
 export function PuzzleScreen({
@@ -32,6 +39,8 @@ export function PuzzleScreen({
   rows = 2,
   columns = 2,
   onBack,
+  onCompleted,
+  onReset,
 }: PuzzleScreenProps) {
   const [index, setIndex] = useState(() => {
     const found = puzzles.findIndex(p => p.id === initialPuzzleId);
@@ -40,8 +49,9 @@ export function PuzzleScreen({
 
   const puzzle = puzzles[index];
   const [solved, setSolved] = useState(false);
-  // Bumping this remounts PuzzleBoard, which re-scatters the pieces — the
-  // Reset button, and implicitly every puzzle change.
+  // Passed to PuzzleBoard as `resetSignal`; bumping it re-scatters the
+  // pieces in place (no remount, so the decoded image is kept) — the Reset
+  // button.
   const [resetCount, setResetCount] = useState(0);
 
   useEffect(() => {
@@ -69,6 +79,12 @@ export function PuzzleScreen({
   const reset = () => {
     setResetCount(current => current + 1);
     setSolved(false);
+    onReset?.(puzzle.id);
+  };
+
+  const handleSolved = () => {
+    setSolved(true);
+    onCompleted?.(puzzle.id);
   };
 
   return (
@@ -81,11 +97,15 @@ export function PuzzleScreen({
         <View style={styles.boardLayer} accessibilityLabel={puzzle.title}>
           {imageSource != null ? (
             <PuzzleBoard
-              key={`${puzzle.id}-${columns}x${rows}-${resetCount}`}
+              // Keyed only on the puzzle + grid size, so switching puzzles
+              // remounts (new image to decode) but Reset doesn't — Reset
+              // goes through `resetSignal`, keeping the decoded image.
+              key={`${puzzle.id}-${columns}x${rows}`}
               imageSource={imageSource}
               rows={rows}
               columns={columns}
-              onSolved={() => setSolved(true)}
+              resetSignal={resetCount}
+              onSolved={handleSolved}
             />
           ) : (
             // A puzzle with no artwork at all — nothing to cut into

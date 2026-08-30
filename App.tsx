@@ -14,12 +14,13 @@ import { ParentGateScreen } from './src/screens/ParentGateScreen';
 import { ParentScreen } from './src/screens/ParentScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SessionLockOverlay } from './src/screens/SessionLockOverlay';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { useBackgroundMusic } from './src/hooks/useBackgroundMusic';
+import { usePersistentPuzzles } from './src/hooks/usePersistentPuzzles';
 import {
   DEFAULT_PUZZLE_SIZE,
   type PuzzleSize,
 } from './src/games/puzzle/puzzleSizes';
-import type { Puzzle } from './src/types/puzzle';
 
 // Lets the app render immediately with zero insets instead of nothing at
 // all, since SafeAreaProvider otherwise renders no children until a real
@@ -46,9 +47,19 @@ type Screen =
 
 function App() {
   const [screen, setScreen] = useState<Screen>({ name: 'home' });
-  // No persisted storage yet (src/storage/ is empty) — these reset on
-  // every app launch until that layer exists.
-  const [userPuzzles, setUserPuzzles] = useState<Puzzle[]>([]);
+  // Uploaded photos and per-puzzle completion are persisted to
+  // AsyncStorage (photos' bytes copied into app storage) and rehydrated
+  // on launch — see usePersistentPuzzles.
+  const {
+    userPuzzles,
+    addPuzzles,
+    deletePuzzle,
+    completedIds,
+    markCompleted,
+    clearCompleted,
+  } = usePersistentPuzzles();
+  // The rest is still session-only, by design (Settings choices reset on
+  // relaunch until there's a reason to keep them).
   const [defaultImagesEnabled, setDefaultImagesEnabled] = useState(true);
   const [soundVolume, setSoundVolume] = useState(0.6);
   const [soundMuted, setSoundMuted] = useState(false);
@@ -92,6 +103,8 @@ function App() {
         rows={puzzleSize.rows}
         columns={puzzleSize.columns}
         onBack={goHome}
+        onCompleted={markCompleted}
+        onReset={clearCompleted}
       />
     );
   } else if (screen.name === 'parentGate') {
@@ -105,12 +118,8 @@ function App() {
     content = (
       <ParentScreen
         userPuzzles={userPuzzles}
-        onAddPuzzles={added =>
-          setUserPuzzles(current => [...added, ...current])
-        }
-        onDeletePuzzle={id =>
-          setUserPuzzles(current => current.filter(p => p.id !== id))
-        }
+        onAddPuzzles={addPuzzles}
+        onDeletePuzzle={deletePuzzle}
         defaultImagesEnabled={defaultImagesEnabled}
         onToggleDefaultImages={setDefaultImagesEnabled}
         onBack={goHome}
@@ -136,6 +145,7 @@ function App() {
       <HomeScreen
         userPuzzles={userPuzzles}
         stockPuzzles={stockPuzzles}
+        completedPuzzleIds={[...completedIds]}
         onSelectPuzzle={puzzle =>
           setScreen({ name: 'puzzle', puzzleId: puzzle.id })
         }
@@ -147,16 +157,18 @@ function App() {
   return (
     <SafeAreaProvider initialMetrics={FALLBACK_SAFE_AREA_METRICS}>
       <StatusBar hidden />
-      <View style={styles.container}>
-        <View
-          style={[styles.container, locked && styles.dimmed]}
-          pointerEvents={locked ? 'none' : 'auto'}>
-          {content}
+      <ErrorBoundary>
+        <View style={styles.container}>
+          <View
+            style={[styles.container, locked && styles.dimmed]}
+            pointerEvents={locked ? 'none' : 'auto'}>
+            {content}
+          </View>
+          {locked && (
+            <SessionLockOverlay onUnlock={() => setLocked(false)} />
+          )}
         </View>
-        {locked && (
-          <SessionLockOverlay onUnlock={() => setLocked(false)} />
-        )}
-      </View>
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }

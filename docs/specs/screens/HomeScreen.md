@@ -23,7 +23,10 @@ a cartoon farm scene, pre-blurred and paled at build time and then drawn
 at `opacity: 0.5` over the cream page colour — enough to feel like a
 place, not enough to fight the puzzle tiles for attention. It's an
 absolutely-positioned `Image` under a transparent `SafeAreaView` (rather
-than the deprecated `ImageBackground`). The [[AppHeader]]'s opaque cream
+than the deprecated `ImageBackground`), sized explicitly to the full
+window (`useWindowDimensions`) with `resizeMode="cover"` so it always
+fills the screen, cropping whichever of width/height overflows. The
+[[AppHeader]]'s opaque cream
 band covers it at the top; the tiles (opaque photos / colours) sit over it;
 it shows through the gaps.
 
@@ -40,15 +43,29 @@ row), and a thin `divider` rule is inserted between them **only when
 there's an uploaded group *and* a starter group** — no uploads, or
 starters toggled off, means no divider.
 
-**Responsive column count.** `columnsForWidth(useWindowDimensions().width)`
-picks the grid width: **4 columns at >= 700dp** (a typical tablet — so the
-eight starter puzzles form a tidy 4x2), 3 at >= 520dp, 2 below that (a
-phone). It recomputes on rotation / window resize. The `FlatList` is keyed
-`cols-{columns}` so it rebuilds cleanly when that changes. A short last
-row is padded with `columns - row.length` invisible spacer views so its
-tiles keep their natural size instead of stretching to fill the width.
+**Responsive column count.** `columnsForViewport(width, height)` (both
+from `useWindowDimensions()`) picks the grid width. `columnsForWidth`
+gives the landscape baseline: **4 columns at >= 700dp** (a typical tablet
+— so the eight starter puzzles form a tidy 4x2), 3 at >= 520dp, 2 below
+that (a phone). Then, **when the viewport is portrait** (`height > width`),
+that count is halved and floored at 2 (`max(2, round(columns / 2))`) — so
+rotating a tablet upright "rotates" the grid: a 4-wide 4x2 becomes a
+2-wide 2x4, a phone stays at 2. It all recomputes on rotation / window
+resize. The `FlatList` is keyed `cols-{columns}` so it rebuilds cleanly
+when that changes. A short last row is padded with `columns - row.length`
+invisible spacer views so its tiles keep their natural size instead of
+stretching to fill the width.
 Tile background colours cycle continuously through the palette by absolute
 grid position (`colorBase + colIndex`), carrying across the divider.
+
+**Completion badge.** `completedPuzzleIds` (from `App.tsx` via
+[[usePersistentPuzzles]]) is turned into a `Set`; any tile whose
+`puzzle.id` is in it renders a small green circular check badge
+(`colors.leaf`, white border, `Icon name="check"`) pinned to its
+top-right corner, and sets `accessibilityState={{ selected: true }}`. The
+badge has no `onPress` and `pointerEvents="none"`, so it doesn't affect
+tapping. It covers starter and uploaded puzzles alike. A puzzle's badge is
+cleared by pressing Reset on its [[PuzzleScreen]].
 
 Each tile renders the puzzle's artwork whenever it has any — resolved via
 `puzzleImageSource` (see [[puzzleImage]]), which returns the bundled asset
@@ -89,6 +106,7 @@ Android navigation bar there previously covered this button.
 |------|------|----------|-------|
 | `userPuzzles` | `Puzzle[]` | No | Defaults to `[]`. Rendered first in the grid. |
 | `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled eight-puzzle `STARTER_PUZZLES` set. Rendered after `userPuzzles`. |
+| `completedPuzzleIds` | `string[]` | No | Defaults to `[]`. Each id gets a green check badge on its tile. |
 | `onSelectPuzzle` | `(puzzle: Puzzle) => void` | No | Called with the tapped puzzle. No-op if omitted. |
 | `onOpenParentArea` | `() => void` | No | Called when the corner parent-area button is pressed. No-op if omitted. |
 
@@ -104,6 +122,8 @@ Android navigation bar there previously covered this button.
 - No text needs to be read to use the screen: each tile shows its
   picture, and the puzzle title (`accessibilityLabel`) is exposed for
   screen readers but never required to identify or select a tile visually.
+- "Done" is shown as a green check badge, not a word — a toddler can see
+  which pictures they've finished without reading.
 - Visual feedback on press: the tile dims (`opacity: 0.7`) while held.
   Background music plays (see [[useBackgroundMusic]]); no per-tap sound.
 - The parent-area button is low-contrast (`opacity: 0.55` at rest) on
@@ -115,7 +135,7 @@ Android navigation bar there previously covered this button.
 
 - No `userPuzzles` and no `stockPuzzles` override → grid is populated by
   the default `STARTER_PUZZLES` alone (eight tiles, each with cartoon art;
-  4x2 on a tablet, 2x4 on a phone).
+  4x2 on a tablet in landscape, 2x4 on a phone or a tablet in portrait).
 - `userPuzzles` non-empty *and* `stockPuzzles` non-empty → uploaded tiles
   first, a `divider` rule, then the starter tiles. The two groups never
   share a row.
@@ -126,8 +146,13 @@ Android navigation bar there previously covered this button.
   empty-state message — see Non-goals).
 - A group's size isn't a multiple of the column count → that group's last
   row is padded with invisible spacers so its tiles aren't stretched.
-- Window width crosses a breakpoint (tablet rotated, split-view resized) →
-  the grid re-chunks to the new column count.
+- `completedPuzzleIds` contains an id not on the grid → harmless no-op.
+- `completedPuzzleIds` empty / omitted → no badges, no check glyph rendered.
+- Window width crosses a breakpoint (split-view resized) → the grid
+  re-chunks to the new column count.
+- Tablet rotated landscape ↔ portrait → the column count halves / doubles
+  (min 2) and the grid re-chunks, so the same tiles run taller in portrait
+  instead of wider.
 - Tapping a tile with no `onSelectPuzzle` passed → no-op, no crash.
 
 ## Test scenarios
@@ -137,8 +162,10 @@ Android navigation bar there previously covered this button.
    Train, Theatre, Teddies), in order.
 2. Render with one `userPuzzles` entry → it's the first tile, then all of
    `STARTER_PUZZLES` in order.
-3. At width 400 the eight starter puzzles chunk into rows of 2; at width
-   900 into rows of 4; at width 600 into rows of 3.
+3. In landscape, at width 400 the eight starter puzzles chunk into rows of
+   2; at width 900 into rows of 4; at width 600 into rows of 3. In
+   portrait (height > width), a 1100-wide tablet's 4 columns drop to 2
+   (rows of 2), and a 400-wide phone stays at 2.
 4. No `userPuzzles` → the grid model contains no `divider` item. Two
    `userPuzzles` at width 900 → model is `row, divider, row, row` (2
    uploaded, then 4 + 4 starters); one `userPuzzles` with `stockPuzzles={[]}`
@@ -146,6 +173,9 @@ Android navigation bar there previously covered this button.
 5. Tap the first tile → `onSelectPuzzle` is called with that tile's
    `Puzzle` (`id: 'stock-1'`).
 6. Tap the corner parent-area button → `onOpenParentArea` is called.
+7. `completedPuzzleIds={['stock-2', 'stock-5']}` → exactly the Fairground
+   and Sandpit tiles carry the check badge (`accessibilityState.selected`);
+   with it empty, no tile does and no check glyph is in the tree.
 
 ## Non-goals / known limitations
 
@@ -158,8 +188,9 @@ Android navigation bar there previously covered this button.
 - No navigation library: `onSelectPuzzle` is a bare callback; `App.tsx`
   switches between `HomeScreen` and `PuzzleScreen` with a single piece of
   local state rather than a real nav stack (see `PuzzleScreen`'s spec).
-- No persisted storage: `userPuzzles` must be passed in by whatever renders
-  `HomeScreen`; this screen doesn't read `src/storage/` (not implemented).
+- This screen still reads nothing from storage itself — `userPuzzles` and
+  `completedPuzzleIds` are passed in by `App.tsx`, which owns the
+  persistence via [[usePersistentPuzzles]].
 - No explicit empty state for "zero puzzles at all" — shouldn't happen in
   practice since `stockPuzzles` always defaults to a non-empty set, but isn't
   guarded against explicitly.
@@ -175,4 +206,4 @@ Android navigation bar there previously covered this button.
 - Palette: `src/theme/colors.ts`
 - Starter artwork: `src/games/puzzle/assets/starter/`
 - Background: `src/assets/home-bg.jpg` (pre-blurred farm scene)
-- Related specs: [[AppHeader]], [[Icon]], [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]]
+- Related specs: [[AppHeader]], [[Icon]], [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]], [[usePersistentPuzzles]]

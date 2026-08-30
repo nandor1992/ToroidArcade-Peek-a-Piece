@@ -1,2 +1,8 @@
+# A flat node_modules — React Native autolinking and @shopify/react-native-skia
+# v2's split native packages both resolve dependencies by walking up a real
+# node_modules tree, which the default isolated/symlinked layout breaks.
+# (.npmrc also sets node-linker=hoisted; kept here too for pnpm 11+.)
+nodeLinker: hoisted
+
 patchedDependencies:
   '@react-native-community/cli-platform-android@20.2.0': patches/@react-native-community__cli-platform-android@20.2.0.patch

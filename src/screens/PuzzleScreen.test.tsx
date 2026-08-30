@@ -130,23 +130,30 @@ test('a starter puzzle with no photo still shows the emoji placeholder, not a bo
   expect(findPuzzleBoard(root!.root)).toBeUndefined();
 });
 
-test('solving the board shows the "Great job!" banner', async () => {
+test('solving the board shows the "Great job!" banner and marks the puzzle complete; Reset clears both', async () => {
   const withPhoto: Puzzle[] = [
     { id: 'u1', title: 'Grandma', source: 'user', imageUri: 'file:///g.jpg' },
   ];
   const randomSpy = jest.spyOn(Math, 'random').mockReturnValue(0);
+  const onCompleted = jest.fn();
+  const onReset = jest.fn();
 
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
     root = ReactTestRenderer.create(
-      <PuzzleScreen puzzles={withPhoto} initialPuzzleId="u1" />,
+      <PuzzleScreen
+        puzzles={withPhoto}
+        initialPuzzleId="u1"
+        onCompleted={onCompleted}
+        onReset={onReset}
+      />,
     );
   });
 
   const board = findPuzzleBoard(root!.root);
   await act(() => {
     board.props.onLayout({
-      nativeEvent: { layout: { width: 200, height: 200 } },
+      nativeEvent: { layout: { width: 800, height: 800 } },
     });
   });
 
@@ -156,13 +163,13 @@ test('solving the board shows the "Great job!" banner', async () => {
   expect(bannerVisible()).toBe(false);
 
   // 2x2 grid, all pieces scattered to (0, 0) with Math.random mocked —
-  // see PuzzleBoard.test.tsx for the geometry. Absolute targets are at
-  // (40,40) / (100,40) / (40,100) / (100,100); a grab at (1,1) then a
-  // move to `target + (1,1)` lands each piece exactly.
+  // see PuzzleBoard.test.tsx for the geometry. On an 800x800 area the
+  // absolute targets are (40,40) / (400,40) / (40,400) / (400,400); a grab
+  // at (1,1) then a move to `target + (1,1)` lands each piece exactly.
   const targets = [
-    { x: 101, y: 101 }, // 1-1
-    { x: 41, y: 101 }, // 1-0
-    { x: 101, y: 41 }, // 0-1
+    { x: 401, y: 401 }, // 1-1
+    { x: 41, y: 401 }, // 1-0
+    { x: 401, y: 41 }, // 0-1
     { x: 41, y: 41 }, // 0-0
   ];
   for (const target of targets) {
@@ -182,12 +189,15 @@ test('solving the board shows the "Great job!" banner', async () => {
   }
 
   expect(bannerVisible()).toBe(true);
+  expect(onCompleted).toHaveBeenCalledWith('u1');
 
-  // Reset clears the banner and re-scrambles (the board remounts).
+  // Reset clears the banner and re-scrambles the board in place, and
+  // clears the puzzle's completion.
   await act(() => {
     findButton(root!.root, 'Reset puzzle').props.onPress();
   });
   expect(bannerVisible()).toBe(false);
+  expect(onReset).toHaveBeenCalledWith('u1');
 
   randomSpy.mockRestore();
 });

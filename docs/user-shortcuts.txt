@@ -1,6 +1,0 @@
-adb devices
-
-pnpm exec react-native run-android --device R3CN70GL8CJ
-
-R3 - S21
-R8 - A8

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Cold-start window background: brand colour with the app mark centred,
+     shown until the React root view mounts. All vector — no raster asset
+     to keep in sync. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/brand_sunbeam" />
+    <item
+        android:drawable="@drawable/ic_launcher_foreground"
+        android:gravity="center"
+        android:width="220dp"
+        android:height="220dp" />
+</layer-list>

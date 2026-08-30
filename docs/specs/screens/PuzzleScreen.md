@@ -47,11 +47,12 @@ are visible across the whole area below the header.
 (`box-none` container, so taps between them still reach the pieces). Home
 (`home` [[Icon]], top-left) calls `onBack` — a house, not a chevron, so
 it's clearly "leave the game" not "previous picture". Reset (`reset` /
-restart icon, top-right) bumps a `resetCount` that's part of the
-`PuzzleBoard` `key`, remounting it → the pieces re-scatter (and `solved`
-clears). *Previous* and *Next* (`previous` / `next` chevrons) are
-absolute, vertically centred on the left / right edges, and step `index`
-by ±1, wrapping both ways.
+restart icon, top-right) bumps a `resetCount` passed to `PuzzleBoard` as
+`resetSignal` → the pieces re-scatter in place (and `solved` clears)
+**without a remount**, so the decoded photo stays in memory and Reset is
+instant rather than flashing back to the loading placeholder. *Previous*
+and *Next* (`previous` / `next` chevrons) are absolute, vertically centred
+on the left / right edges, and step `index` by ±1, wrapping both ways.
 
 `puzzles` is built by `App.tsx` as `[...userPuzzles, ...stockPuzzles]`,
 where `stockPuzzles` is `STARTER_PUZZLES` (eight bundled puzzles) or `[]`
@@ -59,28 +60,40 @@ depending on the parent's "Show starter puzzles" toggle (see
 `ParentScreen`) — so Next only cycles through whatever's currently visible
 on `HomeScreen`, never a hidden set.
 
-The whole screen's background is one of a handful of solid-color
-placeholders (`BACKGROUND_PLACEHOLDERS`, standing in for real background art
-— see Non-goals), chosen at random once per puzzle shown. The choice
-re-rolls when `index` changes (`useMemo` keyed on the current puzzle's id),
-not on every re-render.
+The whole screen's background is one of a handful of **soft pastel
+washes** (`BACKGROUND_PLACEHOLDERS` — heavily lightened relatives of the
+palette hues, not the full-strength brand colours, which were too loud
+right behind the photo; standing in for real background art, see
+Non-goals), chosen at random once per puzzle shown. The choice re-rolls
+when `index` changes (`useMemo` keyed on the current puzzle's id), not on
+every re-render.
 
 **The game itself.** When the current puzzle has artwork —
 `puzzleSkiaSource(puzzle)` returns non-null, which it does for both
 parent-uploaded photos (`imageUri`) and every `STARTER_PUZZLES` entry
 (`imageAsset`) — the play area renders `<PuzzleBoard
-key={`${puzzle.id}-${columns}x${rows}-${resetCount}`} imageSource={...}
-rows={rows} columns={columns} onSolved={...} />`. The `key` folds in the
-puzzle id, the grid size *and* `resetCount`, so any of the three remounts
-`PuzzleBoard` — which is how a new puzzle, a size change, and the Reset
-button all re-scatter the pieces. A puzzle with no artwork falls back to a
-centred emoji; nothing in the current data hits that. See [[puzzleImage]].
+key={`${puzzle.id}-${columns}x${rows}`} imageSource={...} rows={rows}
+columns={columns} resetSignal={resetCount} onSolved={...} />`. The `key`
+folds in **only** the puzzle id and the grid size, so a new puzzle or a
+size change remounts `PuzzleBoard` (there's a different image / grid to
+build) but the Reset button does not — it flows through `resetSignal`,
+which re-scatters the pieces in place while keeping the decoded image. A
+puzzle with no artwork falls back to a centred emoji; nothing in the
+current data hits that. See [[puzzleImage]].
 
 A local `solved` boolean (cleared whenever `puzzle?.id` changes and on
 Reset) tracks whether the current puzzle's `onSolved` has fired; while
 true, a small "🎉 Great job!" banner overlays the play area
 (`pointerEvents="none"`). Solving doesn't auto-advance or navigate — the
 banner is the only feedback.
+
+**Completion callbacks.** When the board fires `onSolved`, this screen
+calls `onCompleted?.(puzzle.id)` (in addition to setting `solved`) — that's
+what persists the green check on [[HomeScreen]] via
+[[usePersistentPuzzles]]. Pressing Reset calls `onReset?.(puzzle.id)`
+alongside re-scattering the board, which clears that puzzle's check. Both
+are keyed by the current puzzle's id, so they track starter and uploaded
+puzzles alike.
 
 ## Interface
 
@@ -91,6 +104,8 @@ banner is the only feedback.
 | `rows` | `number` | No | Piece rows. Default 2. |
 | `columns` | `number` | No | Piece columns. Default 2. |
 | `onBack` | `() => void` | No | Called when the home button is pressed. No-op if omitted. |
+| `onCompleted` | `(puzzleId: string) => void` | No | Called with the current puzzle's id when it's solved. |
+| `onReset` | `(puzzleId: string) => void` | No | Called with the current puzzle's id when Reset is pressed. |
 
 ## Toddler UX constraints
 
@@ -122,8 +137,10 @@ banner is the only feedback.
   puzzle (e.g. parent re-render) does not.
 - Switching puzzles also clears `solved` and remounts a fresh
   `PuzzleBoard` (via its `key`) — no leftover banner / pre-solved board.
-- Pressing Reset → the board remounts (pieces re-scatter) and the banner
-  clears; the puzzle id and grid size are unchanged.
+- Pressing Reset → the pieces re-scatter in place (no remount, image
+  kept), the banner clears, and `onReset(puzzle.id)` fires (clears the Home
+  check); the puzzle id and grid size are unchanged.
+- Solving → `onCompleted(puzzle.id)` fires once alongside the banner.
 - `rows`/`columns` change (a new Puzzle Size) → `PuzzleBoard` remounts at
   the new grid. In practice you can't reach Settings without leaving this
   screen, so it only differs on the next open.
@@ -140,7 +157,9 @@ banner is the only feedback.
    props), not the emoji fallback; a puzzle with neither renders the
    fallback, not a board.
 5. Solving the board (dragging all its pieces together) shows the
-   "🎉 Great job!" banner; pressing Reset then clears it.
+   "🎉 Great job!" banner and calls `onCompleted(puzzle.id)`; pressing
+   Reset then clears the banner, re-scatters (no remount), and calls
+   `onReset(puzzle.id)`.
 
 The end-to-end claim that Next respects the "Show starter puzzles" toggle
 is covered at the `App.tsx` level (`App.test.tsx`), not here, since it
@@ -154,8 +173,8 @@ awareness of the toggle at all, only of whatever list it's handed.
   [[HomeScreen]]).
 - Piece count comes from the global Settings choice (`rows`/`columns`
   props); there's no per-puzzle or in-game size control here.
-- No real background art — `BACKGROUND_PLACEHOLDERS` is four solid palette
-  colors standing in for a bundled set of background images. (The starter
+- No real background art — `BACKGROUND_PLACEHOLDERS` is five pale pastel
+  tints standing in for a bundled set of background images. (The starter
   *puzzle* art is now bundled — see [[HomeScreen]] — but the screen
   background behind it still isn't.)
 - Navigation is a small hand-rolled `screen` union in `App.tsx`, not a real
@@ -164,10 +183,12 @@ awareness of the toggle at all, only of whatever list it's handed.
   would need revisiting (likely adding a navigation library) if it grows
   much further.
 - `puzzles` and `initialPuzzleId` are passed in by the caller; this screen
-  doesn't read `src/storage/` itself (not implemented).
+  doesn't read `src/storage/` itself. Completion is reported *out* via
+  `onCompleted` / `onReset` — `App.tsx` ([[usePersistentPuzzles]]) does the
+  persisting.
 
 ## Related
 
 - Code: `src/screens/PuzzleScreen.tsx`
 - Tests: `src/screens/PuzzleScreen.test.tsx`
-- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]], [[puzzleSizes]], [[AppHeader]], [[Icon]]
+- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]], [[puzzleSizes]], [[AppHeader]], [[Icon]], [[usePersistentPuzzles]]

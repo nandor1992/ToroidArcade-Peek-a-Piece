@@ -26,11 +26,15 @@ is the eyes+piece mark alone (no background), for contexts that need just
 the glyph. The native app icons
 (`android/app/src/main/res/mipmap-*/ic_launcher*.png` and
 `ios/PeekaPiece/Images.xcassets/AppIcon.appiconset/`) are rendered from this
-vector at each required size — Android keeps the icon's own rounded-corner
-silhouette with transparent corners (legacy launcher icons, no adaptive-icon
-XML in this project yet); iOS uses a full-bleed square with no alpha
-channel, since iOS applies its own corner mask and the App Store rejects
-icons with transparency.
+vector at each required size. Android has both: the legacy
+`mipmap-*/ic_launcher.png` (API < 26) **and** an adaptive icon
+(`mipmap-anydpi-v26/ic_launcher*.xml`) whose foreground
+(`drawable/ic_launcher_foreground.xml`) is a hand-transcribed
+`VectorDrawable` of `resources/peekapiece-mark.svg` scaled into the 108dp
+safe zone, over a solid `#FFC93C` (`@color/ic_launcher_background`) — so
+modern launchers show a proper masked icon, not a shrunk square. iOS uses
+a full-bleed square with no alpha channel, since iOS applies its own
+corner mask and the App Store rejects icons with transparency.
 
 **Colour.** Warm, high-contrast, chosen to stay distinguishable under the
 most common forms of colour blindness (the palette differs in lightness as
@@ -91,6 +95,27 @@ entire category of complexity: no API, no sync conflicts, no server-side
 specs to maintain. If cross-device sync is wanted later, treat it as an
 opt-in layer added on top of a working offline-first app, not a foundation.
 
+Concretely (as of the persistence pass):
+
+- **`@react-native-async-storage/async-storage`** holds the small JSON state
+  that must survive a relaunch — the uploaded-puzzle list
+  (`@peekapiece/userPuzzles`) and the set of solved puzzle ids
+  (`@peekapiece/completedPuzzleIds`). Chosen over MMKV/SQLite for ubiquity;
+  the data is tiny and unstructured. Settings choices (volume, timer, puzzle
+  size, starter-puzzles toggle) are still deliberately session-only.
+- **Photo bytes are copied into app-private storage**, not left at the
+  picker's temp URI (which the OS can purge). On upload, the file is copied
+  to `<DocumentDirectoryPath>/puzzles/<puzzleId>.jpg` via
+  **`@dr.pogodin/react-native-fs`** (the maintained fork of the abandoned
+  `react-native-fs`); the stored `imageUri` points at that copy, and deleting
+  a puzzle deletes its file.
+- `src/storage/` holds the pure load/save/copy helpers; `usePersistentPuzzles`
+  (`src/hooks/`) is the single hook `App.tsx` uses to hydrate on launch and
+  persist on every change. See `docs/specs/storage/` and
+  `docs/specs/hooks/usePersistentPuzzles.md`.
+- Both libraries autolink (no manual native edits) but need a native rebuild
+  after install, and `pod install` for iOS.
+
 **Games are self-contained plugins under `src/games/<name>/`.** Each game
 owns its own `components/` and `logic/` and exposes a small entry point
 (`index.ts`). The goal: adding a second or third game type should mean adding
@@ -130,11 +155,59 @@ registered per-platform (`android/app/src/main/assets/fonts/`, iOS
 native rebuild. Every child-facing screen also opens with a slim
 `src/components/AppHeader.tsx` (the mark + "Peek-a-Piece").
 
+**A web demo build, via react-native-web + Webpack.** There is a second,
+browser-hostable entry point: `src/app/DemoApp.tsx`, bundled by
+`webpack.config.js` into a static `web/dist/` (`pnpm web:build`). It is
+deliberately **demo-scope** — the eight bundled starter puzzles only, no
+parent area and no photo upload — so the app can be tried without installing
+it. See [`docs/specs/app/DemoApp.md`](specs/app/DemoApp.md).
+
+- **Why a separate root rather than reusing `App.tsx`:** three native
+  dependencies have no web build (`react-native-image-picker`,
+  `@dr.pogodin/react-native-fs`, `react-native-sound`) and `Alert` is absent
+  from react-native-web. By not importing the parent-facing screens, the demo
+  needs exactly **one** real shim (audio) instead of four.
+- **Ported for free:** Skia renders the board through CanvasKit/WASM (it ships
+  `.web.js` platform files); AsyncStorage v3 falls back to IndexedDB, so
+  completion ticks persist; safe-area-context ships web files; `AppState` maps
+  to the Page Visibility API.
+- **Shims are platform files, not branches** — `useBackgroundMusic.web.ts`,
+  `photoFiles.web.ts`. Webpack resolves `.web.*` first, so native code paths
+  are untouched and there are no `Platform.OS` conditionals in shared code.
+- **Additive by construction:** Metro and the native builds never read
+  `webpack.config.js` or `web/`, so `pnpm android` / `pnpm ios` are unaffected.
+- **Trade-off accepted:** `canvaskit.wasm` is ~8 MB uncompressed. Serve the
+  demo with brotli/gzip; see `docs/web-demo.md` for the payload notes.
+
 **Toddler-first UX is a first-class constraint, not a detail.** Large touch
 targets, forgiving input (mis-taps do nothing rather than showing an error),
 minimal-to-no text dependency, and clear audio/visual feedback are baseline
 requirements for every screen and game component — see the "Toddler UX
 constraints" section required in every spec.
+
+**Releasing to Google Play.** The app id is **`com.toroidarcade.peekapiece`**
+(permanent once published; `namespace` + `applicationId` in
+`android/app/build.gradle`, and the Kotlin package). It is a **children's
+app** → Google Play **Families Policy** applies in full; the code is built
+to comply (no network, no analytics/ads/crash SDKs, all storage local,
+parental actions behind a math gate — see `ParentGateScreen`). Release
+mechanics:
+
+- **Signing**: `android/app/build.gradle` reads an upload key from
+  `android/keystore.properties` (gitignored; `.example` committed). Absent
+  that file it falls back to the debug key so a fresh clone still builds —
+  that fallback is never publishable.
+- **Permissions**: only `INTERNET` (declared, unused for data). The
+  manifest explicitly `tools:node="remove"`s the `WRITE_EXTERNAL_STORAGE`
+  that `@dr.pogodin/react-native-fs` would otherwise merge in — the app
+  only writes to its own `DocumentDirectoryPath`.
+- **Cold start**: `Theme.App.SplashScreen` (brand background + mark) is the
+  window theme until `MainActivity.onCreate` swaps to `AppTheme`, so there's
+  no white flash while Hermes + Skia start.
+- **Crash safety**: `src/components/ErrorBoundary.tsx` wraps the app so a JS
+  exception shows a parent-facing recovery screen, not a white screen.
+- Full checklist + per-release steps: [`docs/web-demo.md`](web-demo.md).
+  Privacy policy draft: [`docs/legal/privacy-policy.md`](legal/privacy-policy.md).
 
 ## Open decisions (for the install/setup session or first implementation pass)
 
@@ -142,11 +215,10 @@ constraints" section required in every spec.
   React Context + hooks or a lightweight store (e.g. Zustand) are both
   reasonable; avoid anything that assumes a backend (Redux-with-thunks-for-
   API-calls patterns are unnecessary overhead here).
-- **Local persistence**: photo references + puzzle progress need a small
-  local store — `react-native-mmkv` (fast key-value) or SQLite (e.g.
-  `op-sqlite`) if querying structured puzzle/progress data turns out to
-  matter. Actual photo bytes should stay wherever the OS photo picker leaves
-  them (or a copy in app-private storage) rather than duplicated into a DB.
+- ~~**Local persistence**~~: **decided** — `@react-native-async-storage/async-storage`
+  for the JSON state, `@dr.pogodin/react-native-fs` to copy photo bytes into
+  `<DocumentDirectoryPath>/puzzles/`. See "Local-only storage" under Key
+  decisions above.
 - **Navigation library**: `@react-navigation/native` is the de facto standard
   for bare RN and is assumed by the folder layout (`src/navigation/`), but
   hasn't been installed yet as of this doc.

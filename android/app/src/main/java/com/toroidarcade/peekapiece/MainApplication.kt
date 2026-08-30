@@ -1,4 +1,4 @@
-package com.peekapiece
+package com.toroidarcade.peekapiece
 
 import android.app.Application
 import com.facebook.react.PackageList

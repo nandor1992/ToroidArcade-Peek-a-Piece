@@ -26,14 +26,18 @@ calling back to whatever owns the list (`App.tsx`):
   number of photos in one go. Each returned asset with a `uri` becomes a
   `Puzzle` (`source: 'user'`, `imageUri` = the asset URI, `title` from the
   asset filename or `"Photo"`), with ids `user-<timestamp>-<i>` so a batch
-  doesn't collide; the whole array is passed to `onAddPuzzles` (`App.tsx`
-  prepends it to `userPuzzles`). A cancelled / errored response
-  (`didCancel` / `errorCode`), or one with no usable assets, is a no-op.
+  doesn't collide; the whole array is passed to `onAddPuzzles`. `App.tsx`
+  ([[usePersistentPuzzles]]) then **copies each photo's bytes into
+  app-private storage** (rewriting `imageUri` to that durable copy —
+  [[photoFiles]]), prepends the batch to `userPuzzles`, and persists.
+  A cancelled / errored response (`didCancel` / `errorCode`), or one with
+  no usable assets, is a no-op.
 - **Delete** — a coral badge with the [[Icon]] `close` glyph in each
   thumbnail's top-right *corner* (`top: 4, right: 4`, white border) —
   shows a native confirmation (`Alert.alert`) before calling
-  `onDeletePuzzle(id)`. Deleting is permanent (local-only storage, no
-  undo), so the confirm step is deliberate. The badge sits *inside* the
+  `onDeletePuzzle(id)`. `App.tsx` removes it from the persisted list *and
+  deletes its copied file* ([[photoFiles]]). Deleting is permanent
+  (local-only, no undo), so the confirm step is deliberate. The badge sits *inside* the
   corner rather than overhanging it, and the grid has `paddingTop`, so the
   first row's badges aren't clipped by the top of the list.
 - **Show starter puzzles** is a `Switch` that directly reports its new
@@ -84,10 +88,14 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 
 ## Non-goals / known limitations
 
-- No persisted storage: puzzles added here live only in `App.tsx`'s
-  in-memory state and are lost on app restart, same limitation as
-  `HomeScreen`/`PuzzleScreen`. The same is true of everything
-  `SettingsScreen` controls (volume, mute, timer minutes).
+- Puzzles added here **are** now persisted — `App.tsx`
+  ([[usePersistentPuzzles]]) writes the list to AsyncStorage and copies
+  each photo into app storage, so they survive a relaunch. Everything
+  `SettingsScreen` controls (volume, mute, timer minutes) is still
+  session-only by design.
+- `ParentScreen` itself is unchanged by this — it still just builds
+  `Puzzle[]` from picker assets and calls `onAddPuzzles`; the copy +
+  persist happens above it.
 - No editing of a puzzle's title, no reordering, no multi-select delete
   (multi-select *add* is supported).
 - Requires `NSPhotoLibraryUsageDescription` (added to
@@ -98,4 +106,4 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 
 - Code: `src/screens/ParentScreen.tsx`
 - Tests: `src/screens/ParentScreen.test.tsx`
-- Related specs: [[ParentGateScreen]], [[HomeScreen]], [[SettingsScreen]], [[Icon]]
+- Related specs: [[ParentGateScreen]], [[HomeScreen]], [[SettingsScreen]], [[Icon]], [[usePersistentPuzzles]], [[photoFiles]]

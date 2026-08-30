@@ -1,0 +1,5 @@
+<resources>
+    <!-- Brand "Sunbeam" — the app icon's field colour (docs/architecture.md). -->
+    <color name="brand_sunbeam">#FFC93C</color>
+    <color name="ic_launcher_background">#FFC93C</color>
+</resources>

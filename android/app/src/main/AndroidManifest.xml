@@ -1,6 +1,20 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- @dr.pogodin/react-native-fs merges in WRITE_EXTERNAL_STORAGE (and
+         AGP then implies READ_EXTERNAL_STORAGE from it). The app only touches
+         its own private Documents dir (src/storage/photoFiles.ts) and picks
+         photos through the system photo picker (no permission), so drop both
+         — a kids-category app shouldn't carry storage permissions it never
+         uses. -->
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        tools:node="remove" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        tools:node="remove" />
 
     <application
       android:name=".MainApplication"
@@ -17,6 +31,7 @@
         android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
+        android:theme="@style/Theme.App.SplashScreen"
         android:exported="true">
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />

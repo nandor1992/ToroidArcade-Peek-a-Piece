@@ -1,4 +1,4 @@
-package com.peekapiece
+package com.toroidarcade.peekapiece
 
 import android.os.Bundle
 import androidx.core.view.WindowCompat
@@ -25,6 +25,9 @@ class MainActivity : ReactActivity() {
       DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
 
   override fun onCreate(savedInstanceState: Bundle?) {
+    // Swap the cold-start splash theme (Theme.App.SplashScreen, set in the
+    // manifest) back to the normal app theme before the window is created.
+    setTheme(R.style.AppTheme)
     super.onCreate(savedInstanceState)
     hideSystemBars()
   }

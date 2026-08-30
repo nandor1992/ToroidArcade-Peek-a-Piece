@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive-icon foreground: the Peek-a-Piece mark (eyes peeking over a
+     jigsaw piece), transcribed from resources/peekapiece-mark.svg. The
+     <group> scales the SVG's own 512-space coordinates into the 108dp
+     adaptive viewport's safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:scaleX="0.17"
+        android:scaleY="0.17"
+        android:translateX="10.4"
+        android:translateY="9">
+
+        <!-- Eyes: navy discs with white highlights. Drawn before the piece
+             so the piece's top edge crops them into a "peeking" look. -->
+        <path
+            android:fillColor="#26385A"
+            android:pathData="M135,143 a46,46 0 1,0 92,0 a46,46 0 1,0 -92,0 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M153,127 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 Z" />
+        <path
+            android:fillColor="#26385A"
+            android:pathData="M239,143 a46,46 0 1,0 92,0 a46,46 0 1,0 -92,0 Z" />
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M257,127 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 Z" />
+
+        <!-- Jigsaw piece: darker "shadow" layer then the teal face. -->
+        <path
+            android:fillColor="#1FA396"
+            android:pathData="M117,184 C193.6,184 270.1,184 349,184 C349,242 349,260.6 358.3,272.2 C381.5,286.1 395.4,258.2 395.4,300 C395.4,341.8 381.5,313.9 358.3,327.8 C349,339.4 349,358 349,416 C272.4,416 195.9,416 117,416 C117,358 117,339.4 126.3,327.8 C149.5,313.9 163.4,341.8 163.4,300 C163.4,258.2 149.5,286.1 126.3,272.2 C117,260.6 117,242 117,184 Z" />
+        <path
+            android:fillColor="#2EC4B6"
+            android:pathData="M117,173 C193.6,173 270.1,173 349,173 C349,231 349,249.6 358.3,261.2 C381.5,275.1 395.4,247.2 395.4,289 C395.4,330.8 381.5,302.9 358.3,316.8 C349,328.4 349,347 349,405 C272.4,405 195.9,405 117,405 C117,347 117,328.4 126.3,316.8 C149.5,302.9 163.4,330.8 163.4,289 C163.4,247.2 149.5,275.1 126.3,261.2 C117,249.6 117,231 117,173 Z" />
+    </group>
+</vector>

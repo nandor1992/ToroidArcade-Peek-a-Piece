@@ -199,6 +199,38 @@ test('About button opens a popup with app info, and Close dismisses it', async (
   expect(findModal().props.visible).toBe(false);
 });
 
+test('the About popup links to the GitHub repository', async () => {
+  const openURL = jest
+    .spyOn(Linking, 'openURL')
+    .mockResolvedValue(undefined as never);
+
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  const repoLink = root!.root.findAll(
+    node =>
+      node.props.accessibilityRole === 'link' &&
+      typeof node.props.onPress === 'function' &&
+      node.props.accessibilityLabel === 'Source code on GitHub',
+  )[0];
+  expect(repoLink).toBeDefined();
+
+  await act(() => {
+    repoLink.props.onPress();
+  });
+  expect(openURL).toHaveBeenLastCalledWith(
+    'https://github.com/nandor1992/ToroidArcade-Peek-a-Piece',
+  );
+
+  openURL.mockRestore();
+});
+
 test('the About popup credits the background music with tappable links', async () => {
   const openURL = jest
     .spyOn(Linking, 'openURL')
