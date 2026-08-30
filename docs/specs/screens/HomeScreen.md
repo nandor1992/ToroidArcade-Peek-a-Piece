@@ -18,8 +18,16 @@ app is playable immediately, before any photo has been uploaded.
 
 ## How it works
 
-The screen opens with the slim [[AppHeader]] (logo + "Peek-a-Piece"), then
-the puzzle grid.
+Behind everything sits a full-bleed background: `src/assets/home-bg.jpg`,
+a cartoon farm scene, pre-blurred and paled at build time and then drawn
+at `opacity: 0.5` over the cream page colour — enough to feel like a
+place, not enough to fight the puzzle tiles for attention. It's an
+absolutely-positioned `Image` under a transparent `SafeAreaView` (rather
+than the deprecated `ImageBackground`). The [[AppHeader]]'s opaque cream
+band covers it at the top; the tiles (opaque photos / colours) sit over it;
+it shows through the gaps.
+
+Then the slim [[AppHeader]] (logo + "Peek-a-Piece"), then the puzzle grid.
 
 `HomeScreen` takes the puzzle lists as props rather than reading storage
 itself (storage isn't implemented yet — see Non-goals). It renders
@@ -166,4 +174,5 @@ Android navigation bar there previously covered this button.
 - Types: `src/types/puzzle.ts`
 - Palette: `src/theme/colors.ts`
 - Starter artwork: `src/games/puzzle/assets/starter/`
+- Background: `src/assets/home-bg.jpg` (pre-blurred farm scene)
 - Related specs: [[AppHeader]], [[Icon]], [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]]

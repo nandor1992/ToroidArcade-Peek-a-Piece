@@ -91,8 +91,6 @@ export function SettingsScreen({
         <View style={styles.headerSpacer} />
       </View>
 
-      <Text style={styles.dedication}>{DEDICATION}</Text>
-
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionLabel}>Background Music</Text>
@@ -120,9 +118,9 @@ export function SettingsScreen({
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionCentered]}>
         <Text style={styles.sectionLabel}>Puzzle Size</Text>
-        <View style={styles.presetsRow}>
+        <View style={[styles.presetsRow, styles.presetsRowCentered]}>
           {PUZZLE_SIZES.map(size => {
             const selected = size.label === puzzleSize.label;
             return (
@@ -201,6 +199,8 @@ export function SettingsScreen({
         <View style={styles.modalScrim}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{ABOUT_INFO.appName}</Text>
+            <Text style={styles.modalDedication}>{DEDICATION}</Text>
+            <View style={styles.modalRule} />
             <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
             <Text style={styles.modalBody}>{ABOUT_INFO.starterArt}</Text>
             <Text style={styles.modalBody}>
@@ -266,14 +266,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: colors.navy,
-  },
-  dedication: {
-    textAlign: 'center',
-    color: colors.navy,
-    fontStyle: 'italic',
-    opacity: 0.75,
-    paddingHorizontal: 24,
-    paddingBottom: 8,
   },
   section: {
     paddingHorizontal: 16,
@@ -350,23 +342,37 @@ const styles = StyleSheet.create({
   },
   modalCard: {
     width: '100%',
-    maxWidth: 340,
+    maxWidth: 460,
     backgroundColor: colors.cream,
     borderRadius: 24,
-    padding: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 28,
     alignItems: 'center',
+    // Even spacing between every line / element in the card.
+    gap: 14,
   },
   modalTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: colors.navy,
-    marginBottom: 8,
+  },
+  modalDedication: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: colors.navy,
+    opacity: 0.75,
+    textAlign: 'center',
+  },
+  modalRule: {
+    alignSelf: 'stretch',
+    height: 1,
+    backgroundColor: colors.navy,
+    opacity: 0.15,
   },
   modalBody: {
     fontSize: 16,
     color: colors.navy,
     textAlign: 'center',
-    marginBottom: 4,
   },
   modalLink: {
     color: colors.teal,
@@ -377,8 +383,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.navy,
     opacity: 0.6,
-    marginTop: 12,
-    marginBottom: 20,
+    marginTop: 4,
   },
   submitButton: {
     backgroundColor: colors.teal,

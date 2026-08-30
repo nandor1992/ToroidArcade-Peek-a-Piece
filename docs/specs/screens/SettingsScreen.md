@@ -24,9 +24,7 @@ state itself, only rendering what it's given and calling back on change.
 `App.tsx` owns `soundVolume`, `soundMuted`, `timerMinutes`, and
 `puzzleSize`.
 
-The back button is a chevron [[Icon]] (`back`). Directly under the header,
-centred, is a fixed dedication line — "Built with love for Julia and
-Vincent".
+The back button is a chevron [[Icon]] (`back`).
 
 - **Background Music**: a [[Slider]] bound to `soundVolume`
   (`onChangeSoundVolume`), plus a separate mute button — an [[Icon]]
@@ -39,6 +37,10 @@ Vincent".
   *playing* while this screen is open (unlike other parent screens) so the
   slider and mute button have something audible to affect — see
   [[useBackgroundMusic]].
+The **Puzzle Size**, **Screen Time Limit**, and **About** sections all
+have their label and their controls centred; **Background Music** keeps
+its left-aligned label + right-aligned mute button row.
+
 - **Puzzle Size**: a row of preset chips from `PUZZLE_SIZES` (see
   [[puzzleSizes]]) — `2x2` … `6x5`, labelled columns x rows. Tapping one
   calls `onChangePuzzleSize` with the matching `PuzzleSize` object; the
@@ -49,22 +51,21 @@ Vincent".
   `15 min`, `20 min`, `30 min` — `TIMER_PRESETS`) rather than a free-form
   number input. Tapping one calls `onChangeTimerMinutes` with that preset's
   `minutes` (`null` for `Off`); the chip matching the current
-  `timerMinutes` is highlighted. **This section's label and chip row are
-  centred**, as is the About button.
-- **About**: unlike everything else on this screen, this is local UI state
-  (`aboutVisible`) rather than something `App.tsx` owns — there's nothing
-  for a caller to control or react to. Tapping the About button opens a
-  `Modal` (`transparent`, `animationType="fade"`) showing the app name, a
-  fixed credit line, the starter-art attribution ("Generated with
-  imagetocartoon.com using our family photos"), a background-music
-  attribution line ("Music by *Dmitrii Kolesnikov* from *Pixabay*", the
-  two names being `accessibilityRole="link"` `Text` spans that
-  `Linking.openURL` their Pixabay URLs), and a version string (all from
-  `ABOUT_INFO`, hand-maintained in this file — see Non-goals), with a
-  Close button that dismisses it. `onRequestClose` (Android back button /
-  iOS swipe) also dismisses it. The Pixabay links are the one place in the
-  app that opens an external link, fine here because Settings sits behind
-  the parent gate.
+  `timerMinutes` is highlighted.
+- **About**: local UI state (`aboutVisible`), nothing `App.tsx` owns.
+  Tapping the button opens a `Modal` (`transparent`, `animationType="fade"`,
+  `maxWidth: 460` card with an even `gap` between every element) showing,
+  top to bottom: the app name; the dedication *"Built with love for Julia
+  and Vincent"* (italic); a faint divider rule; the credit line; the
+  starter-art attribution *"Generated with imagetocartoon.com using our
+  family photos"*; the music attribution *"Music by Dmitrii Kolesnikov
+  from Pixabay"* (the two names are `accessibilityRole="link"` `Text`
+  spans that `Linking.openURL` their Pixabay URLs); the version string;
+  and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
+  (hand-maintained in this file — see Non-goals). `onRequestClose`
+  (Android back / iOS swipe) also dismisses it. The Pixabay links are the
+  app's only external link, fine here because Settings sits behind the
+  parent gate.
 
 ## Interface
 
@@ -99,12 +100,12 @@ Vincent".
    "Off" → `onChangeTimerMinutes(null)`.
 4. Tap a puzzle-size chip (e.g. "4x4") → `onChangePuzzleSize` is called
    with that `PuzzleSize`. The chip matching `puzzleSize` renders selected.
-5. Tap the About button → the popup shows the app name, the
+5. The dedication text is *not* on the screen until the About popup is
+   opened; tapping About shows it along with the app name, the
    imagetocartoon.com line, and the music credit. Tap Close → hidden.
 6. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
    → `Linking.openURL` is called with the matching Pixabay URL.
-7. The dedication line renders on the screen (outside the popup).
-8. Press Back → `onBack` is called.
+7. Press Back → `onBack` is called.
 
 ## Non-goals / known limitations
 

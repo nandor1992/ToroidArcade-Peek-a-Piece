@@ -148,32 +148,26 @@ test('the current puzzle size chip is marked selected', async () => {
   });
 });
 
-test('the About popup credits the starter artwork', async () => {
+test('the About popup shows the dedication and the starter-art credit', async () => {
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
     root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
-  });
-  await act(() => {
-    findByLabel(root!.root, 'About').props.onPress();
   });
 
   const hasText = (text: string) =>
     root!.root.findAll(n => n.props.children === text).length > 0;
+
+  // Not on the screen itself — only inside the popup.
+  expect(hasText('Built with love for Julia and Vincent')).toBe(false);
+
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  expect(hasText('Built with love for Julia and Vincent')).toBe(true);
   expect(
     hasText('Generated with imagetocartoon.com using our family photos'),
   ).toBe(true);
-});
-
-test('the dedication is shown at the top', async () => {
-  let root: ReactTestRenderer.ReactTestRenderer;
-  await act(() => {
-    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
-  });
-  expect(
-    root!.root.findAll(
-      n => n.props.children === 'Built with love for Julia and Vincent',
-    ).length,
-  ).toBeGreaterThan(0);
 });
 
 test('About button opens a popup with app info, and Close dismisses it', async () => {

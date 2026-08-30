@@ -181,65 +181,76 @@ export function HomeScreen({
   const grid = buildGrid(userPuzzles, stockPuzzles, columns);
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
-      <AppHeader />
-      <FlatList
-        // `key` forces a fresh list when the column count changes (rotate
-        // a tablet, resize a window) so every row re-chunks cleanly.
-        key={`cols-${columns}`}
-        data={grid}
-        keyExtractor={(item, index) =>
-          item.kind === 'divider'
-            ? `divider-${index}`
-            : item.puzzles[0].id
-        }
-        renderItem={({ item }: ListRenderItemInfo<GridItem>) => {
-          if (item.kind === 'divider') {
-            return <View style={styles.divider} pointerEvents="none" />;
-          }
-          return (
-            <View style={styles.row}>
-              {item.puzzles.map((puzzle, colIndex) => (
-                <PuzzleTile
-                  key={puzzle.id}
-                  puzzle={puzzle}
-                  color={
-                    TILE_COLORS[
-                      (item.colorBase + colIndex) % TILE_COLORS.length
-                    ]
-                  }
-                  onPress={onSelectPuzzle}
-                />
-              ))}
-              {Array.from({ length: columns - item.puzzles.length }).map(
-                (_, i) => (
-                  // Keep a short last row's tiles their natural size
-                  // instead of letting them stretch to fill the width.
-                  <View
-                    key={`spacer-${i}`}
-                    style={styles.spacer}
-                    pointerEvents="none"
-                  />
-                ),
-              )}
-            </View>
-          );
-        }}
-        contentContainerStyle={styles.content}
+    <View style={styles.container}>
+      {/* The art is pre-blurred and paled; `backgroundImage` fades it
+          further so it's a hint of a backdrop behind the tiles, never
+          something that competes with the puzzle photos. */}
+      <Image
+        source={require('../assets/home-bg.jpg')}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+        pointerEvents="none"
       />
-      {/* Deliberately small and low-contrast — this is the parent-only
-          entry point, not something a toddler should be drawn to tap. */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Parent settings"
-        onPress={onOpenParentArea}
-        style={({ pressed }) => [
-          styles.parentButton,
-          pressed && styles.parentButtonPressed,
-        ]}>
-        <Icon name="parents" size={50} color={colors.navy} />
-      </Pressable>
-    </SafeAreaView>
+      <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
+        <AppHeader />
+        <FlatList
+          // `key` forces a fresh list when the column count changes
+          // (rotate a tablet, resize a window) so every row re-chunks.
+          key={`cols-${columns}`}
+          data={grid}
+          keyExtractor={(item, index) =>
+            item.kind === 'divider'
+              ? `divider-${index}`
+              : item.puzzles[0].id
+          }
+          renderItem={({ item }: ListRenderItemInfo<GridItem>) => {
+            if (item.kind === 'divider') {
+              return <View style={styles.divider} pointerEvents="none" />;
+            }
+            return (
+              <View style={styles.row}>
+                {item.puzzles.map((puzzle, colIndex) => (
+                  <PuzzleTile
+                    key={puzzle.id}
+                    puzzle={puzzle}
+                    color={
+                      TILE_COLORS[
+                        (item.colorBase + colIndex) % TILE_COLORS.length
+                      ]
+                    }
+                    onPress={onSelectPuzzle}
+                  />
+                ))}
+                {Array.from({ length: columns - item.puzzles.length }).map(
+                  (_, i) => (
+                    // Keep a short last row's tiles their natural size
+                    // instead of letting them stretch to fill the width.
+                    <View
+                      key={`spacer-${i}`}
+                      style={styles.spacer}
+                      pointerEvents="none"
+                    />
+                  ),
+                )}
+              </View>
+            );
+          }}
+          contentContainerStyle={styles.content}
+        />
+        {/* Deliberately low-contrast — the parent-only entry point, not
+            something a toddler should be drawn to tap. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Parent settings"
+          onPress={onOpenParentArea}
+          style={({ pressed }) => [
+            styles.parentButton,
+            pressed && styles.parentButtonPressed,
+          ]}>
+          <Icon name="parents" size={50} color={colors.navy} />
+        </Pressable>
+      </SafeAreaView>
+    </View>
   );
 }
 
@@ -247,6 +258,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.cream,
+  },
+  safe: {
+    flex: 1,
+  },
+  backgroundImage: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    opacity: 0.5,
   },
   content: {
     paddingHorizontal: 16,
