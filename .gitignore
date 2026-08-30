@@ -70,6 +70,28 @@ web/dist/
 *.local.md
 docs/user-shortcuts.txt
 
+# Editor / tooling config — personal to each machine, not project source
+.vscode/
+.claude/
+.idea/
+*.code-workspace
+*.swp
+*~
+
+# Generated / derived output. Nothing below is source; all of it is
+# reproducible from a clean checkout, so none of it belongs in git.
+android/.gradle/
+android/app/build/
+android/build/
+ios/build/
+ios/DerivedData/
+*.tsbuildinfo
+*.log
+.expo/
+.eslintcache
+.parcel-cache/
+.turbo/
+
 # Ruby / CocoaPods
 **/Pods/
 /vendor/bundle/

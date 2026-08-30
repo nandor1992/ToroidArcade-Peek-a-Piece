@@ -25,14 +25,14 @@ source files, it doesn't execute them. You need Pages.
 `web/dist/` is gitignored, so don't commit the build. Instead:
 
 1. Repo **Settings → Pages → Source = "GitHub Actions"**.
-2. Push to `main`. `.github/workflows/deploy-web.yml` installs, typechecks,
+2. Push to `master`. `.github/workflows/deploy-web.yml` installs, typechecks,
    runs `pnpm web:build`, and publishes `web/dist/` to Pages.
 3. For this repo (`nandor1992/ToroidArcade-Peek-a-Piece`) the site lands at
    **https://nandor1992.github.io/ToroidArcade-Peek-a-Piece/**
 
-That workflow triggers on `main`; this repo is currently on
-`feat/starter-puzzle-cartoons`, so either merge to `main` or add the branch to
-the `on.push.branches` list. It can also be run by hand from the Actions tab
+The trunk branch here is **`master`**, which is what the workflow's
+`on.push.branches` lists — keep the two in sync if the branch is ever
+renamed. The workflow can also be run by hand from the Actions tab
 (`workflow_dispatch`).
 
 A `.nojekyll` file is emitted so the legacy branch-based Pages deploy doesn't
