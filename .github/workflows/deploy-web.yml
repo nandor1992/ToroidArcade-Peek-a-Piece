@@ -33,13 +33,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # All actions here are pinned to majors that run on node24 — GitHub
+      # deprecated the node20 runtime, and older majors now emit a warning
+      # while being force-run on node24.
+      - uses: actions/checkout@v7
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 11
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: pnpm
@@ -54,9 +57,11 @@ jobs:
       - name: Build web demo
         run: pnpm web:build
 
-      - uses: actions/configure-pages@v5
+      - uses: actions/configure-pages@v6
 
-      - uses: actions/upload-pages-artifact@v3
+      # v5 bundles upload-artifact v7; v3 pulled in the node20 upload-artifact
+      # v4 that the deprecation warning named.
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: web/dist
 
@@ -68,4 +73,4 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
