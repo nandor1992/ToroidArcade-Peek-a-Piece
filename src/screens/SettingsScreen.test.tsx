@@ -6,6 +6,10 @@ import React from 'react';
 import { Linking } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { SettingsScreen } from './SettingsScreen';
+import {
+  DEFAULT_PUZZLE_SIZE,
+  PUZZLE_SIZES,
+} from '../games/puzzle/puzzleSizes';
 
 function findByLabel(
   root: ReactTestRenderer.ReactTestInstance,
@@ -22,6 +26,8 @@ function baseProps() {
     onToggleMute: jest.fn(),
     timerMinutes: null as number | null,
     onChangeTimerMinutes: jest.fn(),
+    puzzleSize: DEFAULT_PUZZLE_SIZE,
+    onChangePuzzleSize: jest.fn(),
     onBack: jest.fn(),
   };
 }
@@ -106,6 +112,68 @@ test('picking Off reports null minutes', async () => {
   });
 
   expect(props.onChangeTimerMinutes).toHaveBeenCalledWith(null);
+});
+
+test('picking a puzzle size reports it', async () => {
+  const props = baseProps();
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...props} />);
+  });
+
+  await act(() => {
+    findByLabel(root!.root, '4x4').props.onPress();
+  });
+
+  expect(props.onChangePuzzleSize).toHaveBeenCalledWith(
+    PUZZLE_SIZES.find(s => s.label === '4x4'),
+  );
+});
+
+test('the current puzzle size chip is marked selected', async () => {
+  const props = {
+    ...baseProps(),
+    puzzleSize: PUZZLE_SIZES.find(s => s.label === '3x3')!,
+  };
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...props} />);
+  });
+
+  expect(findByLabel(root!.root, '3x3').props.accessibilityState).toEqual({
+    selected: true,
+  });
+  expect(findByLabel(root!.root, '2x2').props.accessibilityState).toEqual({
+    selected: false,
+  });
+});
+
+test('the About popup credits the starter artwork', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  const hasText = (text: string) =>
+    root!.root.findAll(n => n.props.children === text).length > 0;
+  expect(
+    hasText('Generated with imagetocartoon.com using our family photos'),
+  ).toBe(true);
+});
+
+test('the dedication is shown at the top', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+  expect(
+    root!.root.findAll(
+      n => n.props.children === 'Built with love for Julia and Vincent',
+    ).length,
+  ).toBeGreaterThan(0);
 });
 
 test('About button opens a popup with app info, and Close dismisses it', async () => {

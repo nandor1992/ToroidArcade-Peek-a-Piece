@@ -3,7 +3,7 @@ name: PuzzleBoard
 type: game
 source: src/games/puzzle/components/PuzzleBoard.tsx
 status: draft
-last_verified: 2026-08-29
+last_verified: 2026-08-30
 ---
 
 # PuzzleBoard
@@ -64,10 +64,14 @@ its own):
   within the piece it was originally grabbed (so the piece doesn't jump to
   center itself under the finger).
 - `onResponderRelease`: if the piece's distance from its `targetX`/`targetY`
-  is within `SNAP_DISTANCE` (40px), it snaps exactly onto the target and
-  is marked `placed` (excluded from further hit-testing — it's locked in
-  place). Otherwise it just stays wherever it was dropped, still
-  draggable.
+  is within `snapDistance`, it snaps exactly onto the target and is marked
+  `placed` (excluded from further hit-testing — it's locked in place).
+  Otherwise it just stays wherever it was dropped, still draggable.
+  `snapDistance` is `max(18, min(pieceWidth, pieceHeight) * 0.4)` — a
+  fraction of the piece size rather than a fixed pixel count, so it stays
+  generous on a 2x2 grid (≈40px on a typical board) without overlapping
+  neighbouring targets on a fine 6x5 one, and never drops below a usable
+  18px floor.
 
 **Solved detection** is a separate `useEffect` watching `pieces`, not
 something decided inside the release handler itself — an earlier version
@@ -88,15 +92,16 @@ per mount.
 
 ## Toddler UX constraints
 
-- `SNAP_DISTANCE` (40px) is deliberately generous — a piece doesn't need
-  to be dropped pixel-precisely on its target, just roughly near it.
+- `snapDistance` scales with piece size (see above) and is deliberately
+  generous — a piece doesn't need to be dropped pixel-precisely on its
+  target, just roughly near it.
 - Hit-testing uses each piece's full rectangular bounding box, not its
   exact (smaller, oddly-shaped) clipped silhouette — easier to grab than
   the visible shape alone would allow.
-- A default 2x2 grid (4 large pieces) keeps individual pieces big — no
-  explicit minimum touch-target size is enforced beyond "the board is
-  divided by a small `rows`/`columns`," but the default is chosen with
-  that in mind.
+- The grid size comes from the parent (`rows`/`columns`, default 2x2 —
+  see [[puzzleSizes]]). The default keeps pieces large; the bigger options
+  (up to 6x5 / 30 pieces) are a deliberate parent choice for older kids,
+  and the snap radius scaling above keeps even small pieces catchable.
 - No audio feedback on snap/solve — same known gap as the rest of the app
   (no sound-effect pipeline, only background music).
 
@@ -156,4 +161,4 @@ rendering.
 - Code: `src/games/puzzle/components/PuzzleBoard.tsx`
 - Tests: `src/games/puzzle/components/PuzzleBoard.test.tsx`
 - Mock: `__mocks__/@shopify/react-native-skia.js`
-- Related specs: [[pieceShapes]], [[generatePuzzleGrid]], [[pathCommandsToSvgPath]], [[coverRect]], [[Slider]], [[PuzzleScreen]], [[puzzleImage]]
+- Related specs: [[pieceShapes]], [[generatePuzzleGrid]], [[pathCommandsToSvgPath]], [[coverRect]], [[Slider]], [[PuzzleScreen]], [[puzzleImage]], [[puzzleSizes]]

@@ -237,7 +237,7 @@ export function HomeScreen({
           styles.parentButton,
           pressed && styles.parentButtonPressed,
         ]}>
-        <Icon name="parents" size={22} color={colors.navy} />
+        <Icon name="parents" size={50} color={colors.navy} />
       </Pressable>
     </SafeAreaView>
   );
@@ -291,9 +291,9 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 12,
     bottom: 12,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.cream,

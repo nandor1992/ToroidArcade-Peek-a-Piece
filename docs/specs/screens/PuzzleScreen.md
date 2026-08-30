@@ -32,11 +32,18 @@ This screen counts as a "child-facing screen" for two other pieces of
 `HomeScreen`.
 
 `PuzzleScreen` receives the full puzzle list (`puzzles`, same
-user-photos-then-starter-puzzles order as the `HomeScreen` grid) plus which
-one to open (`initialPuzzleId`), and tracks its own `index` into that list.
-The back button calls `onBack` (returns to `HomeScreen`); the next button
-advances `index`, wrapping from the last puzzle back to the first rather
-than disabling itself at the end.
+user-photos-then-starter-puzzles order as the `HomeScreen` grid), which one
+to open (`initialPuzzleId`), and the piece-grid `rows`/`columns` (from the
+Settings "Puzzle Size" chooser — see [[puzzleSizes]]; defaults to 2x2).
+It tracks its own `index` into the list.
+
+**Controls.** A *home* button (top-left, `home` [[Icon]]) calls `onBack`
+to return to `HomeScreen` — a house, not a chevron, so it's clearly "leave
+the game" rather than "previous picture". *Previous* and *Next* buttons
+(`previous` / `next` chevron icons) sit vertically centred on the left and
+right edges of the board area, one each side, and step `index` by ±1,
+wrapping around both ends (last→first, first→last) rather than
+disabling at the ends.
 
 `puzzles` is built by `App.tsx` as `[...userPuzzles, ...stockPuzzles]`,
 where `stockPuzzles` is `STARTER_PUZZLES` (eight bundled puzzles) or `[]`
@@ -53,12 +60,12 @@ not on every re-render.
 **The game itself.** When the current puzzle has artwork —
 `puzzleSkiaSource(puzzle)` returns non-null, which it now does for both
 parent-uploaded photos (`imageUri`) and every `STARTER_PUZZLES` entry
-(`imageAsset`, bundled cartoon art) — the image area renders
-`<PuzzleBoard key={puzzle.id} imageSource={...} onSolved={...} />` instead
-of a static photo. The `key` matters: it forces Skia to fully remount (and
-therefore re-scramble) `PuzzleBoard` on every puzzle change, rather than
-reusing one instance across different images. A puzzle with no artwork at
-all falls back to the emoji placeholder — there's nothing to cut into
+(`imageAsset`, bundled cartoon art) — the board area renders
+`<PuzzleBoard key={`${puzzle.id}-${columns}x${rows}`} imageSource={...}
+rows={rows} columns={columns} onSolved={...} />`. The `key` includes the
+grid size as well as the puzzle id, so it fully remounts (and re-scrambles)
+on either change rather than reusing one instance. A puzzle with no artwork
+at all falls back to the emoji placeholder — there's nothing to cut into
 pieces without a source image — but nothing in the current data hits that
 path. See [[puzzleImage]] for how the source is resolved.
 
@@ -73,20 +80,25 @@ the only feedback.
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| `puzzles` | `Puzzle[]` | Yes | The full browsable list; `Next` cycles through it. |
+| `puzzles` | `Puzzle[]` | Yes | The full browsable list; Previous/Next cycle through it. |
 | `initialPuzzleId` | `string` | Yes | Which puzzle to open first. Falls back to index 0 if not found in `puzzles`. |
-| `onBack` | `() => void` | No | Called when the back button is pressed. No-op if omitted. |
+| `rows` | `number` | No | Piece rows. Default 2. |
+| `columns` | `number` | No | Piece columns. Default 2. |
+| `onBack` | `() => void` | No | Called when the home button is pressed. No-op if omitted. |
 
 ## Toddler UX constraints
 
-- Back and next buttons are each a 56x56 circular tap target — the whole
-  circle is tappable, not just the glyph inside it.
-- Both buttons use chevron [[Icon]]s (`back` / `next`), not text labels, so
-  nothing needs to be read to browse puzzles or leave the screen;
-  `accessibilityLabel` ("Back" / "Next puzzle") is on the `Pressable` for
-  screen readers, and the icon itself is hidden from them.
-- Next always succeeds and wraps around — there's no dead-end state a
-  toddler's repeated tapping could get stuck against.
+- Home, Previous and Next buttons are each a 56x56 circular tap target —
+  the whole circle is tappable, not just the glyph inside it.
+- The buttons use [[Icon]]s (`home` / `previous` / `next`), not text
+  labels, so nothing needs to be read to browse puzzles or leave the
+  screen; `accessibilityLabel` ("Home" / "Previous puzzle" / "Next
+  puzzle") is on the `Pressable` for screen readers, and the icon itself
+  is hidden from them.
+- Previous and Next always succeed and wrap around — there's no dead-end
+  state a toddler's repeated tapping could get stuck against.
+- The Previous/Next buttons sit *beside* the board, never over it, so a
+  mis-tap toward the puzzle doesn't hit a nav button and vice versa.
 - Visual feedback on press: both buttons dim (`opacity: 0.7`) while held.
   Same known gap as `HomeScreen`: no audio feedback yet (no sound asset
   pipeline in the project).
@@ -95,22 +107,27 @@ the only feedback.
 
 - `initialPuzzleId` not present in `puzzles` → opens the first puzzle
   (index 0) instead of crashing.
-- Pressing Next on the last puzzle in the list → wraps to the first puzzle.
+- Pressing Next on the last puzzle → wraps to the first; pressing Previous
+  on the first → wraps to the last.
 - `puzzles` is empty → renders nothing (`null`); shouldn't happen in
   practice since `App.tsx` always passes at least `STARTER_PUZZLES`, but
   isn't guarded against with a message.
-- Switching puzzles via Next re-picks the random background; re-rendering
-  the same puzzle (e.g. parent re-render) does not.
-- Switching puzzles via Next also resets `solved` back to `false` and
-  remounts a fresh, re-scrambled `PuzzleBoard` (via its `key`) — solving
-  one puzzle doesn't leave the banner showing (or the board pre-solved) on
-  the next one.
+- Switching puzzles re-picks the random background; re-rendering the same
+  puzzle (e.g. parent re-render) does not.
+- Switching puzzles also resets `solved` back to `false` and remounts a
+  fresh, re-scrambled `PuzzleBoard` (via its `key`) — solving one puzzle
+  doesn't leave the banner showing (or the board pre-solved) on the next.
+- Changing the `rows`/`columns` (a new Puzzle Size chosen in Settings)
+  while this screen is mounted → `PuzzleBoard` remounts at the new grid
+  (its `key` includes the size). In practice you can't reach Settings
+  without leaving this screen, so it's only ever different on the next
+  open.
 
 ## Test scenarios
 
-1. Open with a given puzzle, press Back → `onBack` is called.
-2. Open on the last puzzle in the list, press Next → the first puzzle in
-   the list is now showing.
+1. Open with a given puzzle, press Home → `onBack` is called.
+2. Open on the last puzzle, press Next → the first puzzle is now showing.
+   Open on the first puzzle, press Previous → the last puzzle is showing.
 3. Open with an `initialPuzzleId` not present in `puzzles` → the first
    puzzle in the list is showing.
 4. A puzzle with artwork (`imageUri` or `imageAsset`) renders the
@@ -130,8 +147,8 @@ awareness of the toggle at all, only of whatever list it's handed.
 - Starter puzzles now *can* be played as a real jigsaw — each carries
   bundled cartoon art (`imageAsset`, a hand-illustrated JPEG — see
   [[HomeScreen]]).
-- No difficulty selection — `PuzzleBoard` is always opened at its default
-  2x2 grid; this screen has no UI to change piece count.
+- Piece count comes from the global Settings choice (`rows`/`columns`
+  props); there's no per-puzzle or in-game size control here.
 - No real background art — `BACKGROUND_PLACEHOLDERS` is four solid palette
   colors standing in for a bundled set of background images. (The starter
   *puzzle* art is now bundled — see [[HomeScreen]] — but the screen
@@ -148,4 +165,4 @@ awareness of the toggle at all, only of whatever list it's handed.
 
 - Code: `src/screens/PuzzleScreen.tsx`
 - Tests: `src/screens/PuzzleScreen.test.tsx`
-- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]], [[AppHeader]], [[Icon]]
+- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]], [[puzzleSizes]], [[AppHeader]], [[Icon]]

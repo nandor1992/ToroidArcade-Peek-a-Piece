@@ -8,6 +8,8 @@ import { Icon, type IconName } from './Icon';
 
 const NAMES: IconName[] = [
   'back',
+  'home',
+  'previous',
   'next',
   'parents',
   'settings',
@@ -36,8 +38,10 @@ test('maps semantic names to Material Design Icons glyphs', async () => {
     .filter((_, i) => i % 2 === 0);
 
   expect(glyphs).toEqual([
-    'chevron-left',
-    'chevron-right',
+    'chevron-left', // back
+    'home',
+    'chevron-left', // previous
+    'chevron-right', // next
     'account-supervisor',
     'cog',
     'volume-high',

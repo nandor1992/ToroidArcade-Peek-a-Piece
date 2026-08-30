@@ -9,6 +9,8 @@ import { colors } from '../theme/colors';
 // iOS via the package's podspec + `UIAppFonts` in Info.plist.
 const GLYPHS = {
   back: 'chevron-left',
+  home: 'home',
+  previous: 'chevron-left',
   next: 'chevron-right',
   parents: 'account-supervisor',
   settings: 'cog',

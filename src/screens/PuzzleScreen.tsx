@@ -20,12 +20,17 @@ const BACKGROUND_PLACEHOLDERS = [
 export interface PuzzleScreenProps {
   puzzles: Puzzle[];
   initialPuzzleId: string;
+  /** Piece grid — from the Settings "Puzzle Size" chooser. Defaults to 2x2. */
+  rows?: number;
+  columns?: number;
   onBack?: () => void;
 }
 
 export function PuzzleScreen({
   puzzles,
   initialPuzzleId,
+  rows = 2,
+  columns = 2,
   onBack,
 }: PuzzleScreenProps) {
   const [index, setIndex] = useState(() => {
@@ -55,55 +60,75 @@ export function PuzzleScreen({
   }
 
   const imageSource = puzzleSkiaSource(puzzle);
+  const goPrev = () =>
+    setIndex(current => (current - 1 + puzzles.length) % puzzles.length);
+  const goNext = () => setIndex(current => (current + 1) % puzzles.length);
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: background }]}
       edges={['top', 'bottom']}>
       <AppHeader />
-      <View style={styles.header}>
+      <View style={styles.topBar}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Back"
+          accessibilityLabel="Home"
           onPress={onBack}
           style={({ pressed }) => [
             styles.navButton,
             pressed && styles.navButtonPressed,
           ]}>
-          <Icon name="back" size={30} color={colors.navy} />
+          <Icon name="home" size={28} color={colors.navy} />
         </Pressable>
+      </View>
+
+      <View style={styles.imageArea}>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Next puzzle"
-          onPress={() => setIndex(current => (current + 1) % puzzles.length)}
+          accessibilityLabel="Previous puzzle"
+          onPress={goPrev}
           style={({ pressed }) => [
             styles.navButton,
             pressed && styles.navButtonPressed,
           ]}>
-          <Icon name="next" size={30} color={colors.navy} />
+          <Icon name="previous" size={32} color={colors.navy} />
         </Pressable>
-      </View>
-      <View style={styles.imageArea}>
-        <View
-          style={styles.imagePlaceholder}
-          accessibilityLabel={puzzle.title}>
-          {imageSource != null ? (
-            <PuzzleBoard
-              key={puzzle.id}
-              imageSource={imageSource}
-              onSolved={() => setSolved(true)}
-            />
-          ) : (
-            // A puzzle with no artwork at all — nothing to cut into
-            // pieces. See docs/specs/screens/PuzzleScreen.md.
-            <Text style={styles.imageGlyph}>🧩</Text>
+
+        <View style={styles.boardWrap}>
+          <View
+            style={styles.imagePlaceholder}
+            accessibilityLabel={puzzle.title}>
+            {imageSource != null ? (
+              <PuzzleBoard
+                key={`${puzzle.id}-${columns}x${rows}`}
+                imageSource={imageSource}
+                rows={rows}
+                columns={columns}
+                onSolved={() => setSolved(true)}
+              />
+            ) : (
+              // A puzzle with no artwork at all — nothing to cut into
+              // pieces. See docs/specs/screens/PuzzleScreen.md.
+              <Text style={styles.imageGlyph}>🧩</Text>
+            )}
+          </View>
+          {solved && (
+            <View style={styles.solvedBanner} pointerEvents="none">
+              <Text style={styles.solvedBannerText}>🎉 Great job!</Text>
+            </View>
           )}
         </View>
-        {solved && (
-          <View style={styles.solvedBanner} pointerEvents="none">
-            <Text style={styles.solvedBannerText}>🎉 Great job!</Text>
-          </View>
-        )}
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Next puzzle"
+          onPress={goNext}
+          style={({ pressed }) => [
+            styles.navButton,
+            pressed && styles.navButtonPressed,
+          ]}>
+          <Icon name="next" size={32} color={colors.navy} />
+        </Pressable>
       </View>
     </SafeAreaView>
   );
@@ -113,14 +138,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  topBar: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
   },
   navButton: {
-    minWidth: 56,
-    minHeight: 56,
+    width: 56,
+    height: 56,
     borderRadius: 28,
     backgroundColor: colors.cream,
     alignItems: 'center',
@@ -131,9 +156,17 @@ const styles = StyleSheet.create({
   },
   imageArea: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    // The prev/next buttons live in this row, vertically centred beside
+    // the board — never overlapping it.
+    paddingHorizontal: 8,
+    gap: 8,
+  },
+  boardWrap: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
   },
   imagePlaceholder: {
     width: '100%',

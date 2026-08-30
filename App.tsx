@@ -15,6 +15,10 @@ import { ParentScreen } from './src/screens/ParentScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SessionLockOverlay } from './src/screens/SessionLockOverlay';
 import { useBackgroundMusic } from './src/hooks/useBackgroundMusic';
+import {
+  DEFAULT_PUZZLE_SIZE,
+  type PuzzleSize,
+} from './src/games/puzzle/puzzleSizes';
 import type { Puzzle } from './src/types/puzzle';
 
 // Lets the app render immediately with zero insets instead of nothing at
@@ -49,6 +53,7 @@ function App() {
   const [soundVolume, setSoundVolume] = useState(0.6);
   const [soundMuted, setSoundMuted] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState<number | null>(null);
+  const [puzzleSize, setPuzzleSize] = useState<PuzzleSize>(DEFAULT_PUZZLE_SIZE);
   const [locked, setLocked] = useState(false);
 
   const stockPuzzles = defaultImagesEnabled ? STARTER_PUZZLES : [];
@@ -84,6 +89,8 @@ function App() {
       <PuzzleScreen
         puzzles={puzzles}
         initialPuzzleId={screen.puzzleId}
+        rows={puzzleSize.rows}
+        columns={puzzleSize.columns}
         onBack={goHome}
       />
     );
@@ -98,8 +105,8 @@ function App() {
     content = (
       <ParentScreen
         userPuzzles={userPuzzles}
-        onAddPuzzle={puzzle =>
-          setUserPuzzles(current => [puzzle, ...current])
+        onAddPuzzles={added =>
+          setUserPuzzles(current => [...added, ...current])
         }
         onDeletePuzzle={id =>
           setUserPuzzles(current => current.filter(p => p.id !== id))
@@ -119,6 +126,8 @@ function App() {
         onToggleMute={setSoundMuted}
         timerMinutes={timerMinutes}
         onChangeTimerMinutes={setTimerMinutes}
+        puzzleSize={puzzleSize}
+        onChangePuzzleSize={setPuzzleSize}
         onBack={() => setScreen({ name: 'parent' })}
       />
     );

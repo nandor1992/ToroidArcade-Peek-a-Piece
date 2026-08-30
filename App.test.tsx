@@ -134,11 +134,11 @@ test('Next on the puzzle screen only cycles through puzzles currently visible on
   // Add two photos (prepended, so the grid ends up ["b.jpg", "a.jpg"]).
   addPhoto('a.jpg', 'file:///a.jpg');
   await act(() => {
-    findByLabel(root!.root, 'Add photo').props.onPress();
+    findByLabel(root!.root, 'Add photos').props.onPress();
   });
   addPhoto('b.jpg', 'file:///b.jpg');
   await act(() => {
-    findByLabel(root!.root, 'Add photo').props.onPress();
+    findByLabel(root!.root, 'Add photos').props.onPress();
   });
 
   // Turn starter puzzles off — the "Show starter puzzles" Switch lives on

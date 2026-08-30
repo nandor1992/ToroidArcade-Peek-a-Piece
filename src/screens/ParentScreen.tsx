@@ -17,7 +17,8 @@ import { Icon } from '../components/Icon';
 
 export interface ParentScreenProps {
   userPuzzles: Puzzle[];
-  onAddPuzzle: (puzzle: Puzzle) => void;
+  /** Called with one `Puzzle` per picked photo — the picker allows many at once. */
+  onAddPuzzles: (puzzles: Puzzle[]) => void;
   onDeletePuzzle: (id: string) => void;
   defaultImagesEnabled: boolean;
   onToggleDefaultImages: (enabled: boolean) => void;
@@ -27,28 +28,32 @@ export interface ParentScreenProps {
 
 export function ParentScreen({
   userPuzzles,
-  onAddPuzzle,
+  onAddPuzzles,
   onDeletePuzzle,
   defaultImagesEnabled,
   onToggleDefaultImages,
   onBack,
   onOpenSettings,
 }: ParentScreenProps) {
-  const handleAddPhoto = () => {
-    launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, response => {
+  const handleAddPhotos = () => {
+    // selectionLimit: 0 → the OS picker allows selecting any number of
+    // photos in one go.
+    launchImageLibrary({ mediaType: 'photo', selectionLimit: 0 }, response => {
       if (response.didCancel || response.errorCode) {
         return;
       }
-      const asset = response.assets?.[0];
-      if (!asset?.uri) {
-        return;
+      const now = Date.now();
+      const puzzles = (response.assets ?? [])
+        .filter(asset => asset.uri)
+        .map((asset, i) => ({
+          id: `user-${now}-${i}`,
+          title: asset.fileName ?? 'Photo',
+          source: 'user' as const,
+          imageUri: asset.uri as string,
+        }));
+      if (puzzles.length > 0) {
+        onAddPuzzles(puzzles);
       }
-      onAddPuzzle({
-        id: `user-${Date.now()}`,
-        title: asset.fileName ?? 'Photo',
-        source: 'user',
-        imageUri: asset.uri,
-      });
     });
   };
 
@@ -100,13 +105,13 @@ export function ParentScreen({
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Add photo"
-        onPress={handleAddPhoto}
+        accessibilityLabel="Add photos"
+        onPress={handleAddPhotos}
         style={({ pressed }) => [
           styles.addButton,
           pressed && styles.addButtonPressed,
         ]}>
-        <Text style={styles.addButtonLabel}>+ Add Photo</Text>
+        <Text style={styles.addButtonLabel}>+ Add Photos</Text>
       </Pressable>
 
       {userPuzzles.length === 0 ? (

@@ -11,6 +11,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { Slider } from '../components/Slider';
 import { Icon } from '../components/Icon';
+import { PUZZLE_SIZES, type PuzzleSize } from '../games/puzzle/puzzleSizes';
 
 export interface TimerPreset {
   label: string;
@@ -26,12 +27,15 @@ const TIMER_PRESETS: TimerPreset[] = [
   { label: '30 min', minutes: 30 },
 ];
 
+const DEDICATION = 'Built with love for Julia and Vincent';
+
 // Keep in sync with package.json's "version" by hand — there's no build
 // step wiring these together yet.
 const ABOUT_INFO = {
   appName: 'Peek-a-Piece',
   version: '0.0.1',
   credit: 'Created by ToroidSystems / ToroidArcade',
+  starterArt: 'Generated with imagetocartoon.com using our family photos',
   // Pixabay Content License attribution for the bundled background track
   // (resources/the_mountain-children.mp3). utm params are the referral
   // attribution Pixabay asks linkers to keep.
@@ -52,6 +56,8 @@ export interface SettingsScreenProps {
   onToggleMute: (muted: boolean) => void;
   timerMinutes: number | null;
   onChangeTimerMinutes: (minutes: number | null) => void;
+  puzzleSize: PuzzleSize;
+  onChangePuzzleSize: (size: PuzzleSize) => void;
   onBack?: () => void;
 }
 
@@ -62,6 +68,8 @@ export function SettingsScreen({
   onToggleMute,
   timerMinutes,
   onChangeTimerMinutes,
+  puzzleSize,
+  onChangePuzzleSize,
   onBack,
 }: SettingsScreenProps) {
   const [aboutVisible, setAboutVisible] = useState(false);
@@ -82,6 +90,8 @@ export function SettingsScreen({
         <Text style={styles.title}>Settings</Text>
         <View style={styles.headerSpacer} />
       </View>
+
+      <Text style={styles.dedication}>{DEDICATION}</Text>
 
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
@@ -111,8 +121,38 @@ export function SettingsScreen({
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionLabel}>Screen Time Limit</Text>
+        <Text style={styles.sectionLabel}>Puzzle Size</Text>
         <View style={styles.presetsRow}>
+          {PUZZLE_SIZES.map(size => {
+            const selected = size.label === puzzleSize.label;
+            return (
+              <Pressable
+                key={size.label}
+                accessibilityRole="button"
+                accessibilityLabel={size.label}
+                accessibilityState={{ selected }}
+                onPress={() => onChangePuzzleSize(size)}
+                style={({ pressed }) => [
+                  styles.presetChip,
+                  selected && styles.presetChipSelected,
+                  pressed && styles.presetChipPressed,
+                ]}>
+                <Text
+                  style={[
+                    styles.presetLabel,
+                    selected && styles.presetLabelSelected,
+                  ]}>
+                  {size.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={[styles.section, styles.sectionCentered]}>
+        <Text style={styles.sectionLabel}>Screen Time Limit</Text>
+        <View style={[styles.presetsRow, styles.presetsRowCentered]}>
           {TIMER_PRESETS.map(preset => {
             const selected = preset.minutes === timerMinutes;
             return (
@@ -140,7 +180,7 @@ export function SettingsScreen({
         </View>
       </View>
 
-      <View style={styles.section}>
+      <View style={[styles.section, styles.sectionCentered]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="About"
@@ -162,6 +202,7 @@ export function SettingsScreen({
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>{ABOUT_INFO.appName}</Text>
             <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
+            <Text style={styles.modalBody}>{ABOUT_INFO.starterArt}</Text>
             <Text style={styles.modalBody}>
               Music by{' '}
               <Text
@@ -226,9 +267,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.navy,
   },
+  dedication: {
+    textAlign: 'center',
+    color: colors.navy,
+    fontStyle: 'italic',
+    opacity: 0.75,
+    paddingHorizontal: 24,
+    paddingBottom: 8,
+  },
   section: {
     paddingHorizontal: 16,
     paddingVertical: 16,
+  },
+  sectionCentered: {
+    alignItems: 'center',
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -248,6 +300,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
+  },
+  presetsRowCentered: {
+    justifyContent: 'center',
   },
   presetChip: {
     paddingVertical: 10,
@@ -272,7 +327,6 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   aboutButton: {
-    alignSelf: 'flex-start',
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderRadius: 20,

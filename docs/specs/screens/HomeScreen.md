@@ -62,12 +62,13 @@ combine it with
 `userPuzzles` into the single ordered list `PuzzleScreen` browses with its
 Next button — both screens need to agree on the same list and ordering.
 
-A small button floats over the bottom-right corner of the grid
-(`position: absolute`, `bottom: 12`, `right: 12`) and calls
+A button floats over the bottom-right corner of the grid
+(`position: absolute`, `bottom: 12`, `right: 12`, 64x64) and calls
 `onOpenParentArea`. It shows the [[Icon]] `parents` glyph
-(`account-supervisor` — an adult-and-child figure), not a padlock, but is
-still deliberately small (40x40) and low-contrast (`opacity: 0.55` at
-rest). `App.tsx` routes it to `ParentGateScreen`, not directly to
+(`account-supervisor` — an adult-and-child figure, sized 50), not a
+padlock. It stays low-contrast (`opacity: 0.55` at rest) so it doesn't
+draw a toddler's eye, but the icon itself is now large enough to read
+clearly. `App.tsx` routes it to `ParentGateScreen`, not directly to
 `ParentScreen` — see that spec for the math-gate step in between. Nothing
 system-drawn sits over that corner because the app runs full screen with
 the status/navigation bars hidden (see
@@ -97,10 +98,10 @@ Android navigation bar there previously covered this button.
   screen readers but never required to identify or select a tile visually.
 - Visual feedback on press: the tile dims (`opacity: 0.7`) while held.
   Background music plays (see [[useBackgroundMusic]]); no per-tap sound.
-- The parent-area button is a deliberate exception to the
-  large-touch-target rule: it's small (40x40) and low-contrast
-  (`opacity: 0.55` at rest), on purpose, since it's the one control on this
-  screen that should *not* be easy for a toddler to find or hit.
+- The parent-area button is low-contrast (`opacity: 0.55` at rest) on
+  purpose — it's the one control on this screen that should *not* draw a
+  toddler's eye — but it's a full 64x64 target with a clear
+  adult-and-child glyph, so a parent can find it easily.
 
 ## Edge cases & expected behavior
 

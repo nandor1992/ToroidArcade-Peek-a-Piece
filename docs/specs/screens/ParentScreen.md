@@ -21,11 +21,14 @@ a toddler poking at it; normal buttons, confirmations, and text are fine.
 `ParentScreen` is a controlled view: it holds no puzzle data itself, only
 calling back to whatever owns the list (`App.tsx`):
 
-- **Add Photo** calls `react-native-image-picker`'s `launchImageLibrary`.
-  On a successful pick, it builds a new `Puzzle` (`source: 'user'`,
-  `imageUri` set to the picked asset's URI, `title` from the asset's
-  filename or `"Photo"` if none) and calls `onAddPuzzle`. A cancelled
-  picker or an error response (`didCancel` / `errorCode` set) is a no-op.
+- **Add Photos** calls `react-native-image-picker`'s `launchImageLibrary`
+  with `selectionLimit: 0` — the OS picker lets the parent select any
+  number of photos in one go. Each returned asset with a `uri` becomes a
+  `Puzzle` (`source: 'user'`, `imageUri` = the asset URI, `title` from the
+  asset filename or `"Photo"`), with ids `user-<timestamp>-<i>` so a batch
+  doesn't collide; the whole array is passed to `onAddPuzzles` (`App.tsx`
+  prepends it to `userPuzzles`). A cancelled / errored response
+  (`didCancel` / `errorCode`), or one with no usable assets, is a no-op.
 - **Delete** — a coral badge with the [[Icon]] `close` glyph in each
   thumbnail's top-right *corner* (`top: 4, right: 4`, white border) —
   shows a native confirmation (`Alert.alert`) before calling
@@ -49,7 +52,7 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
 | `userPuzzles` | `Puzzle[]` | Yes | The parent's uploaded puzzles, rendered as the thumbnail grid. |
-| `onAddPuzzle` | `(puzzle: Puzzle) => void` | Yes | Called with a new `Puzzle` after a successful photo pick. |
+| `onAddPuzzles` | `(puzzles: Puzzle[]) => void` | Yes | Called with one `Puzzle` per picked photo (the picker allows selecting many). |
 | `onDeletePuzzle` | `(id: string) => void` | Yes | Called with a puzzle's `id` after the delete confirmation is accepted. |
 | `defaultImagesEnabled` | `boolean` | Yes | Current value of the starter-puzzles toggle. |
 | `onToggleDefaultImages` | `(enabled: boolean) => void` | Yes | Called with the switch's new value. |
@@ -59,9 +62,9 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 ## Edge cases & expected behavior
 
 - Picker cancelled (`didCancel: true`) or errored (`errorCode` set) →
-  `onAddPuzzle` is not called.
-- Picker response has no `assets[0].uri` → `onAddPuzzle` is not called
-  (defensive — shouldn't happen on a successful, non-cancelled pick).
+  `onAddPuzzles` is not called.
+- Picker response with no assets that have a `uri` → `onAddPuzzles` is not
+  called (an empty batch is dropped rather than passed through).
 - Delete confirmation dismissed via "Cancel" → `onDeletePuzzle` is not
   called.
 - `userPuzzles` is empty → grid is replaced by an empty-state message, not
@@ -71,9 +74,10 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 
 1. Toggle the "Show starter puzzles" switch → `onToggleDefaultImages` is
    called with the new value.
-2. Pick a photo successfully → `onAddPuzzle` is called with a `Puzzle`
-   carrying the picked `imageUri`, `title`, and `source: 'user'`.
-3. Cancel the picker → `onAddPuzzle` is not called.
+2. Pick two photos → `onAddPuzzles` is called once with a two-element
+   array; each carries its own `imageUri` / `title` / `source: 'user'`
+   and a distinct `id`. The picker was invoked with `selectionLimit: 0`.
+3. Cancel the picker → `onAddPuzzles` is not called.
 4. Tap a photo's delete badge, confirm the alert's "Delete" option →
    `onDeletePuzzle` is called with that photo's id.
 5. Tap the settings (cog) button → `onOpenSettings` is called.
@@ -84,9 +88,8 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
   in-memory state and are lost on app restart, same limitation as
   `HomeScreen`/`PuzzleScreen`. The same is true of everything
   `SettingsScreen` controls (volume, mute, timer minutes).
-- No editing of a puzzle's title, no reordering, no multi-select delete.
-- `launchImageLibrary` is called with `selectionLimit: 1` — one photo per
-  tap, not a batch upload flow.
+- No editing of a puzzle's title, no reordering, no multi-select delete
+  (multi-select *add* is supported).
 - Requires `NSPhotoLibraryUsageDescription` (added to
   `ios/PeekaPiece/Info.plist`) for iOS photo library access; nothing
   additional is required for Android with this library.

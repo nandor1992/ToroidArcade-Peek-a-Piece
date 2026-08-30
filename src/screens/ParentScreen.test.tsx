@@ -33,7 +33,7 @@ test('settings button calls onOpenSettings', async () => {
     root = ReactTestRenderer.create(
       <ParentScreen
         userPuzzles={[]}
-        onAddPuzzle={jest.fn()}
+        onAddPuzzles={jest.fn()}
         onDeletePuzzle={jest.fn()}
         defaultImagesEnabled={true}
         onToggleDefaultImages={jest.fn()}
@@ -56,7 +56,7 @@ test('toggling the switch reports the new value', async () => {
     root = ReactTestRenderer.create(
       <ParentScreen
         userPuzzles={[]}
-        onAddPuzzle={jest.fn()}
+        onAddPuzzles={jest.fn()}
         onDeletePuzzle={jest.fn()}
         defaultImagesEnabled={true}
         onToggleDefaultImages={onToggleDefaultImages}
@@ -71,19 +71,22 @@ test('toggling the switch reports the new value', async () => {
   expect(onToggleDefaultImages).toHaveBeenCalledWith(false);
 });
 
-test('picking a photo adds a puzzle for it', async () => {
+test('picking photos adds a puzzle for each one', async () => {
   mockedLaunchImageLibrary.mockImplementation((_options, callback) => {
     callback({
-      assets: [{ uri: 'file:///photo.jpg', fileName: 'photo.jpg' }],
+      assets: [
+        { uri: 'file:///a.jpg', fileName: 'a.jpg' },
+        { uri: 'file:///b.jpg', fileName: 'b.jpg' },
+      ],
     });
   });
-  const onAddPuzzle = jest.fn();
+  const onAddPuzzles = jest.fn();
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
     root = ReactTestRenderer.create(
       <ParentScreen
         userPuzzles={[]}
-        onAddPuzzle={onAddPuzzle}
+        onAddPuzzles={onAddPuzzles}
         onDeletePuzzle={jest.fn()}
         defaultImagesEnabled={true}
         onToggleDefaultImages={jest.fn()}
@@ -92,29 +95,38 @@ test('picking a photo adds a puzzle for it', async () => {
   });
 
   await act(() => {
-    findByLabel(root!.root, 'Add photo').props.onPress();
+    findByLabel(root!.root, 'Add photos').props.onPress();
   });
 
-  expect(onAddPuzzle).toHaveBeenCalledWith(
+  // The OS picker is asked with no selection limit.
+  expect(mockedLaunchImageLibrary.mock.calls[0][0]).toEqual(
+    expect.objectContaining({ selectionLimit: 0 }),
+  );
+  expect(onAddPuzzles).toHaveBeenCalledTimes(1);
+  const added = onAddPuzzles.mock.calls[0][0];
+  expect(added).toHaveLength(2);
+  expect(added[0]).toEqual(
     expect.objectContaining({
-      title: 'photo.jpg',
+      title: 'a.jpg',
       source: 'user',
-      imageUri: 'file:///photo.jpg',
+      imageUri: 'file:///a.jpg',
     }),
   );
+  expect(added[1].imageUri).toBe('file:///b.jpg');
+  expect(added[0].id).not.toBe(added[1].id);
 });
 
-test('cancelling the picker does not add a puzzle', async () => {
+test('cancelling the picker does not add puzzles', async () => {
   mockedLaunchImageLibrary.mockImplementation((_options, callback) => {
     callback({ didCancel: true });
   });
-  const onAddPuzzle = jest.fn();
+  const onAddPuzzles = jest.fn();
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
     root = ReactTestRenderer.create(
       <ParentScreen
         userPuzzles={[]}
-        onAddPuzzle={onAddPuzzle}
+        onAddPuzzles={onAddPuzzles}
         onDeletePuzzle={jest.fn()}
         defaultImagesEnabled={true}
         onToggleDefaultImages={jest.fn()}
@@ -123,10 +135,10 @@ test('cancelling the picker does not add a puzzle', async () => {
   });
 
   await act(() => {
-    findByLabel(root!.root, 'Add photo').props.onPress();
+    findByLabel(root!.root, 'Add photos').props.onPress();
   });
 
-  expect(onAddPuzzle).not.toHaveBeenCalled();
+  expect(onAddPuzzles).not.toHaveBeenCalled();
 });
 
 test('deleting a photo confirms, then calls onDeletePuzzle when confirmed', async () => {
@@ -144,7 +156,7 @@ test('deleting a photo confirms, then calls onDeletePuzzle when confirmed', asyn
     root = ReactTestRenderer.create(
       <ParentScreen
         userPuzzles={[puzzle]}
-        onAddPuzzle={jest.fn()}
+        onAddPuzzles={jest.fn()}
         onDeletePuzzle={onDeletePuzzle}
         defaultImagesEnabled={true}
         onToggleDefaultImages={jest.fn()}

@@ -30,10 +30,13 @@ interface PieceState {
   placed: boolean;
 }
 
-// How close (in board pixels) a released piece needs to land to its
-// correct spot to snap into place — generous on purpose, matching the
-// forgiving-input constraint used everywhere else a toddler taps or drags.
-const SNAP_DISTANCE = 40;
+// How close a released piece needs to land to its correct spot to snap
+// into place, as a fraction of the smaller piece dimension — generous on
+// purpose (forgiving input), but relative so it doesn't overlap
+// neighbouring targets on a fine 6x5 grid or feel stingy on a 2x2 one.
+// Floored so tiny pieces still have a usable catch radius.
+const SNAP_RATIO = 0.4;
+const MIN_SNAP_DISTANCE = 18;
 
 function randomStart(max: number): number {
   return Math.random() * Math.max(0, max);
@@ -61,6 +64,10 @@ export function PuzzleBoard({
 
   const pieceWidth = boardSize.width / columns;
   const pieceHeight = boardSize.height / rows;
+  const snapDistance = Math.max(
+    MIN_SNAP_DISTANCE,
+    Math.min(pieceWidth, pieceHeight) * SNAP_RATIO,
+  );
 
   const handleLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
@@ -185,7 +192,7 @@ export function PuzzleBoard({
           p.x - p.descriptor.targetX,
           p.y - p.descriptor.targetY,
         );
-        if (distance <= SNAP_DISTANCE) {
+        if (distance <= snapDistance) {
           return {
             ...p,
             x: p.descriptor.targetX,

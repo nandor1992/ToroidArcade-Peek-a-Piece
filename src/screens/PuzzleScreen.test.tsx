@@ -21,7 +21,7 @@ function findButton(root: ReactTestRenderer.ReactTestInstance, label: string) {
   )[0];
 }
 
-test('back button calls onBack', async () => {
+test('the home button calls onBack', async () => {
   const onBack = jest.fn();
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
@@ -31,10 +31,28 @@ test('back button calls onBack', async () => {
   });
 
   await act(() => {
-    findButton(root!.root, 'Back').props.onPress();
+    findButton(root!.root, 'Home').props.onPress();
   });
 
   expect(onBack).toHaveBeenCalledTimes(1);
+});
+
+test('the previous button steps back through the list, wrapping at the start', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <PuzzleScreen puzzles={PUZZLES} initialPuzzleId="p1" />,
+    );
+  });
+
+  expect(currentPuzzleLabel(root!.root)).toBe('Puppy');
+
+  await act(() => {
+    findButton(root!.root, 'Previous puzzle').props.onPress();
+  });
+
+  // Wrapped from the first puzzle round to the last.
+  expect(currentPuzzleLabel(root!.root)).toBe('Flower');
 });
 
 function currentPuzzleLabel(root: ReactTestRenderer.ReactTestInstance) {

@@ -40,13 +40,16 @@ is decoration, the button carries the label.
 
 | Name | Type | Required | Notes |
 |------|------|----------|-------|
-| `name` | `IconName` | Yes | `back` \| `next` \| `parents` \| `settings` \| `volumeOn` \| `volumeOff` \| `close` |
+| `name` | `IconName` | Yes | `back` \| `home` \| `previous` \| `next` \| `parents` \| `settings` \| `volumeOn` \| `volumeOff` \| `close` |
 | `size` | `number` | No | Default 24. |
 | `color` | `string` | No | Default `colors.navy`. |
 
-Current mapping: `back` → `chevron-left`, `next` → `chevron-right`,
-`parents` → `account-supervisor`, `settings` → `cog`, `volumeOn` →
-`volume-high`, `volumeOff` → `volume-off`, `close` → `close`.
+Current mapping: `back` / `previous` → `chevron-left`, `next` →
+`chevron-right`, `home` → `home`, `parents` → `account-supervisor`,
+`settings` → `cog`, `volumeOn` → `volume-high`, `volumeOff` →
+`volume-off`, `close` → `close`. (`back` and `previous` share a glyph but
+are kept distinct so callers read right: `back` = up one screen,
+`previous` = the earlier puzzle.)
 
 ## Toddler UX constraints
 

@@ -10,19 +10,23 @@ last_verified: 2026-08-30
 
 ## Purpose
 
-Reached from `ParentScreen`'s ⚙️ button (so it inherits that screen's
+Reached from `ParentScreen`'s cog button (so it inherits that screen's
 math-gate protection — there's no separate gate here). Lets a parent adjust
-the two things that affect the whole app rather than a single puzzle:
-background-music volume/mute, and the screen-time limit that drives
-[[SessionLockOverlay]].
+the things that affect the whole app rather than a single puzzle:
+background-music volume/mute, the jigsaw piece-grid size, and the
+screen-time limit that drives [[SessionLockOverlay]]. Also carries the
+app's dedication and (in the About popup) its attributions.
 
 ## How it works
 
 Fully controlled, like `ParentScreen` — `SettingsScreen` owns none of this
 state itself, only rendering what it's given and calling back on change.
-`App.tsx` owns `soundVolume`, `soundMuted`, and `timerMinutes`.
+`App.tsx` owns `soundVolume`, `soundMuted`, `timerMinutes`, and
+`puzzleSize`.
 
-The back button is a chevron [[Icon]] (`back`).
+The back button is a chevron [[Icon]] (`back`). Directly under the header,
+centred, is a fixed dedication line — "Built with love for Julia and
+Vincent".
 
 - **Background Music**: a [[Slider]] bound to `soundVolume`
   (`onChangeSoundVolume`), plus a separate mute button — an [[Icon]]
@@ -35,24 +39,32 @@ The back button is a chevron [[Icon]] (`back`).
   *playing* while this screen is open (unlike other parent screens) so the
   slider and mute button have something audible to affect — see
   [[useBackgroundMusic]].
+- **Puzzle Size**: a row of preset chips from `PUZZLE_SIZES` (see
+  [[puzzleSizes]]) — `2x2` … `6x5`, labelled columns x rows. Tapping one
+  calls `onChangePuzzleSize` with the matching `PuzzleSize` object; the
+  chip whose `label` equals `puzzleSize.label` is highlighted
+  (`accessibilityState={{ selected }}`). `App.tsx` passes the choice to
+  `PuzzleScreen` → [[PuzzleBoard]].
 - **Screen Time Limit**: a row of preset chips (`Off`, `5 min`, `10 min`,
   `15 min`, `20 min`, `30 min` — `TIMER_PRESETS`) rather than a free-form
   number input. Tapping one calls `onChangeTimerMinutes` with that preset's
   `minutes` (`null` for `Off`); the chip matching the current
-  `timerMinutes` is highlighted (`accessibilityState={{ selected }}`
-  too).
+  `timerMinutes` is highlighted. **This section's label and chip row are
+  centred**, as is the About button.
 - **About**: unlike everything else on this screen, this is local UI state
   (`aboutVisible`) rather than something `App.tsx` owns — there's nothing
   for a caller to control or react to. Tapping the About button opens a
-  `Modal` (`transparent`, `animationType="fade"`) showing the app name,
-  a fixed credit line, a background-music attribution line ("Music by
-  *Dmitrii Kolesnikov* from *Pixabay*", the two names being
-  `accessibilityRole="link"` `Text` spans that `Linking.openURL` their
-  Pixabay URLs), and a version string (all from `ABOUT_INFO`,
-  hand-maintained in this file — see Non-goals), with a Close button that
-  dismisses it. `onRequestClose` (Android back button / iOS swipe) also
-  dismisses it. This is the one place in the app that opens an external
-  link, and it's fine here because Settings sits behind the parent gate.
+  `Modal` (`transparent`, `animationType="fade"`) showing the app name, a
+  fixed credit line, the starter-art attribution ("Generated with
+  imagetocartoon.com using our family photos"), a background-music
+  attribution line ("Music by *Dmitrii Kolesnikov* from *Pixabay*", the
+  two names being `accessibilityRole="link"` `Text` spans that
+  `Linking.openURL` their Pixabay URLs), and a version string (all from
+  `ABOUT_INFO`, hand-maintained in this file — see Non-goals), with a
+  Close button that dismisses it. `onRequestClose` (Android back button /
+  iOS swipe) also dismisses it. The Pixabay links are the one place in the
+  app that opens an external link, fine here because Settings sits behind
+  the parent gate.
 
 ## Interface
 
@@ -64,6 +76,8 @@ The back button is a chevron [[Icon]] (`back`).
 | `onToggleMute` | `(muted: boolean) => void` | Yes | Called with the new (opposite) state when the mute button is pressed. |
 | `timerMinutes` | `number \| null` | Yes | Current screen-time limit; `null` means off. |
 | `onChangeTimerMinutes` | `(minutes: number \| null) => void` | Yes | Called with the tapped preset's value. |
+| `puzzleSize` | `PuzzleSize` | Yes | Current jigsaw grid ([[puzzleSizes]]). |
+| `onChangePuzzleSize` | `(size: PuzzleSize) => void` | Yes | Called with the tapped size chip's `PuzzleSize`. |
 | `onBack` | `() => void` | No | Called when the back button is pressed. No-op if omitted. |
 
 ## Edge cases & expected behavior
@@ -83,11 +97,14 @@ The back button is a chevron [[Icon]] (`back`).
    the button's label is "Unmute" and pressing it calls `onToggleMute(false)`.
 3. Tap a timer preset (e.g. "10 min") → `onChangeTimerMinutes(10)`. Tap
    "Off" → `onChangeTimerMinutes(null)`.
-4. Tap the About button → the popup becomes visible and shows the app
-   name. Tap Close → the popup is hidden again.
-5. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
+4. Tap a puzzle-size chip (e.g. "4x4") → `onChangePuzzleSize` is called
+   with that `PuzzleSize`. The chip matching `puzzleSize` renders selected.
+5. Tap the About button → the popup shows the app name, the
+   imagetocartoon.com line, and the music credit. Tap Close → hidden.
+6. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
    → `Linking.openURL` is called with the matching Pixabay URL.
-6. Press Back → `onBack` is called.
+7. The dedication line renders on the screen (outside the popup).
+8. Press Back → `onBack` is called.
 
 ## Non-goals / known limitations
 
@@ -99,15 +116,17 @@ The back button is a chevron [[Icon]] (`back`).
 - `ABOUT_INFO.version` is a hardcoded string, not read from `package.json`
   — nothing keeps it in sync automatically, so it can drift if the app's
   version bumps without this file being touched too.
-- "Who created the app" is a fixed credit line (`ABOUT_INFO.credit`), not
-  configurable or localized.
-- The music attribution (`ABOUT_INFO.music`) is likewise hardcoded for the
-  one bundled track; swapping the track (see [[useBackgroundMusic]]) means
-  updating this line by hand too. The `utm_*` params on the URLs are
-  Pixabay's referral-attribution string, kept verbatim.
+- The credit line, dedication, and both attributions
+  (`ABOUT_INFO.credit` / `.starterArt` / `.music`, and `DEDICATION`) are
+  fixed strings — not configurable or localised. Swapping the music track
+  (see [[useBackgroundMusic]]) or the starter art means editing them by
+  hand. The `utm_*` params on the Pixabay URLs are its referral-attribution
+  string, kept verbatim.
+- `puzzleSize` isn't persisted — resets to `2x2` on restart, like every
+  other setting.
 
 ## Related
 
 - Code: `src/screens/SettingsScreen.tsx`
 - Tests: `src/screens/SettingsScreen.test.tsx`
-- Related specs: [[Slider]], [[Icon]], [[ParentScreen]], [[SessionLockOverlay]], [[useBackgroundMusic]]
+- Related specs: [[Slider]], [[Icon]], [[puzzleSizes]], [[ParentScreen]], [[SessionLockOverlay]], [[useBackgroundMusic]]

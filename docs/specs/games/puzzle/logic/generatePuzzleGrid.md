@@ -76,8 +76,9 @@ preview artifact) can pass a seeded function instead.
 
 ## Non-goals / known limitations
 
-- No difficulty presets — `rows`/`columns` are just numbers a caller
-  passes in; `PuzzleBoard` currently defaults to a fixed 2x2.
+- `rows`/`columns` are just numbers a caller passes in. The presets a
+  parent actually picks from live in [[puzzleSizes]] (2x2 … 6x5);
+  `PuzzleBoard` defaults to 2x2 when given nothing.
 - No guarantee against a "trivial" random layout (e.g. it's possible,
   though unlikely, for a whole row's connections to all land the same
   way) — no attempt to enforce visual variety beyond a straight coin flip
