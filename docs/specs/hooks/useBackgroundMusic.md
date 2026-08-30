@@ -50,9 +50,12 @@ the right state once ready. An earlier version called all three
 immediately after `new Sound()` — which is why the track never actually
 played (or looped) on a real device.
 
-`App.tsx` calls this with `enabled: inChildSession && !locked` — music
-plays on `HomeScreen`/`PuzzleScreen`, pauses on any parent-only screen and
-while `SessionLockOverlay` is showing.
+`App.tsx` calls this with `enabled: (inChildSession || screen === 'settings')
+&& !locked` — music plays on `HomeScreen` / `PuzzleScreen`, and also on the
+`SettingsScreen` (so the volume slider and mute button there are audible
+while you adjust them; without this, dragging the slider looked like it
+did nothing). It pauses on the parent gate / parent screen and while
+`SessionLockOverlay` is showing.
 
 ## Interface
 

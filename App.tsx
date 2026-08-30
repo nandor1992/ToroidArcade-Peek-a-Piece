@@ -55,6 +55,10 @@ function App() {
   const puzzles = [...userPuzzles, ...stockPuzzles];
   const goHome = () => setScreen({ name: 'home' });
   const inChildSession = screen.name === 'home' || screen.name === 'puzzle';
+  // Music also plays on the Settings screen so the volume slider and mute
+  // button there have something audible to adjust — otherwise dragging the
+  // slider looks like it does nothing (see useBackgroundMusic spec).
+  const musicEnabled = (inChildSession || screen.name === 'settings') && !locked;
 
   // Re-locks every `timerMinutes` for as long as a child-facing screen is
   // showing. Leaving to a parent-only screen (or unlocking) clears the
@@ -69,7 +73,7 @@ function App() {
   }, [inChildSession, timerMinutes, locked]);
 
   useBackgroundMusic({
-    enabled: inChildSession && !locked,
+    enabled: musicEnabled,
     volume: soundVolume,
     muted: soundMuted,
   });
