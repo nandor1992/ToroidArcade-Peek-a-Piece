@@ -11,21 +11,38 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 // React Native and several RN libraries ship untranspiled source (Flow types,
 // ESM, JSX), so unlike a normal web project these *must* go through Babel.
+//
+// Only list packages that genuinely need it. `@react-native/babel-preset`
+// rewrites ESM to CommonJS, which is fatal for a package whose compiled
+// output is marked `"type": "module"` — webpack then parses the file as
+// strict ESM while Babel has filled it with `exports.…`, and it dies at
+// runtime with "exports is not defined". That is why
+// `@react-native-async-storage/async-storage` is deliberately absent: its
+// lib/module/package.json sets `"type": "module"`, and its output is
+// already plain compiled ESM with no Flow, so webpack consumes it directly.
+// Before adding an entry here, check for that marker:
+//   node -p "require('<pkg>/lib/module/package.json').type"
+// `@shopify/react-native-skia` is absent for the same reason: compiled ESM,
+// no Flow, works untranspiled (which is what it has been doing — see the
+// escaping note below).
 const RN_PACKAGES_NEEDING_TRANSPILE = [
   'react-native',
   'react-native-web',
   'react-native-safe-area-context',
   '@react-native',
-  '@react-native-async-storage',
   '@react-native-vector-icons',
-  '@shopify/react-native-skia',
 ];
 
 // Matches node_modules/<pkg>/... for each of the above. pnpm's hoisted layout
 // (see .npmrc) keeps them at the top level, but the regex tolerates nesting.
+//
+// Escape regex metacharacters *first*, then turn path separators into a class
+// matching both / and \. Doing it the other way round escapes the brackets of
+// the class just inserted, so a scoped entry like `@scope/pkg` silently
+// compiles to a pattern matching the literal text `[\/]` and never fires.
 const transpileRegex = new RegExp(
   `node_modules[\\\\/](${RN_PACKAGES_NEEDING_TRANSPILE.map(p =>
-    p.replace(/[/\\]/g, '[\\\\/]').replace(/[.*+?^${}()|[\]]/g, '\\$&'),
+    p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\//g, '[\\\\/]'),
   ).join('|')})[\\\\/]`,
 );
 
@@ -131,6 +148,18 @@ module.exports = (_env, argv) => {
               presets: [require.resolve('@react-native/babel-preset')],
             },
           },
+        },
+        {
+          // Packages whose compiled output is marked `"type": "module"`
+          // (async-storage) are parsed as strict ESM, where webpack requires
+          // imports to be "fully specified" — i.e. carry a file extension.
+          // Their source uses extensionless relative imports
+          // (`./createAsyncStorage`), so relax that and let resolve.extensions
+          // do its job. This is also what picks the web implementation:
+          // createAsyncStorage.js (IndexedDB) over createAsyncStorage.native.js.
+          test: /\.m?js$/,
+          include: /node_modules/,
+          resolve: { fullySpecified: false },
         },
         {
           test: /\.(png|jpe?g|gif|svg|mp3|ttf|woff2?)$/,

@@ -94,7 +94,7 @@ test('setting a screen-time limit locks the app after it elapses, and solving th
 
   // Home -> parent gate -> parent screen -> settings.
   await act(() => {
-    findByLabel(root!.root, 'Parent settings').props.onPress();
+    findByLabel(root!.root, 'Parent controls').props.onPress();
   });
   await solveMathGate(root!.root);
   await act(() => {
@@ -141,7 +141,7 @@ test('Next on the puzzle screen only cycles through puzzles currently visible on
 
   // Home -> parent gate -> parent screen.
   await act(() => {
-    findByLabel(root!.root, 'Parent settings').props.onPress();
+    findByLabel(root!.root, 'Parent controls').props.onPress();
   });
   await solveMathGate(root!.root);
 

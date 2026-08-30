@@ -25,7 +25,7 @@ function tileOrder(root: ReactTestRenderer.ReactTestInstance): string[] {
     .map(node => node.props.accessibilityLabel)
     .filter(
       (label): label is string =>
-        typeof label === 'string' && label !== 'Parent settings',
+        typeof label === 'string' && label !== 'Parent controls',
     );
 }
 
@@ -278,7 +278,7 @@ test('the parent button is hidden when there is no parent area to open', async (
   // button would just be something for a toddler to poke at.
   expect(
     root!.root.findAll(
-      node => node.props.accessibilityLabel === 'Parent settings',
+      node => node.props.accessibilityLabel === 'Parent controls',
     ),
   ).toEqual([]);
 });
@@ -295,7 +295,7 @@ test('tapping the parent button opens the parent area', async () => {
 
   const button = root!.root.findAll(
     node =>
-      node.props.accessibilityLabel === 'Parent settings' &&
+      node.props.accessibilityLabel === 'Parent controls' &&
       typeof node.props.onPress === 'function',
   )[0];
 

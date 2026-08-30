@@ -274,7 +274,7 @@ export function HomeScreen({
         {onOpenParentArea && (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel="Parent settings"
+            accessibilityLabel="Parent controls"
             onPress={onOpenParentArea}
             style={({ pressed }) => [
               styles.parentButton,

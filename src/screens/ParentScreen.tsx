@@ -81,7 +81,10 @@ export function ParentScreen({
           ]}>
           <Icon name="back" size={26} color={colors.navy} />
         </Pressable>
-        <Text style={styles.title}>Parent Settings</Text>
+        {/* "Controls", not "Settings" — this screen has its own Settings
+            submenu (the cog, top right), and two levels both called
+            Settings read as the same place. */}
+        <Text style={styles.title}>Parent Controls</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Settings"
