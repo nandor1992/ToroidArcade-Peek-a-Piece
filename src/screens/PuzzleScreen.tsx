@@ -40,6 +40,9 @@ export function PuzzleScreen({
 
   const puzzle = puzzles[index];
   const [solved, setSolved] = useState(false);
+  // Bumping this remounts PuzzleBoard, which re-scatters the pieces — the
+  // Reset button, and implicitly every puzzle change.
+  const [resetCount, setResetCount] = useState(0);
 
   useEffect(() => {
     setSolved(false);
@@ -63,72 +66,87 @@ export function PuzzleScreen({
   const goPrev = () =>
     setIndex(current => (current - 1 + puzzles.length) % puzzles.length);
   const goNext = () => setIndex(current => (current + 1) % puzzles.length);
+  const reset = () => {
+    setResetCount(current => current + 1);
+    setSolved(false);
+  };
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: background }]}
       edges={['top', 'bottom']}>
       <AppHeader />
-      <View style={styles.topBar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Home"
-          onPress={onBack}
-          style={({ pressed }) => [
-            styles.navButton,
-            pressed && styles.navButtonPressed,
-          ]}>
-          <Icon name="home" size={28} color={colors.navy} />
-        </Pressable>
-      </View>
 
-      <View style={styles.imageArea}>
+      <View style={styles.playArea}>
+        <View style={styles.boardLayer} accessibilityLabel={puzzle.title}>
+          {imageSource != null ? (
+            <PuzzleBoard
+              key={`${puzzle.id}-${columns}x${rows}-${resetCount}`}
+              imageSource={imageSource}
+              rows={rows}
+              columns={columns}
+              onSolved={() => setSolved(true)}
+            />
+          ) : (
+            // A puzzle with no artwork at all — nothing to cut into
+            // pieces. See docs/specs/screens/PuzzleScreen.md.
+            <Text style={styles.imageGlyph}>🧩</Text>
+          )}
+        </View>
+
+        {/* Controls float over the board. `box-none` so touches between
+            the buttons still reach the pieces underneath. */}
+        <View style={styles.topControls} pointerEvents="box-none">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Home"
+            onPress={onBack}
+            style={({ pressed }) => [
+              styles.navButton,
+              pressed && styles.navButtonPressed,
+            ]}>
+            <Icon name="home" size={28} color={colors.navy} />
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Reset puzzle"
+            onPress={reset}
+            style={({ pressed }) => [
+              styles.navButton,
+              pressed && styles.navButtonPressed,
+            ]}>
+            <Icon name="reset" size={26} color={colors.navy} />
+          </Pressable>
+        </View>
+
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Previous puzzle"
           onPress={goPrev}
           style={({ pressed }) => [
-            styles.navButton,
+            styles.sideButton,
+            styles.sideButtonLeft,
             pressed && styles.navButtonPressed,
           ]}>
           <Icon name="previous" size={32} color={colors.navy} />
         </Pressable>
-
-        <View style={styles.boardWrap}>
-          <View
-            style={styles.imagePlaceholder}
-            accessibilityLabel={puzzle.title}>
-            {imageSource != null ? (
-              <PuzzleBoard
-                key={`${puzzle.id}-${columns}x${rows}`}
-                imageSource={imageSource}
-                rows={rows}
-                columns={columns}
-                onSolved={() => setSolved(true)}
-              />
-            ) : (
-              // A puzzle with no artwork at all — nothing to cut into
-              // pieces. See docs/specs/screens/PuzzleScreen.md.
-              <Text style={styles.imageGlyph}>🧩</Text>
-            )}
-          </View>
-          {solved && (
-            <View style={styles.solvedBanner} pointerEvents="none">
-              <Text style={styles.solvedBannerText}>🎉 Great job!</Text>
-            </View>
-          )}
-        </View>
-
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Next puzzle"
           onPress={goNext}
           style={({ pressed }) => [
-            styles.navButton,
+            styles.sideButton,
+            styles.sideButtonRight,
             pressed && styles.navButtonPressed,
           ]}>
           <Icon name="next" size={32} color={colors.navy} />
         </Pressable>
+
+        {solved && (
+          <View style={styles.solvedBanner} pointerEvents="none">
+            <Text style={styles.solvedBannerText}>🎉 Great job!</Text>
+          </View>
+        )}
       </View>
     </SafeAreaView>
   );
@@ -138,52 +156,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  topBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+  playArea: {
+    flex: 1,
+  },
+  boardLayer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navButton: {
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: colors.cream,
+    opacity: 0.9,
     alignItems: 'center',
     justifyContent: 'center',
   },
   navButtonPressed: {
-    opacity: 0.7,
+    opacity: 0.6,
   },
-  imageArea: {
-    flex: 1,
+  topControls: {
+    position: 'absolute',
+    top: 8,
+    left: 12,
+    right: 12,
     flexDirection: 'row',
-    alignItems: 'center',
-    // The prev/next buttons live in this row, vertically centred beside
-    // the board — never overlapping it.
-    paddingHorizontal: 8,
-    gap: 8,
+    justifyContent: 'space-between',
   },
-  boardWrap: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  imagePlaceholder: {
-    width: '100%',
-    aspectRatio: 1,
-    maxWidth: 480,
-    borderRadius: 32,
+  sideButton: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -28,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
     backgroundColor: colors.cream,
+    opacity: 0.85,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+  },
+  sideButtonLeft: {
+    left: 8,
+  },
+  sideButtonRight: {
+    right: 8,
   },
   imageGlyph: {
     fontSize: 96,
   },
   solvedBanner: {
     position: 'absolute',
-    top: 12,
+    top: 16,
     alignSelf: 'center',
     backgroundColor: colors.teal,
     paddingVertical: 8,

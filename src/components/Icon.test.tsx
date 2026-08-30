@@ -11,6 +11,7 @@ const NAMES: IconName[] = [
   'home',
   'previous',
   'next',
+  'reset',
   'parents',
   'settings',
   'volumeOn',
@@ -42,6 +43,7 @@ test('maps semantic names to Material Design Icons glyphs', async () => {
     'home',
     'chevron-left', // previous
     'chevron-right', // next
+    'restart', // reset
     'account-supervisor',
     'cog',
     'volume-high',

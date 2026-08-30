@@ -24,6 +24,10 @@ function Image() {
   return null;
 }
 
+function Path() {
+  return null;
+}
+
 function useImage() {
   return {
     width: () => 200,
@@ -31,4 +35,4 @@ function useImage() {
   };
 }
 
-module.exports = { Canvas, Group, Image, useImage };
+module.exports = { Canvas, Group, Image, Path, useImage };

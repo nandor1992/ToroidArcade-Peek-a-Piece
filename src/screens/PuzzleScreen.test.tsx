@@ -155,14 +155,15 @@ test('solving the board shows the "Great job!" banner', async () => {
       .length > 0;
   expect(bannerVisible()).toBe(false);
 
-  // Default board is a 2x2 grid of 100x100 pieces, all scrambled to
-  // (0, 0) with Math.random mocked — same technique as
-  // PuzzleBoard.test.tsx, driven through PuzzleScreen this time.
+  // 2x2 grid, all pieces scattered to (0, 0) with Math.random mocked —
+  // see PuzzleBoard.test.tsx for the geometry. Absolute targets are at
+  // (40,40) / (100,40) / (40,100) / (100,100); a grab at (1,1) then a
+  // move to `target + (1,1)` lands each piece exactly.
   const targets = [
-    { x: 101, y: 101 },
-    { x: 1, y: 101 },
-    { x: 101, y: 1 },
-    { x: 1, y: 1 },
+    { x: 101, y: 101 }, // 1-1
+    { x: 41, y: 101 }, // 1-0
+    { x: 101, y: 41 }, // 0-1
+    { x: 41, y: 41 }, // 0-0
   ];
   for (const target of targets) {
     await act(() => {
@@ -181,6 +182,12 @@ test('solving the board shows the "Great job!" banner', async () => {
   }
 
   expect(bannerVisible()).toBe(true);
+
+  // Reset clears the banner and re-scrambles (the board remounts).
+  await act(() => {
+    findButton(root!.root, 'Reset puzzle').props.onPress();
+  });
+  expect(bannerVisible()).toBe(false);
 
   randomSpy.mockRestore();
 });

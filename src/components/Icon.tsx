@@ -12,6 +12,7 @@ const GLYPHS = {
   home: 'home',
   previous: 'chevron-left',
   next: 'chevron-right',
+  reset: 'restart',
   parents: 'account-supervisor',
   settings: 'cog',
   volumeOn: 'volume-high',
