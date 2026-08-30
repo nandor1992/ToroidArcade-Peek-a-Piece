@@ -48,6 +48,11 @@ calling back to whatever owns the list (`App.tsx`):
   (background-music volume/mute, screen-time limit). The back button is
   the `back` chevron icon.
 
+The screen is titled **"Parent Controls"**, not "Parent Settings" — it
+*contains* a Settings submenu (the cog above), and two nested levels both
+called Settings read as the same destination. [[HomeScreen]]'s corner
+button carries the matching `accessibilityLabel` "Parent controls".
+
 Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 `numColumns={3}`); an empty grid shows "No photos uploaded yet." instead.
 

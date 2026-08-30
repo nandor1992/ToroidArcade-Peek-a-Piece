@@ -33,6 +33,25 @@
         padding: 0;
       }
 
+      /* #root must be a flex container. react-native-web renders the app's
+         outermost View with `flex: 1`, which only does anything inside a
+         flex parent — as a plain block div, #root let the whole app
+         collapse to content height. That starved PuzzleBoard's onLayout of
+         a real size, so it never built its pieces and sat on the loading
+         state forever. */
+      #root {
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Direct children (the app root, and the boot/Suspense fallback)
+         stretch to fill. min-height:0 lets inner scroll areas shrink
+         properly instead of overflowing. */
+      #root > * {
+        flex: 1 1 auto;
+        min-height: 0;
+      }
+
       body {
         /* colors.cream — matches the app's page background so there's no
            white flash before React mounts. */
