@@ -18,14 +18,19 @@ app is playable immediately, before any photo has been uploaded.
 
 ## How it works
 
+The screen opens with the slim [[AppHeader]] (logo + "Peek-a-Piece"), then
+the puzzle grid.
+
 `HomeScreen` takes the puzzle lists as props rather than reading storage
-itself (storage isn't implemented yet — see Non-goals). It renders one
-continuous grid — `[...userPuzzles, ...stockPuzzles]` chunked into rows —
-rather than two visually separate sections: uploaded photos always come
-first, starter puzzles (`stockPuzzles`, defaulting to the hardcoded
-eight-puzzle `STARTER_PUZZLES` when no prop is passed) fill in after them,
-with no header or divider marking where one group ends and the other
-begins.
+itself (storage isn't implemented yet — see Non-goals). It renders
+uploaded photos first, then the bundled starter set (`stockPuzzles`,
+defaulting to the hardcoded eight-puzzle `STARTER_PUZZLES` when no prop is
+passed). `buildGrid` turns the two lists into a single `FlatList` `data`
+of `{ kind: 'row', puzzles, colorBase }` and `{ kind: 'divider' }` items:
+each group is chunked into its own rows (the two groups never share a
+row), and a thin `divider` rule is inserted between them **only when
+there's an uploaded group *and* a starter group** — no uploads, or
+starters toggled off, means no divider.
 
 **Responsive column count.** `columnsForWidth(useWindowDimensions().width)`
 picks the grid width: **4 columns at >= 700dp** (a typical tablet — so the
@@ -35,7 +40,7 @@ phone). It recomputes on rotation / window resize. The `FlatList` is keyed
 row is padded with `columns - row.length` invisible spacer views so its
 tiles keep their natural size instead of stretching to fill the width.
 Tile background colours cycle continuously through the palette by absolute
-grid position (`rowIndex * columns + colIndex`), not per-row.
+grid position (`colorBase + colIndex`), carrying across the divider.
 
 Each tile renders the puzzle's artwork whenever it has any — resolved via
 `puzzleImageSource` (see [[puzzleImage]]), which returns the bundled asset
@@ -57,12 +62,15 @@ combine it with
 `userPuzzles` into the single ordered list `PuzzleScreen` browses with its
 Next button — both screens need to agree on the same list and ordering.
 
-A small lock button floats over the bottom-right corner of the grid
+A small button floats over the bottom-right corner of the grid
 (`position: absolute`, `bottom: 12`, `right: 12`) and calls
-`onOpenParentArea`. `App.tsx` routes it to `ParentGateScreen`, not
-directly to `ParentScreen` — see that spec for the math-gate step in
-between. Nothing system-drawn sits over that corner because the app runs
-full screen with the status/navigation bars hidden (see
+`onOpenParentArea`. It shows the [[Icon]] `parents` glyph
+(`account-supervisor` — an adult-and-child figure), not a padlock, but is
+still deliberately small (40x40) and low-contrast (`opacity: 0.55` at
+rest). `App.tsx` routes it to `ParentGateScreen`, not directly to
+`ParentScreen` — see that spec for the math-gate step in between. Nothing
+system-drawn sits over that corner because the app runs full screen with
+the status/navigation bars hidden (see
 [`architecture.md`](../../architecture.md) → "Runs full screen"); an
 Android navigation bar there previously covered this button.
 
@@ -73,7 +81,7 @@ Android navigation bar there previously covered this button.
 | `userPuzzles` | `Puzzle[]` | No | Defaults to `[]`. Rendered first in the grid. |
 | `stockPuzzles` | `Puzzle[]` | No | Defaults to the bundled eight-puzzle `STARTER_PUZZLES` set. Rendered after `userPuzzles`. |
 | `onSelectPuzzle` | `(puzzle: Puzzle) => void` | No | Called with the tapped puzzle. No-op if omitted. |
-| `onOpenParentArea` | `() => void` | No | Called when the corner lock button is pressed. No-op if omitted. |
+| `onOpenParentArea` | `() => void` | No | Called when the corner parent-area button is pressed. No-op if omitted. |
 
 ## Toddler UX constraints
 
@@ -84,12 +92,12 @@ Android navigation bar there previously covered this button.
   tiles stay comfortably above that floor on real phones and tablets.
 - Tapping anywhere on a tile always fires `onSelectPuzzle`; there is no
   mis-tap or invalid-state to report, so there is nothing to silently ignore.
-- No text needs to be read to use the screen: each tile is a distinct color
-  + glyph, and the puzzle title (`accessibilityLabel`) is exposed for screen
-  readers but never required to identify or select a tile visually.
-- Visual feedback on press: the tile dims (`opacity: 0.7`) while held. There
-  is no audio feedback yet — no sound asset pipeline exists (see Non-goals).
-- The parent-area lock button is a deliberate exception to the
+- No text needs to be read to use the screen: each tile shows its
+  picture, and the puzzle title (`accessibilityLabel`) is exposed for
+  screen readers but never required to identify or select a tile visually.
+- Visual feedback on press: the tile dims (`opacity: 0.7`) while held.
+  Background music plays (see [[useBackgroundMusic]]); no per-tap sound.
+- The parent-area button is a deliberate exception to the
   large-touch-target rule: it's small (40x40) and low-contrast
   (`opacity: 0.55` at rest), on purpose, since it's the one control on this
   screen that should *not* be easy for a toddler to find or hit.
@@ -99,12 +107,16 @@ Android navigation bar there previously covered this button.
 - No `userPuzzles` and no `stockPuzzles` override → grid is populated by
   the default `STARTER_PUZZLES` alone (eight tiles, each with cartoon art;
   4x2 on a tablet, 2x4 on a phone).
-- `userPuzzles` non-empty → those tiles render first, immediately followed
-  by `stockPuzzles` in the same grid (no visual break between them).
-- `stockPuzzles={[]}` and `userPuzzles={[]}` → grid renders with zero rows
-  (not currently given its own empty-state message — see Non-goals).
-- Puzzle count not a multiple of the column count → the last row is
-  padded with invisible spacers so its tiles aren't stretched.
+- `userPuzzles` non-empty *and* `stockPuzzles` non-empty → uploaded tiles
+  first, a `divider` rule, then the starter tiles. The two groups never
+  share a row.
+- `userPuzzles` non-empty but `stockPuzzles={[]}` (starters toggled off) →
+  no divider.
+- `userPuzzles={[]}` → no divider regardless of `stockPuzzles`.
+- `stockPuzzles={[]}` and `userPuzzles={[]}` → grid renders empty (no
+  empty-state message — see Non-goals).
+- A group's size isn't a multiple of the column count → that group's last
+  row is padded with invisible spacers so its tiles aren't stretched.
 - Window width crosses a breakpoint (tablet rotated, split-view resized) →
   the grid re-chunks to the new column count.
 - Tapping a tile with no `onSelectPuzzle` passed → no-op, no crash.
@@ -114,14 +126,17 @@ Android navigation bar there previously covered this button.
 1. Render with no props → the grid shows exactly the eight
    `STARTER_PUZZLES` (Meadow, Fairground, Climbing, Tractor, Sandpit,
    Train, Theatre, Teddies), in order.
-2. Render with one `userPuzzles` entry → it's the first tile in the grid,
-   immediately followed by all of `STARTER_PUZZLES` in order.
+2. Render with one `userPuzzles` entry → it's the first tile, then all of
+   `STARTER_PUZZLES` in order.
 3. At width 400 the eight starter puzzles chunk into rows of 2; at width
    900 into rows of 4; at width 600 into rows of 3.
-4. Nine tiles at 4 columns → rows of 4, 4, 1 (last row spacer-padded).
+4. No `userPuzzles` → the grid model contains no `divider` item. Two
+   `userPuzzles` at width 900 → model is `row, divider, row, row` (2
+   uploaded, then 4 + 4 starters); one `userPuzzles` with `stockPuzzles={[]}`
+   → no divider.
 5. Tap the first tile → `onSelectPuzzle` is called with that tile's
    `Puzzle` (`id: 'stock-1'`).
-6. Tap the corner lock button → `onOpenParentArea` is called.
+6. Tap the corner parent-area button → `onOpenParentArea` is called.
 
 ## Non-goals / known limitations
 
@@ -139,7 +154,9 @@ Android navigation bar there previously covered this button.
 - No explicit empty state for "zero puzzles at all" — shouldn't happen in
   practice since `stockPuzzles` always defaults to a non-empty set, but isn't
   guarded against explicitly.
-- No audio feedback on tap (no sound asset pipeline in the project yet).
+- No per-tap sound effect (only background music).
+- The divider is a plain thin rule, not a labelled section header — the
+  design deliberately avoids text the child would need to read.
 
 ## Related
 
@@ -148,4 +165,4 @@ Android navigation bar there previously covered this button.
 - Types: `src/types/puzzle.ts`
 - Palette: `src/theme/colors.ts`
 - Starter artwork: `src/games/puzzle/assets/starter/`
-- Related specs: [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]]
+- Related specs: [[AppHeader]], [[Icon]], [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]]

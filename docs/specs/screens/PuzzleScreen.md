@@ -3,7 +3,7 @@ name: PuzzleScreen
 type: screen
 source: src/screens/PuzzleScreen.tsx
 status: draft
-last_verified: 2026-08-29
+last_verified: 2026-08-30
 ---
 
 # PuzzleScreen
@@ -11,9 +11,9 @@ last_verified: 2026-08-29
 ## Purpose
 
 The screen a child lands on after tapping a tile on `HomeScreen`. It's the
-frame around the actual game: a back button, a next button, a random
-background, and — for any puzzle with a real photo — the interactive
-jigsaw itself ([[PuzzleBoard]]).
+frame around the actual game: the slim [[AppHeader]], a back button, a
+next button, a random background, and — for any puzzle with a real photo —
+the interactive jigsaw itself ([[PuzzleBoard]]).
 
 ## How it works
 
@@ -81,9 +81,10 @@ the only feedback.
 
 - Back and next buttons are each a 56x56 circular tap target — the whole
   circle is tappable, not just the glyph inside it.
-- Both buttons use arrow glyphs (←/→), not text labels, so nothing needs to
-  be read to browse puzzles or leave the screen; `accessibilityLabel`
-  ("Back" / "Next puzzle") is present for screen readers only.
+- Both buttons use chevron [[Icon]]s (`back` / `next`), not text labels, so
+  nothing needs to be read to browse puzzles or leave the screen;
+  `accessibilityLabel` ("Back" / "Next puzzle") is on the `Pressable` for
+  screen readers, and the icon itself is hidden from them.
 - Next always succeeds and wraps around — there's no dead-end state a
   toddler's repeated tapping could get stuck against.
 - Visual feedback on press: both buttons dim (`opacity: 0.7`) while held.
@@ -147,4 +148,4 @@ awareness of the toggle at all, only of whatever list it's handed.
 
 - Code: `src/screens/PuzzleScreen.tsx`
 - Tests: `src/screens/PuzzleScreen.test.tsx`
-- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]]
+- Related specs: [[HomeScreen]], [[SessionLockOverlay]], [[PuzzleBoard]], [[puzzleImage]], [[AppHeader]], [[Icon]]

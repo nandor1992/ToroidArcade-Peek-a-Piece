@@ -13,6 +13,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import type { Puzzle } from '../types/puzzle';
 import { puzzleImageSource } from '../utils/puzzleImage';
+import { AppHeader } from '../components/AppHeader';
+import { Icon } from '../components/Icon';
 
 const TILE_COLORS = [
   colors.teal,
@@ -101,6 +103,35 @@ function chunk<T>(items: T[], size: number): T[][] {
   return rows;
 }
 
+type GridItem =
+  | { kind: 'row'; puzzles: Puzzle[]; colorBase: number }
+  | { kind: 'divider' };
+
+// Uploaded photos first, then the bundled starter set, as one grid — but
+// with a divider between the two groups *only when there's an uploaded
+// group to divide from*. `colorBase` is the tile's absolute position so
+// background colours keep cycling across rows and across the divider.
+function buildGrid(
+  userPuzzles: Puzzle[],
+  stockPuzzles: Puzzle[],
+  columns: number,
+): GridItem[] {
+  const items: GridItem[] = [];
+  let colorBase = 0;
+  const addRows = (list: Puzzle[]) => {
+    for (const puzzles of chunk(list, columns)) {
+      items.push({ kind: 'row', puzzles, colorBase });
+      colorBase += puzzles.length;
+    }
+  };
+  addRows(userPuzzles);
+  if (userPuzzles.length > 0 && stockPuzzles.length > 0) {
+    items.push({ kind: 'divider' });
+  }
+  addRows(stockPuzzles);
+  return items;
+}
+
 interface PuzzleTileProps {
   puzzle: Puzzle;
   color: string;
@@ -147,48 +178,53 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const { width } = useWindowDimensions();
   const columns = columnsForWidth(width);
-
-  // One continuous grid — uploaded photos first, starter puzzles after —
-  // rather than two labeled sections, per the "together, above them" grid
-  // ordering.
-  const rows = chunk([...userPuzzles, ...stockPuzzles], columns);
+  const grid = buildGrid(userPuzzles, stockPuzzles, columns);
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
+      <AppHeader />
       <FlatList
         // `key` forces a fresh list when the column count changes (rotate
         // a tablet, resize a window) so every row re-chunks cleanly.
         key={`cols-${columns}`}
-        data={rows}
-        keyExtractor={(row, index) => `${row[0]?.id ?? 'row'}-${index}`}
-        renderItem={({
-          item: row,
-          index: rowIndex,
-        }: ListRenderItemInfo<Puzzle[]>) => (
-          <View style={styles.row}>
-            {row.map((puzzle, colIndex) => (
-              <PuzzleTile
-                key={puzzle.id}
-                puzzle={puzzle}
-                color={
-                  TILE_COLORS[
-                    (rowIndex * columns + colIndex) % TILE_COLORS.length
-                  ]
-                }
-                onPress={onSelectPuzzle}
-              />
-            ))}
-            {Array.from({ length: columns - row.length }).map((_, i) => (
-              // Keep a short last row's tiles their natural size instead of
-              // letting them stretch to fill the width.
-              <View
-                key={`spacer-${i}`}
-                style={styles.spacer}
-                pointerEvents="none"
-              />
-            ))}
-          </View>
-        )}
+        data={grid}
+        keyExtractor={(item, index) =>
+          item.kind === 'divider'
+            ? `divider-${index}`
+            : item.puzzles[0].id
+        }
+        renderItem={({ item }: ListRenderItemInfo<GridItem>) => {
+          if (item.kind === 'divider') {
+            return <View style={styles.divider} pointerEvents="none" />;
+          }
+          return (
+            <View style={styles.row}>
+              {item.puzzles.map((puzzle, colIndex) => (
+                <PuzzleTile
+                  key={puzzle.id}
+                  puzzle={puzzle}
+                  color={
+                    TILE_COLORS[
+                      (item.colorBase + colIndex) % TILE_COLORS.length
+                    ]
+                  }
+                  onPress={onSelectPuzzle}
+                />
+              ))}
+              {Array.from({ length: columns - item.puzzles.length }).map(
+                (_, i) => (
+                  // Keep a short last row's tiles their natural size
+                  // instead of letting them stretch to fill the width.
+                  <View
+                    key={`spacer-${i}`}
+                    style={styles.spacer}
+                    pointerEvents="none"
+                  />
+                ),
+              )}
+            </View>
+          );
+        }}
         contentContainerStyle={styles.content}
       />
       {/* Deliberately small and low-contrast — this is the parent-only
@@ -201,7 +237,7 @@ export function HomeScreen({
           styles.parentButton,
           pressed && styles.parentButtonPressed,
         ]}>
-        <Text style={styles.parentButtonGlyph}>🔒</Text>
+        <Icon name="parents" size={22} color={colors.navy} />
       </Pressable>
     </SafeAreaView>
   );
@@ -213,11 +249,20 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   row: {
     flexDirection: 'row',
     gap: 16,
+    marginBottom: 16,
+  },
+  divider: {
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.navy,
+    opacity: 0.12,
     marginBottom: 16,
   },
   spacer: {
@@ -256,8 +301,5 @@ const styles = StyleSheet.create({
   },
   parentButtonPressed: {
     opacity: 0.85,
-  },
-  parentButtonGlyph: {
-    fontSize: 18,
   },
 });

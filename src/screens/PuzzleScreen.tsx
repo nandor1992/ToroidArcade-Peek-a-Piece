@@ -5,6 +5,8 @@ import { colors } from '../theme/colors';
 import { PuzzleBoard } from '../games/puzzle/components/PuzzleBoard';
 import type { Puzzle } from '../types/puzzle';
 import { puzzleSkiaSource } from '../utils/puzzleImage';
+import { AppHeader } from '../components/AppHeader';
+import { Icon } from '../components/Icon';
 
 // Stand-ins for bundled background art. Swap for real images once that
 // asset set exists — see docs/specs/screens/PuzzleScreen.md.
@@ -58,6 +60,7 @@ export function PuzzleScreen({
     <SafeAreaView
       style={[styles.container, { backgroundColor: background }]}
       edges={['top', 'bottom']}>
+      <AppHeader />
       <View style={styles.header}>
         <Pressable
           accessibilityRole="button"
@@ -67,7 +70,7 @@ export function PuzzleScreen({
             styles.navButton,
             pressed && styles.navButtonPressed,
           ]}>
-          <Text style={styles.navGlyph}>←</Text>
+          <Icon name="back" size={30} color={colors.navy} />
         </Pressable>
         <Pressable
           accessibilityRole="button"
@@ -77,7 +80,7 @@ export function PuzzleScreen({
             styles.navButton,
             pressed && styles.navButtonPressed,
           ]}>
-          <Text style={styles.navGlyph}>→</Text>
+          <Icon name="next" size={30} color={colors.navy} />
         </Pressable>
       </View>
       <View style={styles.imageArea}>
@@ -125,11 +128,6 @@ const styles = StyleSheet.create({
   },
   navButtonPressed: {
     opacity: 0.7,
-  },
-  navGlyph: {
-    fontSize: 28,
-    color: colors.navy,
-    fontWeight: '700',
   },
   imageArea: {
     flex: 1,

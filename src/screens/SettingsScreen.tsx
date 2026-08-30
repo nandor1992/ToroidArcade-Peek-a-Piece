@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { Slider } from '../components/Slider';
+import { Icon } from '../components/Icon';
 
 export interface TimerPreset {
   label: string;
@@ -76,7 +77,7 @@ export function SettingsScreen({
             styles.iconButton,
             pressed && styles.iconButtonPressed,
           ]}>
-          <Text style={styles.iconGlyph}>←</Text>
+          <Icon name="back" size={26} color={colors.navy} />
         </Pressable>
         <Text style={styles.title}>Settings</Text>
         <View style={styles.headerSpacer} />
@@ -93,7 +94,11 @@ export function SettingsScreen({
               styles.iconButton,
               pressed && styles.iconButtonPressed,
             ]}>
-            <Text style={styles.iconGlyph}>{soundMuted ? '🔇' : '🔊'}</Text>
+            <Icon
+              name={soundMuted ? 'volumeOff' : 'volumeOn'}
+              size={24}
+              color={colors.navy}
+            />
           </Pressable>
         </View>
         <View style={soundMuted && styles.sliderMuted}>
@@ -215,10 +220,6 @@ const styles = StyleSheet.create({
   },
   iconButtonPressed: {
     opacity: 0.6,
-  },
-  iconGlyph: {
-    fontSize: 22,
-    color: colors.navy,
   },
   title: {
     fontSize: 18,

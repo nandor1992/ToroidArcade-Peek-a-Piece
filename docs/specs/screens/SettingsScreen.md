@@ -22,13 +22,19 @@ Fully controlled, like `ParentScreen` — `SettingsScreen` owns none of this
 state itself, only rendering what it's given and calling back on change.
 `App.tsx` owns `soundVolume`, `soundMuted`, and `timerMinutes`.
 
+The back button is a chevron [[Icon]] (`back`).
+
 - **Background Music**: a [[Slider]] bound to `soundVolume`
-  (`onChangeSoundVolume`), plus a separate mute button
-  (🔊/🔇 depending on `soundMuted`) that calls `onToggleMute` with the
-  *opposite* of the current value. Muting doesn't change `soundVolume` —
-  it's a separate flag layered on top, so unmuting restores whatever level
-  was set before. The slider dims (`opacity: 0.4`) while muted as a visual
-  hint, but stays interactive; dragging it while muted does not auto-unmute.
+  (`onChangeSoundVolume`), plus a separate mute button — an [[Icon]]
+  (`volumeOn` / `volumeOff` depending on `soundMuted`) — that calls
+  `onToggleMute` with the *opposite* of the current value. Muting doesn't
+  change `soundVolume` — it's a separate flag layered on top, so unmuting
+  restores whatever level was set before. The slider dims (`opacity: 0.4`)
+  while muted as a visual hint, but stays interactive; dragging it while
+  muted does not auto-unmute. `App.tsx` keeps the background track
+  *playing* while this screen is open (unlike other parent screens) so the
+  slider and mute button have something audible to affect — see
+  [[useBackgroundMusic]].
 - **Screen Time Limit**: a row of preset chips (`Off`, `5 min`, `10 min`,
   `15 min`, `20 min`, `30 min` — `TIMER_PRESETS`) rather than a free-form
   number input. Tapping one calls `onChangeTimerMinutes` with that preset's
@@ -104,4 +110,4 @@ state itself, only rendering what it's given and calling back on change.
 
 - Code: `src/screens/SettingsScreen.tsx`
 - Tests: `src/screens/SettingsScreen.test.tsx`
-- Related specs: [[Slider]], [[ParentScreen]], [[SessionLockOverlay]], [[useBackgroundMusic]]
+- Related specs: [[Slider]], [[Icon]], [[ParentScreen]], [[SessionLockOverlay]], [[useBackgroundMusic]]

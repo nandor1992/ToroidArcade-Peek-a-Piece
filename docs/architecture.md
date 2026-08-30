@@ -119,6 +119,17 @@ navigation bar used to cover. This needs small, deliberate native edits
 - JS — `App.tsx` renders `<StatusBar hidden />` so RN agrees with the
   native side.
 
+**Icons via `@react-native-vector-icons/material-design-icons`.** UI
+glyphs (back / next chevrons, the parent-area figure, the settings cog,
+the volume icons) are Material Design Icons, wrapped by a single
+`src/components/Icon.tsx` that maps the app's *semantic* names to glyphs —
+screens never name a glyph directly. The `/static` entry point is used,
+so rendering is pure JS (`<Text>` in the icon font); the font is
+registered per-platform (`android/app/src/main/assets/fonts/`, iOS
+`UIAppFonts` + the package's podspec). Adding it needs `pod install` and a
+native rebuild. Every child-facing screen also opens with a slim
+`src/components/AppHeader.tsx` (the mark + "Peek-a-Piece").
+
 **Toddler-first UX is a first-class constraint, not a detail.** Large touch
 targets, forgiving input (mis-taps do nothing rather than showing an error),
 minimal-to-no text dependency, and clear audio/visual feedback are baseline

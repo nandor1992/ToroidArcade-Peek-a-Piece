@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { colors } from '../theme/colors';
 import type { Puzzle } from '../types/puzzle';
+import { Icon } from '../components/Icon';
 
 export interface ParentScreenProps {
   userPuzzles: Puzzle[];
@@ -73,7 +74,7 @@ export function ParentScreen({
             styles.iconButton,
             pressed && styles.iconButtonPressed,
           ]}>
-          <Text style={styles.iconGlyph}>←</Text>
+          <Icon name="back" size={26} color={colors.navy} />
         </Pressable>
         <Text style={styles.title}>Parent Settings</Text>
         <Pressable
@@ -84,7 +85,7 @@ export function ParentScreen({
             styles.iconButton,
             pressed && styles.iconButtonPressed,
           ]}>
-          <Text style={styles.iconGlyph}>⚙️</Text>
+          <Icon name="settings" size={24} color={colors.navy} />
         </Pressable>
       </View>
 
@@ -131,7 +132,7 @@ export function ParentScreen({
                   styles.deleteButton,
                   pressed && styles.deleteButtonPressed,
                 ]}>
-                <Text style={styles.deleteGlyph}>✕</Text>
+                <Icon name="close" size={16} color="white" />
               </Pressable>
             </View>
           )}
@@ -160,10 +161,6 @@ const styles = StyleSheet.create({
   },
   iconButtonPressed: {
     opacity: 0.6,
-  },
-  iconGlyph: {
-    fontSize: 22,
-    color: colors.navy,
   },
   title: {
     fontSize: 18,
@@ -205,6 +202,9 @@ const styles = StyleSheet.create({
   },
   grid: {
     paddingHorizontal: 12,
+    // Headroom so the corner delete button on the first row of thumbnails
+    // isn't clipped by the top of the list.
+    paddingTop: 8,
   },
   thumbWrapper: {
     flex: 1 / 3,
@@ -218,21 +218,20 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     position: 'absolute',
-    top: -6,
-    right: -6,
+    // Sits just inside the thumbnail's top-right corner rather than
+    // overhanging it, so it's never clipped by the row above.
+    top: 4,
+    right: 4,
     width: 28,
     height: 28,
     borderRadius: 14,
     backgroundColor: colors.coral,
+    borderWidth: 2,
+    borderColor: 'white',
     alignItems: 'center',
     justifyContent: 'center',
   },
   deleteButtonPressed: {
     opacity: 0.7,
-  },
-  deleteGlyph: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

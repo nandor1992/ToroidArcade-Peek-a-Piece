@@ -29,12 +29,28 @@ function tileOrder(root: ReactTestRenderer.ReactTestInstance): string[] {
     );
 }
 
-// The grid is built by chunking the puzzle list into rows; the FlatList's
-// `data` prop is that array of rows, so its shape tells us how many
-// columns were used (spacer padding on a short last row is separate).
-function rowSizes(root: ReactTestRenderer.ReactTestInstance): number[] {
+// The FlatList's `data` is the grid model: `{ kind: 'row', puzzles }` and
+// `{ kind: 'divider' }` items. These pull out the row sizes / count the
+// dividers so tests can assert the chunking without touching rendering.
+type GridItem =
+  | { kind: 'row'; puzzles: unknown[] }
+  | { kind: 'divider' };
+
+function gridData(root: ReactTestRenderer.ReactTestInstance): GridItem[] {
   const list = root.findAll(node => Array.isArray(node.props.data))[0];
-  return (list.props.data as unknown[][]).map(row => row.length);
+  return list.props.data as GridItem[];
+}
+
+function rowSizes(root: ReactTestRenderer.ReactTestInstance): number[] {
+  return gridData(root)
+    .filter((item): item is Extract<GridItem, { kind: 'row' }> =>
+      item.kind === 'row',
+    )
+    .map(item => item.puzzles.length);
+}
+
+function dividerCount(root: ReactTestRenderer.ReactTestInstance): number {
+  return gridData(root).filter(item => item.kind === 'divider').length;
 }
 
 function mockWidth(width: number) {
@@ -104,10 +120,19 @@ test('lays the grid out 2-wide on a phone and 4-wide on a tablet', async () => {
   expect(rowSizes(root!.root)).toEqual([3, 3, 2]);
 });
 
-test('a short last row keeps its real tile count (spacers fill the rest)', async () => {
+test('no divider when there are no uploaded photos', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<HomeScreen />);
+  });
+  expect(dividerCount(root!.root)).toBe(0);
+});
+
+test('a divider separates uploaded photos from the starter set', async () => {
   mockWidth(900); // 4 columns
   const userPuzzles: Puzzle[] = [
     { id: 'user-1', title: 'Grandma', source: 'user' },
+    { id: 'user-2', title: 'Grandpa', source: 'user' },
   ];
 
   let root: ReactTestRenderer.ReactTestRenderer;
@@ -115,9 +140,34 @@ test('a short last row keeps its real tile count (spacers fill the rest)', async
     root = ReactTestRenderer.create(<HomeScreen userPuzzles={userPuzzles} />);
   });
 
-  // 9 tiles across 4 columns → rows of 4, 4, 1.
-  expect(rowSizes(root!.root)).toEqual([4, 4, 1]);
-  expect(tileOrder(root!.root)).toHaveLength(9);
+  // One row of 2 uploaded, a divider, then the 8 starters as 4 + 4. The
+  // uploaded group and the starter group never share a row.
+  expect(gridData(root!.root).map(i => i.kind)).toEqual([
+    'row',
+    'divider',
+    'row',
+    'row',
+  ]);
+  expect(rowSizes(root!.root)).toEqual([2, 4, 4]);
+  expect(dividerCount(root!.root)).toBe(1);
+  expect(tileOrder(root!.root)).toEqual([
+    'Grandma',
+    'Grandpa',
+    ...STARTER_TITLES,
+  ]);
+});
+
+test('no divider when the starter set is turned off', async () => {
+  const userPuzzles: Puzzle[] = [
+    { id: 'user-1', title: 'Grandma', source: 'user' },
+  ];
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <HomeScreen userPuzzles={userPuzzles} stockPuzzles={[]} />,
+    );
+  });
+  expect(dividerCount(root!.root)).toBe(0);
 });
 
 test('tapping a tile reports the selected puzzle', async () => {

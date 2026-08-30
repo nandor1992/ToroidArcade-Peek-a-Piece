@@ -3,7 +3,7 @@ name: ParentScreen
 type: screen
 source: src/screens/ParentScreen.tsx
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-08-30
 ---
 
 # ParentScreen
@@ -26,15 +26,20 @@ calling back to whatever owns the list (`App.tsx`):
   `imageUri` set to the picked asset's URI, `title` from the asset's
   filename or `"Photo"` if none) and calls `onAddPuzzle`. A cancelled
   picker or an error response (`didCancel` / `errorCode` set) is a no-op.
-- **Delete** (the ✕ badge on each thumbnail) shows a native confirmation
-  (`Alert.alert`) before calling `onDeletePuzzle(id)` — deleting is
-  permanent since there's no undo or backup (local-only storage), so this
-  is a deliberate extra step rather than a direct action.
+- **Delete** — a coral badge with the [[Icon]] `close` glyph in each
+  thumbnail's top-right *corner* (`top: 4, right: 4`, white border) —
+  shows a native confirmation (`Alert.alert`) before calling
+  `onDeletePuzzle(id)`. Deleting is permanent (local-only storage, no
+  undo), so the confirm step is deliberate. The badge sits *inside* the
+  corner rather than overhanging it, and the grid has `paddingTop`, so the
+  first row's badges aren't clipped by the top of the list.
 - **Show starter puzzles** is a `Switch` that directly reports its new
   value via `onToggleDefaultImages`; `ParentScreen` doesn't own that
   state either.
-- **Settings** (⚙️, top-right) calls `onOpenSettings` — `App.tsx` routes it
-  to [[SettingsScreen]] (background-music volume/mute, screen-time limit).
+- **Settings** (the [[Icon]] `settings` / cog, top-right) calls
+  `onOpenSettings` — `App.tsx` routes it to [[SettingsScreen]]
+  (background-music volume/mute, screen-time limit). The back button is
+  the `back` chevron icon.
 
 Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 `numColumns={3}`); an empty grid shows "No photos uploaded yet." instead.
@@ -49,7 +54,7 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 | `defaultImagesEnabled` | `boolean` | Yes | Current value of the starter-puzzles toggle. |
 | `onToggleDefaultImages` | `(enabled: boolean) => void` | Yes | Called with the switch's new value. |
 | `onBack` | `() => void` | No | Called when the back button is pressed. No-op if omitted. |
-| `onOpenSettings` | `() => void` | No | Called when the ⚙️ button is pressed. No-op if omitted. |
+| `onOpenSettings` | `() => void` | No | Called when the settings (cog) button is pressed. No-op if omitted. |
 
 ## Edge cases & expected behavior
 
@@ -71,7 +76,7 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 3. Cancel the picker → `onAddPuzzle` is not called.
 4. Tap a photo's delete badge, confirm the alert's "Delete" option →
    `onDeletePuzzle` is called with that photo's id.
-5. Tap the ⚙️ settings button → `onOpenSettings` is called.
+5. Tap the settings (cog) button → `onOpenSettings` is called.
 
 ## Non-goals / known limitations
 
@@ -90,4 +95,4 @@ Uploaded photos render as a 3-column thumbnail grid (`FlatList`,
 
 - Code: `src/screens/ParentScreen.tsx`
 - Tests: `src/screens/ParentScreen.test.tsx`
-- Related specs: [[ParentGateScreen]], [[HomeScreen]], [[SettingsScreen]]
+- Related specs: [[ParentGateScreen]], [[HomeScreen]], [[SettingsScreen]], [[Icon]]
