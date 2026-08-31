@@ -100,12 +100,25 @@ android {
         versionCode 1
         versionName "1.0"
     }
-    // Windows: keep native (CMake/ninja) intermediate object paths short — the
-    // default .cxx location nested under this project's absolute path exceeds
-    // ninja's 260-character path limit for generated .cpp.o files.
-    externalNativeBuild {
-        cmake {
-            buildStagingDirectory "C:/rnbuild/PeekAPiece/.cxx"
+    // Windows only: keep native (CMake/ninja) intermediate object paths short.
+    // The default .cxx location nested under this project's absolute path
+    // exceeds Windows' 260-character limit, and ninja then cannot stat its
+    // own outputs — it regenerates build.ninja, finds it still out of date,
+    // and fails with "manifest 'build.ninja' still dirty after 100 tries".
+    //
+    // This has to be *very* short. The release variant directory is
+    // `RelWithDebInfo` against debug's `Debug`, which adds 9 characters to
+    // every path: with the old "C:/rnbuild/PeekAPiece/.cxx" root, debug
+    // peaked at 248 chars and release tipped over the limit.
+    //
+    // Guarded so macOS/Linux and CI use Gradle's default location. The
+    // permanent fix is enabling Windows long paths (LongPathsEnabled), which
+    // is a machine setting rather than something the build can do.
+    if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+        externalNativeBuild {
+            cmake {
+                buildStagingDirectory "C:/rnb"
+            }
         }
     }
     signingConfigs {
