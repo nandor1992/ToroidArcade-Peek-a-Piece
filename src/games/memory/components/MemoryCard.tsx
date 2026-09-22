@@ -3,8 +3,8 @@ import { Animated, Image, Pressable, StyleSheet, View } from 'react-native';
 import { colors } from '../../../theme/colors';
 import type { MemoryCard as MemoryCardData } from '../logic/buildMemoryDeck';
 
-/** How long the flip takes. Slow enough for a toddler to follow the turn. */
-export const FLIP_MS = 260;
+/** How long the flip takes. Brisk, but still a turn you can follow. */
+export const FLIP_MS = 182;
 
 export interface MemoryCardProps {
   card: MemoryCardData;

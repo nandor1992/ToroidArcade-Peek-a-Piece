@@ -92,6 +92,17 @@ function faceUpCount(root: ReactTestRenderer.ReactTestRenderer): number {
   return cards(root).filter(card => card.props.faceUp).length;
 }
 
+/** The picture ids currently face up, de-duplicated. */
+function faceUpPictures(root: ReactTestRenderer.ReactTestRenderer): string[] {
+  return [
+    ...new Set(
+      cards(root)
+        .filter(card => card.props.faceUp)
+        .map(card => card.props.card.pictureId),
+    ),
+  ];
+}
+
 function matchedCount(root: ReactTestRenderer.ReactTestRenderer): number {
   return cards(root).filter(card => card.props.matched).length;
 }
@@ -167,16 +178,51 @@ test('a mismatched pair stays up long enough to memorise', async () => {
   expect(faceUpCount(root)).toBe(2);
 });
 
-test('a third tap while two cards are showing does nothing', async () => {
+test('tapping a third card turns a mismatched pair straight back', async () => {
   jest.useFakeTimers();
   const root = await renderBoard();
   const [a, b, c] = dealtPictures(root);
 
   await tap(root, a);
   await tap(root, b);
-  await tap(root, c); // mis-tap during the reveal
+  // No waiting out the rest of MISMATCH_PAUSE_MS — the next tap ends the
+  // reveal there and then, and starts the new turn.
+  await tap(root, c);
+
+  expect(faceUpCount(root)).toBe(1);
+  expect(faceUpPictures(root)).toEqual([c]);
+});
+
+test('tapping a card already showing just turns the mismatched pair back', async () => {
+  jest.useFakeTimers();
+  const root = await renderBoard();
+  const [a, b] = dealtPictures(root);
+
+  await tap(root, a);
+  await tap(root, b);
+  await tap(root, a); // one of the two on show
+
+  // It can't be re-picked as the new first card — it's the one they just
+  // looked at — so the board simply clears.
+  expect(faceUpCount(root)).toBe(0);
+});
+
+test('a third tap while a matching pair settles does nothing', async () => {
+  jest.useFakeTimers();
+  const root = await renderBoard();
+  const [a, b] = dealtPictures(root);
+
+  await tap(root, a, 0);
+  await tap(root, a, 1);
+  await tap(root, b, 0); // mis-tap during the brief match pause
 
   expect(faceUpCount(root)).toBe(2);
+
+  // And the pair still lands as matched once the pause elapses.
+  await act(async () => {
+    jest.advanceTimersByTime(MATCH_PAUSE_MS);
+  });
+  expect(matchedCount(root)).toBe(2);
 });
 
 test('tapping the same card twice does not count as a pair', async () => {
