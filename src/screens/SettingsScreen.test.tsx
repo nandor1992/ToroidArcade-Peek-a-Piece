@@ -171,9 +171,45 @@ test('the About popup shows the dedication and the starter-art credit', async ()
   });
 
   expect(hasText('Built with love for Julia and Vincent')).toBe(true);
-  expect(
-    hasText('Generated with imagetocartoon.com using our family photos'),
-  ).toBe(true);
+  // The tool's name is its own link span now, so the sentence arrives as
+  // a children array rather than one string.
+  const hasFragment = (text: string) =>
+    root!.root.findAll(node => {
+      const children = node.props.children;
+      return Array.isArray(children)
+        ? children.includes(text)
+        : children === text;
+    }).length > 0;
+
+  expect(hasFragment('Images generated with')).toBe(true);
+  expect(hasFragment('imagetocartoon.com')).toBe(true);
+  expect(hasFragment('using our family photos')).toBe(true);
+});
+
+test('the starter-art credit links to the tool that made the pictures', async () => {
+  const openURL = jest
+    .spyOn(Linking, 'openURL')
+    .mockImplementation(() => Promise.resolve());
+  const props = baseProps();
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...props} />);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  const link = root!.root.findAll(
+    node =>
+      node.props.accessibilityRole === 'link' &&
+      node.props.children === 'imagetocartoon.com',
+  )[0];
+  await act(() => {
+    link.props.onPress();
+  });
+
+  expect(openURL).toHaveBeenCalledWith('https://www.imagetocartoon.com/');
+  openURL.mockRestore();
 });
 
 test('About button opens a popup with app info, and Close dismisses it', async () => {

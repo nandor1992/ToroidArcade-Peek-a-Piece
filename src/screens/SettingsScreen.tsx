@@ -36,7 +36,13 @@ const ABOUT_INFO = {
   appName: 'Peek-a-Piece',
   version: '0.0.1',
   credit: 'Created by ToroidSystems / ToroidArcade',
-  starterArt: 'Generated with imagetocartoon.com using our family photos',
+  // The bundled starter pictures are cartoon renders of our own family
+  // photos, so the tool gets a credit and a link the same way the music
+  // does.
+  starterArt: {
+    toolName: 'imagetocartoon.com',
+    toolUrl: 'https://www.imagetocartoon.com/',
+  },
   // Pixabay Content License attribution for the bundled background track
   // (resources/the_mountain-children.mp3). utm params are the referral
   // attribution Pixabay asks linkers to keep.
@@ -243,7 +249,16 @@ export function SettingsScreen({
             <Text style={styles.modalDedication}>{DEDICATION}</Text>
             <View style={styles.modalRule} />
             <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
-            <Text style={styles.modalBody}>{ABOUT_INFO.starterArt}</Text>
+            <Text style={styles.modalBody}>
+              Images generated with{' '}
+              <Text
+                accessibilityRole="link"
+                style={styles.modalLink}
+                onPress={() => Linking.openURL(ABOUT_INFO.starterArt.toolUrl)}>
+                {ABOUT_INFO.starterArt.toolName}
+              </Text>{' '}
+              using our family photos
+            </Text>
             <Text style={styles.modalBody}>
               Music by{' '}
               <Text

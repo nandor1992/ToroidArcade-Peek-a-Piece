@@ -66,14 +66,15 @@ its left-aligned label + right-aligned mute button row.
   `maxWidth: 460` card with an even `gap` between every element) showing,
   top to bottom: the app name; the dedication *"Built with love for Julia
   and Vincent"* (italic); a faint divider rule; the credit line; the
-  starter-art attribution *"Generated with imagetocartoon.com using our
-  family photos"*; the music attribution *"Music by Dmitrii Kolesnikov
-  from Pixabay"* (the two names are `accessibilityRole="link"` `Text`
-  spans that `Linking.openURL` their Pixabay URLs); the version string;
-  and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
+  starter-art attribution *"Images generated with imagetocartoon.com using
+  our family photos"* (the tool's name is a link span to
+  `https://www.imagetocartoon.com/`); the music attribution *"Music by
+  Dmitrii Kolesnikov from Pixabay"* (both names are link spans to their
+  Pixabay URLs). Every link is an `accessibilityRole="link"` `Text` span
+  that `Linking.openURL`s. Then the version string and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
   (hand-maintained in this file — see Non-goals). `onRequestClose`
-  (Android back / iOS swipe) also dismisses it. The Pixabay links are the
-  app's only external link, fine here because Settings sits behind the
+  (Android back / iOS swipe) also dismisses it. These credit links are the
+  app's only external links, fine here because Settings sits behind the
   parent gate.
 
 ## Interface
@@ -118,6 +119,8 @@ its left-aligned label + right-aligned mute button row.
 6. The dedication text is *not* on the screen until the About popup is
    opened; tapping About shows it along with the app name, the
    imagetocartoon.com line, and the music credit. Tap Close → hidden.
+6a. In the open About popup, tap "imagetocartoon.com" → `Linking.openURL`
+   is called with `https://www.imagetocartoon.com/`.
 7. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
    → `Linking.openURL` is called with the matching Pixabay URL.
 8. Press Back → `onBack` is called.
