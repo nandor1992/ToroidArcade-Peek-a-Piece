@@ -123,6 +123,23 @@ No data leaves the device. No accounts, no analytics, no ad SDKs, no network
 calls at all — photos of children are the whole point of keeping it local. Full
 policy: [`docs/legal/privacy-policy.md`](docs/legal/privacy-policy.md).
 
+## Licence
+
+The **source code** is MIT — see [`LICENSE`](LICENSE).
+
+The MIT licence stops at the code. It does **not** cover:
+
+- the **starter puzzle pictures** (`src/games/puzzle/assets/starter/`), which
+  are renders of real children's photographs — all rights reserved, replace
+  them if you fork this;
+- the **background music**, which is under the Pixabay Content License;
+- the **Peek-a-Piece name, logo mark, and icon**. Use the code; don't present
+  a fork as Peek-a-Piece.
+
+Full attribution list, including every open-source dependency:
+[`docs/legal/copyright.md`](docs/legal/copyright.md). Terms of use:
+[`docs/legal/terms-of-service.md`](docs/legal/terms-of-service.md).
+
 ## Credits
 
 - Music: [Dmitrii Kolesnikov](https://pixabay.com/users/the_mountain-3616498/)
