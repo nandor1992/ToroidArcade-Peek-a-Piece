@@ -362,6 +362,28 @@ export function PuzzleBoard({
     );
   }, [imageWidth, imageHeight, boardSize.width, boardSize.height]);
 
+  /**
+   * Painting order, back to front: every placed piece first, then every
+   * loose one, each keeping its relative order.
+   *
+   * Without this a piece that was dragged to the front and then landed on
+   * its final spot stays in front, so a loose piece dropped over it is
+   * hidden underneath — a piece the child can see nowhere on the board and
+   * can't pick up, because hit-testing skips locked pieces. Sinking placed
+   * pieces means a loose piece is always visible and always grabbable: the
+   * assembled picture can never swallow one.
+   */
+  const drawOrder = useMemo(() => {
+    if (!pieces) {
+      return null;
+    }
+    const placed = pieces.filter(p => p.placed);
+    // Nothing placed yet (the common case early on) — skip the copy.
+    return placed.length === 0
+      ? pieces
+      : [...placed, ...pieces.filter(p => !p.placed)];
+  }, [pieces]);
+
   const pieceWidth = box ? box.width / columns : 0;
   const pieceHeight = box ? box.height / rows : 0;
   const snapDistance = Math.min(
@@ -407,10 +429,13 @@ export function PuzzleBoard({
     }
     const { locationX, locationY } = event.nativeEvent;
     lastTouch.current = { x: locationX, y: locationY };
-    // Topmost (last-rendered) piece whose bounding box contains the touch
-    // and that isn't already locked into place.
-    for (let i = pieces.length - 1; i >= 0; i--) {
-      const piece = pieces[i];
+    // Topmost (last-painted) piece whose bounding box contains the touch
+    // and that isn't already locked into place. Walks `drawOrder`, not
+    // `pieces`, so "topmost" means the same thing to the finger as it does
+    // to the eye.
+    const order = drawOrder ?? pieces;
+    for (let i = order.length - 1; i >= 0; i--) {
+      const piece = order[i];
       if (piece.placed) {
         continue;
       }
@@ -536,7 +561,7 @@ export function PuzzleBoard({
             r={BACKING_RADIUS}
             color="white"
           />
-          {pieces.map(piece => (
+          {(drawOrder ?? pieces).map(piece => (
             <Group
               key={piece.descriptor.id}
               clip={piece.clipPath}
