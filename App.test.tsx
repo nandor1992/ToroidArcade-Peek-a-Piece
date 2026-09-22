@@ -199,3 +199,46 @@ test('Next on the puzzle screen only cycles through puzzles currently visible on
   });
   expect(currentPuzzleLabel(root!.root)).toBe('b.jpg');
 });
+
+test('the parent area opens from the game picker and returns there, not to the puzzles', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<App />);
+  });
+  await act(async () => {});
+
+  // Straight from the picker — no game entered first.
+  await act(() => {
+    findByLabel(root!.root, 'Parent controls').props.onPress();
+  });
+  await solveMathGate(root!.root);
+  await act(() => {
+    findByLabel(root!.root, 'Back').props.onPress();
+  });
+
+  // Back on the picker: both game tiles are there, and no starter-puzzle
+  // tile is, so this isn't the puzzle grid.
+  expect(findByLabel(root!.root, 'Family Puzzle')).toBeDefined();
+  expect(findByLabel(root!.root, 'Family Memory')).toBeDefined();
+  expect(findByLabel(root!.root, 'Meadow')).toBeUndefined();
+});
+
+test('the parent area still returns to the puzzle grid when opened from there', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<App />);
+  });
+  await act(async () => {});
+
+  await openPuzzles(root!.root);
+  await act(() => {
+    findByLabel(root!.root, 'Parent controls').props.onPress();
+  });
+  await solveMathGate(root!.root);
+  await act(() => {
+    findByLabel(root!.root, 'Back').props.onPress();
+  });
+
+  // A starter puzzle tile is on screen, so this is the grid, not the picker.
+  expect(findByLabel(root!.root, 'Meadow')).toBeDefined();
+});

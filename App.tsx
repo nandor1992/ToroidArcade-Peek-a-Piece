@@ -75,11 +75,21 @@ function App() {
   const [puzzleSize, setPuzzleSize] = useState<PuzzleSize>(DEFAULT_PUZZLE_SIZE);
   const [memorySize, setMemorySize] = useState<MemorySize>(DEFAULT_MEMORY_SIZE);
   const [locked, setLocked] = useState(false);
+  /** Where to land when the parent area is closed — see `openParentGate`. */
+  const [parentReturn, setParentReturn] = useState<Screen>({ name: 'games' });
 
   const stockPuzzles = defaultImagesEnabled ? STARTER_PUZZLES : [];
   const puzzles = [...userPuzzles, ...stockPuzzles];
   const goHome = () => setScreen({ name: 'home' });
   const goGames = () => setScreen({ name: 'games' });
+  // The parent area is reachable from more than one child screen now, so
+  // remember which one to come back to — otherwise backing out of the gate
+  // from the game picker would drop you on the puzzle grid instead.
+  const openParentGate = () => {
+    setParentReturn(screen);
+    setScreen({ name: 'parentGate' });
+  };
+  const leaveParentArea = () => setScreen(parentReturn);
   // Every screen a child is meant to be on: the game picker and both
   // games' own screens. Parent-only screens are excluded, so the
   // screen-time timer pauses while a grown-up is in there.
@@ -121,7 +131,7 @@ function App() {
         onSelectPuzzle={puzzle =>
           setScreen({ name: 'puzzle', puzzleId: puzzle.id })
         }
-        onOpenParentArea={() => setScreen({ name: 'parentGate' })}
+        onOpenParentArea={openParentGate}
         onBack={goGames}
       />
     );
@@ -151,7 +161,7 @@ function App() {
     content = (
       <ParentGateScreen
         onSuccess={() => setScreen({ name: 'parent' })}
-        onBack={goHome}
+        onBack={leaveParentArea}
       />
     );
   } else if (screen.name === 'parent') {
@@ -162,7 +172,7 @@ function App() {
         onDeletePuzzle={deletePuzzle}
         defaultImagesEnabled={defaultImagesEnabled}
         onToggleDefaultImages={setDefaultImagesEnabled}
-        onBack={goHome}
+        onBack={leaveParentArea}
         onOpenSettings={() => setScreen({ name: 'settings' })}
       />
     );
@@ -187,6 +197,7 @@ function App() {
       <GameSelectScreen
         onSelectPuzzles={goHome}
         onSelectMemory={() => setScreen({ name: 'memory' })}
+        onOpenParentArea={openParentGate}
       />
     );
   }
