@@ -8,7 +8,9 @@
 import { useEffect, useState } from 'react';
 import { Dimensions, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GameSelectScreen } from './src/screens/GameSelectScreen';
 import { HomeScreen, STARTER_PUZZLES } from './src/screens/HomeScreen';
+import { MemoryScreen } from './src/screens/MemoryScreen';
 import { PuzzleScreen } from './src/screens/PuzzleScreen';
 import { ParentGateScreen } from './src/screens/ParentGateScreen';
 import { ParentScreen } from './src/screens/ParentScreen';
@@ -39,14 +41,16 @@ const FALLBACK_SAFE_AREA_METRICS = {
 };
 
 type Screen =
+  | { name: 'games' }
   | { name: 'home' }
+  | { name: 'memory' }
   | { name: 'puzzle'; puzzleId: string }
   | { name: 'parentGate' }
   | { name: 'parent' }
   | { name: 'settings' };
 
 function App() {
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [screen, setScreen] = useState<Screen>({ name: 'games' });
   // Uploaded photos and per-puzzle completion are persisted to
   // AsyncStorage (photos' bytes copied into app storage) and rehydrated
   // on launch — see usePersistentPuzzles.
@@ -70,7 +74,15 @@ function App() {
   const stockPuzzles = defaultImagesEnabled ? STARTER_PUZZLES : [];
   const puzzles = [...userPuzzles, ...stockPuzzles];
   const goHome = () => setScreen({ name: 'home' });
-  const inChildSession = screen.name === 'home' || screen.name === 'puzzle';
+  const goGames = () => setScreen({ name: 'games' });
+  // Every screen a child is meant to be on: the game picker and both
+  // games' own screens. Parent-only screens are excluded, so the
+  // screen-time timer pauses while a grown-up is in there.
+  const inChildSession =
+    screen.name === 'games' ||
+    screen.name === 'home' ||
+    screen.name === 'memory' ||
+    screen.name === 'puzzle';
   // Music also plays on the Settings screen so the volume slider and mute
   // button there have something audible to adjust — otherwise dragging the
   // slider looks like it does nothing (see useBackgroundMusic spec).
@@ -95,7 +107,22 @@ function App() {
   });
 
   let content;
-  if (screen.name === 'puzzle') {
+  if (screen.name === 'home') {
+    content = (
+      <HomeScreen
+        userPuzzles={userPuzzles}
+        stockPuzzles={stockPuzzles}
+        completedPuzzleIds={[...completedIds]}
+        onSelectPuzzle={puzzle =>
+          setScreen({ name: 'puzzle', puzzleId: puzzle.id })
+        }
+        onOpenParentArea={() => setScreen({ name: 'parentGate' })}
+        onBack={goGames}
+      />
+    );
+  } else if (screen.name === 'memory') {
+    content = <MemoryScreen onBack={goGames} />;
+  } else if (screen.name === 'puzzle') {
     content = (
       <PuzzleScreen
         puzzles={puzzles}
@@ -142,14 +169,9 @@ function App() {
     );
   } else {
     content = (
-      <HomeScreen
-        userPuzzles={userPuzzles}
-        stockPuzzles={stockPuzzles}
-        completedPuzzleIds={[...completedIds]}
-        onSelectPuzzle={puzzle =>
-          setScreen({ name: 'puzzle', puzzleId: puzzle.id })
-        }
-        onOpenParentArea={() => setScreen({ name: 'parentGate' })}
+      <GameSelectScreen
+        onSelectPuzzles={goHome}
+        onSelectMemory={() => setScreen({ name: 'memory' })}
       />
     );
   }

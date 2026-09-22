@@ -190,6 +190,8 @@ export interface HomeScreenProps {
   completedPuzzleIds?: string[];
   onSelectPuzzle?: (puzzle: Puzzle) => void;
   onOpenParentArea?: () => void;
+  /** Back to the game-select screen. Omitted when there's nowhere to go. */
+  onBack?: () => void;
 }
 
 export function HomeScreen({
@@ -198,6 +200,7 @@ export function HomeScreen({
   completedPuzzleIds = [],
   onSelectPuzzle,
   onOpenParentArea,
+  onBack,
 }: HomeScreenProps) {
   const { width, height } = useWindowDimensions();
   const columns = columnsForViewport(width, height);
@@ -221,7 +224,7 @@ export function HomeScreen({
         pointerEvents="none"
       />
       <SafeAreaView style={styles.safe} edges={['top', 'bottom']}>
-        <AppHeader />
+        <AppHeader title="Family Puzzle" onBack={onBack} />
         <FlatList
           // `key` forces a fresh list when the column count changes
           // (rotate a tablet, resize a window) so every row re-chunks.

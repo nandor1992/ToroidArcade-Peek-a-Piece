@@ -3,7 +3,7 @@ name: DemoApp
 type: screen
 source: src/app/DemoApp.tsx
 status: draft
-last_verified: 2026-08-30
+last_verified: 2026-09-22
 ---
 
 # DemoApp (web demo build)
@@ -26,12 +26,18 @@ never importing `ParentScreen` / `SettingsScreen` / `ParentGateScreen` /
 the bundle entirely, so only *one* real shim is needed (audio). That's what
 makes the demo cheap; a full-parity web build would have to solve all four.
 
-**What it renders.** A two-state screen union (`home | puzzle`), the same
-pattern as `App.tsx` but without the parent branches:
+**What it renders.** A four-state screen union
+(`games | home | memory | puzzle`), the same pattern as `App.tsx` but
+without the parent branches:
 
-- [[HomeScreen]] with `stockPuzzles={STARTER_PUZZLES}` and no
-  `onOpenParentArea` — which is why `HomeScreen` now hides its corner parent
-  button when that prop is absent, rather than showing a dead one.
+- [[GameSelectScreen]] as the initial screen, so the demo opens on the same
+  game picker the native app does.
+- [[HomeScreen]] with `stockPuzzles={STARTER_PUZZLES}`, `onBack` to the
+  picker, and no `onOpenParentArea` — which is why `HomeScreen` hides its
+  corner parent button when that prop is absent, rather than showing a dead
+  one.
+- [[MemoryScreen]], the Family Memory placeholder, with `onBack` to the
+  picker.
 - [[PuzzleScreen]] at `DEFAULT_PUZZLE_SIZE` (2x2), wired to `markCompleted` /
   `clearCompleted` so the green ticks behave exactly as on native.
 
@@ -82,8 +88,11 @@ Not covered by Jest — the suite runs against the **native** module graph, so
 it resolves `useBackgroundMusic.ts`, not the `.web.ts` shim. Verified
 manually in a browser (`pnpm web:start`):
 
-1. Home shows the eight starter puzzles and **no** parent button.
-2. Opening one shows "Retrieving Memories…" then a playable board.
+1. The demo opens on the game picker; tapping "Family Puzzle" shows the
+   eight starter puzzles under a "Family Puzzle" header and **no** parent
+   button, and its Back button returns to the picker. "Family Memory" opens
+   the placeholder screen and backs out the same way.
+2. Opening a puzzle shows "Retrieving Memories…" then a playable board.
 3. Drag / snap / merge works with both mouse and touch.
 4. Solving shows "🎉 Great job!" and a green tick on Home.
 5. Reload → the tick persists.
@@ -115,4 +124,4 @@ manually in a browser (`pnpm web:start`):
 - Entry point: `web/index.tsx`, `web/index.html`
 - Build: `webpack.config.js`; `pnpm web:start` / `pnpm web:build`
 - Web shims: `src/hooks/useBackgroundMusic.web.ts`, `src/storage/photoFiles.web.ts`
-- Related specs: [[HomeScreen]], [[PuzzleScreen]], [[usePersistentPuzzles]], [[useBackgroundMusic]], [[ErrorBoundary]], [[PuzzleBoard]]
+- Related specs: [[GameSelectScreen]], [[HomeScreen]], [[MemoryScreen]], [[PuzzleScreen]], [[usePersistentPuzzles]], [[useBackgroundMusic]], [[ErrorBoundary]], [[PuzzleBoard]]

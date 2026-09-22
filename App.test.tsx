@@ -52,6 +52,14 @@ async function solveMathGate(root: ReactTestRenderer.ReactTestInstance) {
   });
 }
 
+// The app now opens on the game picker, so every flow that exercises the
+// puzzle game starts by tapping through it.
+async function openPuzzles(root: ReactTestRenderer.ReactTestInstance) {
+  await act(() => {
+    findByLabel(root, 'Family Puzzle').props.onPress();
+  });
+}
+
 function currentPuzzleLabel(root: ReactTestRenderer.ReactTestInstance) {
   // The puzzle-screen image area is the only accessibilityLabel-bearing
   // node that isn't one of the nav buttons (those carry
@@ -92,7 +100,8 @@ test('setting a screen-time limit locks the app after it elapses, and solving th
   // relies on a real timer/microtask during mount above.
   jest.useFakeTimers();
 
-  // Home -> parent gate -> parent screen -> settings.
+  // Games -> home -> parent gate -> parent screen -> settings.
+  await openPuzzles(root!.root);
   await act(() => {
     findByLabel(root!.root, 'Parent controls').props.onPress();
   });
@@ -139,7 +148,8 @@ test('Next on the puzzle screen only cycles through puzzles currently visible on
     root = ReactTestRenderer.create(<App />);
   });
 
-  // Home -> parent gate -> parent screen.
+  // Games -> home -> parent gate -> parent screen.
+  await openPuzzles(root!.root);
   await act(() => {
     findByLabel(root!.root, 'Parent controls').props.onPress();
   });

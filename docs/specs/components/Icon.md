@@ -3,7 +3,7 @@ name: Icon
 type: component
 source: src/components/Icon.tsx
 status: draft
-last_verified: 2026-08-30
+last_verified: 2026-09-22
 ---
 
 # Icon

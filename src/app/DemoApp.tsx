@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { Dimensions, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GameSelectScreen } from '../screens/GameSelectScreen';
 import { HomeScreen, STARTER_PUZZLES } from '../screens/HomeScreen';
+import { MemoryScreen } from '../screens/MemoryScreen';
 import { PuzzleScreen } from '../screens/PuzzleScreen';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
@@ -25,7 +27,11 @@ const FALLBACK_SAFE_AREA_METRICS = {
 // implementation of useBackgroundMusic retries then.
 const DEMO_VOLUME = 0.6;
 
-type Screen = { name: 'home' } | { name: 'puzzle'; puzzleId: string };
+type Screen =
+  | { name: 'games' }
+  | { name: 'home' }
+  | { name: 'memory' }
+  | { name: 'puzzle'; puzzleId: string };
 
 /**
  * Root component for the **web demo** build — the bundled starter puzzles,
@@ -39,7 +45,8 @@ type Screen = { name: 'home' } | { name: 'puzzle'; puzzleId: string };
  * See docs/specs/app/DemoApp.md.
  */
 export default function DemoApp() {
-  const [screen, setScreen] = useState<Screen>({ name: 'home' });
+  const [screen, setScreen] = useState<Screen>({ name: 'games' });
+  const goGames = () => setScreen({ name: 'games' });
   const { completedIds, markCompleted, clearCompleted } =
     usePersistentPuzzles();
 
@@ -49,8 +56,9 @@ export default function DemoApp() {
     muted: false,
   });
 
-  const content =
-    screen.name === 'puzzle' ? (
+  let content;
+  if (screen.name === 'puzzle') {
+    content = (
       <PuzzleScreen
         puzzles={STARTER_PUZZLES}
         initialPuzzleId={screen.puzzleId}
@@ -60,17 +68,30 @@ export default function DemoApp() {
         onCompleted={markCompleted}
         onReset={clearCompleted}
       />
-    ) : (
-      // No `onOpenParentArea` — HomeScreen then hides the parent button,
-      // which the demo has nothing to open.
+    );
+  } else if (screen.name === 'home') {
+    // No `onOpenParentArea` — HomeScreen then hides the parent button,
+    // which the demo has nothing to open.
+    content = (
       <HomeScreen
         stockPuzzles={STARTER_PUZZLES}
         completedPuzzleIds={[...completedIds]}
         onSelectPuzzle={puzzle =>
           setScreen({ name: 'puzzle', puzzleId: puzzle.id })
         }
+        onBack={goGames}
       />
     );
+  } else if (screen.name === 'memory') {
+    content = <MemoryScreen onBack={goGames} />;
+  } else {
+    content = (
+      <GameSelectScreen
+        onSelectPuzzles={() => setScreen({ name: 'home' })}
+        onSelectMemory={() => setScreen({ name: 'memory' })}
+      />
+    );
+  }
 
   return (
     <SafeAreaProvider initialMetrics={FALLBACK_SAFE_AREA_METRICS}>

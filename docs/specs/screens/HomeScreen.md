@@ -3,18 +3,19 @@ name: HomeScreen
 type: screen
 source: src/screens/HomeScreen.tsx
 status: draft
-last_verified: 2026-08-30
+last_verified: 2026-09-22
 ---
 
 # HomeScreen
 
 ## Purpose
 
-The first thing a toddler (or the parent handing them the phone) sees on
-launch. It's a grid of puzzles to tap into — nothing else. Photos the parent
-has uploaded always take priority over the bundled starter set, so the app
-still nudges parents toward personalizing it, while the starter set means the
-app is playable immediately, before any photo has been uploaded.
+The Family Puzzle game's own landing screen — reached from the first tile
+on [[GameSelectScreen]], which is now what launch shows. It's a grid of
+puzzles to tap into, and nothing else. Photos the parent has uploaded
+always take priority over the bundled starter set, so the app still nudges
+parents toward personalizing it, while the starter set means the app is
+playable immediately, before any photo has been uploaded.
 
 ## How it works
 
@@ -30,7 +31,9 @@ fills the screen, cropping whichever of width/height overflows. The
 band covers it at the top; the tiles (opaque photos / colours) sit over it;
 it shows through the gaps.
 
-Then the slim [[AppHeader]] (logo + "Peek-a-Piece"), then the puzzle grid.
+Then the slim [[AppHeader]] — here titled "Family Puzzle" and carrying a
+back button wired to `onBack`, which returns to the game picker — then the
+puzzle grid.
 
 `HomeScreen` takes the puzzle lists as props rather than reading storage
 itself (storage isn't implemented yet — see Non-goals). It renders
@@ -109,6 +112,7 @@ Android navigation bar there previously covered this button.
 | `completedPuzzleIds` | `string[]` | No | Defaults to `[]`. Each id gets a green check badge on its tile. |
 | `onSelectPuzzle` | `(puzzle: Puzzle) => void` | No | Called with the tapped puzzle. No-op if omitted. |
 | `onOpenParentArea` | `() => void` | No | Called when the corner parent-area button is pressed. No-op if omitted. |
+| `onBack` | `() => void` | No | Back to the game picker, via the header's back button. Omitted → no back button renders (the web demo before it had a picker, and any host with nowhere to return to). |
 
 ## Toddler UX constraints
 
@@ -173,6 +177,9 @@ Android navigation bar there previously covered this button.
 5. Tap the first tile → `onSelectPuzzle` is called with that tile's
    `Puzzle` (`id: 'stock-1'`).
 6. Tap the corner parent-area button → `onOpenParentArea` is called.
+6a. The header reads "Family Puzzle"; tapping its Back button calls
+   `onBack`. With `onBack` omitted, no control labelled "Back" is in the
+   tree.
 7. `completedPuzzleIds={['stock-2', 'stock-5']}` → exactly the Fairground
    and Sandpit tiles carry the check badge (`accessibilityState.selected`);
    with it empty, no tile does and no check glyph is in the tree.
@@ -206,4 +213,4 @@ Android navigation bar there previously covered this button.
 - Palette: `src/theme/colors.ts`
 - Starter artwork: `src/games/puzzle/assets/starter/`
 - Background: `src/assets/home-bg.jpg` (pre-blurred farm scene)
-- Related specs: [[AppHeader]], [[Icon]], [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]], [[usePersistentPuzzles]]
+- Related specs: [[GameSelectScreen]], [[AppHeader]], [[Icon]], [[PuzzleScreen]], [[ParentGateScreen]], [[ParentScreen]], [[SessionLockOverlay]], [[puzzleImage]], [[usePersistentPuzzles]]

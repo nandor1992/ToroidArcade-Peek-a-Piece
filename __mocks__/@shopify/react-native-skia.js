@@ -28,6 +28,10 @@ function Path() {
   return null;
 }
 
+function Circle() {
+  return null;
+}
+
 function RoundedRect() {
   return null;
 }
@@ -39,4 +43,12 @@ function useImage() {
   };
 }
 
-module.exports = { Canvas, Group, Image, Path, RoundedRect, useImage };
+module.exports = {
+  Canvas,
+  Circle,
+  Group,
+  Image,
+  Path,
+  RoundedRect,
+  useImage,
+};
