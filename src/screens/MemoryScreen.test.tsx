@@ -57,10 +57,7 @@ async function render(
   return root!;
 }
 
-function findByLabel(
-  root: ReactTestRenderer.ReactTestInstance,
-  label: string,
-) {
+function findByLabel(root: ReactTestRenderer.ReactTestInstance, label: string) {
   return root.findAll(
     node =>
       node.props.accessibilityLabel === label &&
@@ -100,9 +97,9 @@ async function clearBoard(root: ReactTestRenderer.ReactTestRenderer) {
   ];
   for (const picture of pictures) {
     for (const which of [0, 1]) {
-      const card = cards(root).filter(
-        c => c.props.card.pictureId === picture,
-      )[which];
+      const card = cards(root).filter(c => c.props.card.pictureId === picture)[
+        which
+      ];
       await act(() => {
         card.props.onPress(card.props.card);
       });

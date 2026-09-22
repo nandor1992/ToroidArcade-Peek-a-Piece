@@ -66,8 +66,18 @@ export function buildMemoryDeck(
   const cards = chosen.flatMap(picture => {
     const source = puzzleImageSource(picture) as ImageSourcePropType;
     return [
-      { id: `${picture.id}-a`, pictureId: picture.id, title: picture.title, source },
-      { id: `${picture.id}-b`, pictureId: picture.id, title: picture.title, source },
+      {
+        id: `${picture.id}-a`,
+        pictureId: picture.id,
+        title: picture.title,
+        source,
+      },
+      {
+        id: `${picture.id}-b`,
+        pictureId: picture.id,
+        title: picture.title,
+        source,
+      },
     ];
   });
   return shuffle(cards, random);

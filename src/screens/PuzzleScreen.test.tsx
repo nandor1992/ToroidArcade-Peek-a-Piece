@@ -158,8 +158,8 @@ test('solving the board shows the "Great job!" banner and marks the puzzle compl
   });
 
   const bannerVisible = () =>
-    root!.root.findAll(node => node.props.children === '🎉 Great job!')
-      .length > 0;
+    root!.root.findAll(node => node.props.children === '🎉 Great job!').length >
+    0;
   expect(bannerVisible()).toBe(false);
 
   // 2x2 grid, all pieces scattered to (0, 0) with Math.random mocked —

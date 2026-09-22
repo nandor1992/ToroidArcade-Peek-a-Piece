@@ -36,9 +36,8 @@ export function generatePuzzleGrid(
   // verticalConnections[r][c] (c in 0..columns-2) describes the shared
   // edge between piece (r, c) and piece (r, c+1): true means the left
   // piece's right side is the tab.
-  const verticalConnections: boolean[][] = Array.from(
-    { length: rows },
-    () => Array.from({ length: columns - 1 }, () => random() < 0.5),
+  const verticalConnections: boolean[][] = Array.from({ length: rows }, () =>
+    Array.from({ length: columns - 1 }, () => random() < 0.5),
   );
   // horizontalConnections[r][c] (r in 0..rows-2) describes the shared edge
   // between piece (r, c) and piece (r+1, c): true means the top piece's
@@ -55,26 +54,26 @@ export function generatePuzzleGrid(
         column === 0
           ? 'flat'
           : verticalConnections[row][column - 1]
-            ? 'blank'
-            : 'tab';
+          ? 'blank'
+          : 'tab';
       const right: EdgeType =
         column === columns - 1
           ? 'flat'
           : verticalConnections[row][column]
-            ? 'tab'
-            : 'blank';
+          ? 'tab'
+          : 'blank';
       const top: EdgeType =
         row === 0
           ? 'flat'
           : horizontalConnections[row - 1][column]
-            ? 'blank'
-            : 'tab';
+          ? 'blank'
+          : 'tab';
       const bottom: EdgeType =
         row === rows - 1
           ? 'flat'
           : horizontalConnections[row][column]
-            ? 'tab'
-            : 'blank';
+          ? 'tab'
+          : 'blank';
 
       const edges: PieceEdges = { top, right, bottom, left };
       pieces.push({

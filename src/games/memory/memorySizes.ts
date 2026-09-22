@@ -26,7 +26,5 @@ export const MEMORY_SIZES: readonly MemorySize[] = [
 export const DEFAULT_MEMORY_SIZE: MemorySize = MEMORY_SIZES[2];
 
 export function findMemorySize(label: string): MemorySize {
-  return (
-    MEMORY_SIZES.find(size => size.label === label) ?? DEFAULT_MEMORY_SIZE
-  );
+  return MEMORY_SIZES.find(size => size.label === label) ?? DEFAULT_MEMORY_SIZE;
 }

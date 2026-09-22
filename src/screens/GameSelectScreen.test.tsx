@@ -23,10 +23,7 @@ beforeEach(() => {
   });
 });
 
-function pressable(
-  root: ReactTestRenderer.ReactTestInstance,
-  label: string,
-) {
+function pressable(root: ReactTestRenderer.ReactTestInstance, label: string) {
   return root.findAll(
     node =>
       node.props.accessibilityLabel === label &&

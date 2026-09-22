@@ -476,7 +476,9 @@ export function PuzzleBoard({
     setPieces(current =>
       current
         ? current.map(p =>
-            p.groupId === draggingGroupId ? { ...p, x: p.x + dx, y: p.y + dy } : p,
+            p.groupId === draggingGroupId
+              ? { ...p, x: p.x + dx, y: p.y + dy }
+              : p,
           )
         : current,
     );
@@ -582,10 +584,7 @@ export function PuzzleBoard({
                 <Path
                   key={`snap-${piece.descriptor.id}`}
                   path={piece.clipPath}
-                  transform={[
-                    { translateX: piece.x },
-                    { translateY: piece.y },
-                  ]}
+                  transform={[{ translateX: piece.x }, { translateY: piece.y }]}
                   style="stroke"
                   strokeWidth={6}
                   color={colors.teal}

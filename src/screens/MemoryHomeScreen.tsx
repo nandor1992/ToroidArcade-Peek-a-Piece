@@ -153,7 +153,10 @@ export function MemoryHomeScreen({
             key={`cols-${columns}`}
             data={rows}
             keyExtractor={row => row[0].id}
-            renderItem={({ item, index }: ListRenderItemInfo<MemoryGroup[]>) => (
+            renderItem={({
+              item,
+              index,
+            }: ListRenderItemInfo<MemoryGroup[]>) => (
               <View style={styles.row}>
                 {item.map((group, colIndex) => (
                   <GroupTile

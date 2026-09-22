@@ -32,9 +32,7 @@ function tileOrder(root: ReactTestRenderer.ReactTestInstance): string[] {
 // The FlatList's `data` is the grid model: `{ kind: 'row', puzzles }` and
 // `{ kind: 'divider' }` items. These pull out the row sizes / count the
 // dividers so tests can assert the chunking without touching rendering.
-type GridItem =
-  | { kind: 'row'; puzzles: unknown[] }
-  | { kind: 'divider' };
+type GridItem = { kind: 'row'; puzzles: unknown[] } | { kind: 'divider' };
 
 function gridData(root: ReactTestRenderer.ReactTestInstance): GridItem[] {
   const list = root.findAll(node => Array.isArray(node.props.data))[0];
@@ -43,8 +41,8 @@ function gridData(root: ReactTestRenderer.ReactTestInstance): GridItem[] {
 
 function rowSizes(root: ReactTestRenderer.ReactTestInstance): number[] {
   return gridData(root)
-    .filter((item): item is Extract<GridItem, { kind: 'row' }> =>
-      item.kind === 'row',
+    .filter(
+      (item): item is Extract<GridItem, { kind: 'row' }> => item.kind === 'row',
     )
     .map(item => item.puzzles.length);
 }

@@ -231,9 +231,7 @@ export function HomeScreen({
           key={`cols-${columns}`}
           data={grid}
           keyExtractor={(item, index) =>
-            item.kind === 'divider'
-              ? `divider-${index}`
-              : item.puzzles[0].id
+            item.kind === 'divider' ? `divider-${index}` : item.puzzles[0].id
           }
           renderItem={({ item }: ListRenderItemInfo<GridItem>) => {
             if (item.kind === 'divider') {

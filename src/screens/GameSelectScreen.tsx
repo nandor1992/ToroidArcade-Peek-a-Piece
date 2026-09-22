@@ -26,8 +26,18 @@ interface GameChoice {
 }
 
 const GAMES: GameChoice[] = [
-  { key: 'puzzle', title: 'Family Puzzle', mark: 'puzzle', accent: colors.teal },
-  { key: 'memory', title: 'Family Memory', mark: 'memory', accent: colors.coral },
+  {
+    key: 'puzzle',
+    title: 'Family Puzzle',
+    mark: 'puzzle',
+    accent: colors.teal,
+  },
+  {
+    key: 'memory',
+    title: 'Family Memory',
+    mark: 'memory',
+    accent: colors.coral,
+  },
 ];
 
 // The mark fills its tile: 94% of the width, or whatever height is left
@@ -59,9 +69,7 @@ function GameTile({ game, onPress }: GameTileProps) {
     setMarkSize(
       Math.max(
         0,
-        Math.round(
-          Math.min(width * MARK_WIDTH_SCALE, height - LABEL_SPACE),
-        ),
+        Math.round(Math.min(width * MARK_WIDTH_SCALE, height - LABEL_SPACE)),
       ),
     );
   };
@@ -133,11 +141,7 @@ export function GameSelectScreen({
             portrait && styles.tilesPortrait,
           ]}>
           {GAMES.map(game => (
-            <GameTile
-              key={game.key}
-              game={game}
-              onPress={handlers[game.key]}
-            />
+            <GameTile key={game.key} game={game} onPress={handlers[game.key]} />
           ))}
         </View>
         {/* Same corner affordance as HomeScreen, and deliberately the same

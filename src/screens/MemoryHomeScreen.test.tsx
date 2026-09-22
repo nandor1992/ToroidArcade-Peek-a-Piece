@@ -60,10 +60,7 @@ function tiles(root: ReactTestRenderer.ReactTestInstance): string[] {
     .filter((label, i, all) => all.indexOf(label) === i);
 }
 
-function pressable(
-  root: ReactTestRenderer.ReactTestInstance,
-  label: string,
-) {
+function pressable(root: ReactTestRenderer.ReactTestInstance, label: string) {
   return root.findAll(
     node =>
       node.props.accessibilityLabel === label &&

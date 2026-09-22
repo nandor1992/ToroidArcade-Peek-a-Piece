@@ -126,9 +126,7 @@ test('drops pictures with no artwork before grouping', () => {
   const groups = buildMemoryGroups(pictures, 4);
 
   expect(sizes(groups)).toEqual([4]);
-  expect(groups.flatMap(g => g.pictures.map(p => p.id))).not.toContain(
-    'blank',
-  );
+  expect(groups.flatMap(g => g.pictures.map(p => p.id))).not.toContain('blank');
 });
 
 test('a pool smaller than one round stays short — there is nothing to borrow', () => {

@@ -1,13 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  View,
-  type LayoutChangeEvent,
-} from 'react-native';
+import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { colors } from '../../../theme/colors';
 import type { Puzzle } from '../../../types/puzzle';
-import { buildMemoryDeck, type MemoryCard as CardData } from '../logic/buildMemoryDeck';
+import {
+  buildMemoryDeck,
+  type MemoryCard as CardData,
+} from '../logic/buildMemoryDeck';
 import { MemoryCard } from './MemoryCard';
 
 /**
@@ -204,7 +202,8 @@ export function MemoryBoard({
         </View>
       ) : (
         cardSize > 0 && (
-          <View style={[styles.grid, { width: columns * (cardSize + GAP) - GAP }]}>
+          <View
+            style={[styles.grid, { width: columns * (cardSize + GAP) - GAP }]}>
             {deck.map(card => (
               <MemoryCard
                 key={card.id}

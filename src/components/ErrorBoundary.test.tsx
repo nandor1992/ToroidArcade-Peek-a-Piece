@@ -49,7 +49,9 @@ test('shows the recovery screen and reports the error when a child throws', asyn
   });
 
   expect(hasText(root!.root, 'Something went wrong')).toBe(true);
-  expect(onError).toHaveBeenCalledWith(expect.objectContaining({ message: 'kaboom' }));
+  expect(onError).toHaveBeenCalledWith(
+    expect.objectContaining({ message: 'kaboom' }),
+  );
 });
 
 test('"Try again" clears the error and re-renders the subtree', async () => {

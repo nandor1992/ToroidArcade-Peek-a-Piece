@@ -80,9 +80,9 @@ async function tap(
   pictureId: string,
   which: 0 | 1 = 0,
 ) {
-  const card = cards(root).filter(
-    c => c.props.card.pictureId === pictureId,
-  )[which];
+  const card = cards(root).filter(c => c.props.card.pictureId === pictureId)[
+    which
+  ];
   await act(() => {
     card.props.onPress(card.props.card);
   });

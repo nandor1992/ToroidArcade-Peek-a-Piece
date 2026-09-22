@@ -42,8 +42,14 @@ function flatten(d: string): Array<[number, number]> {
         const t = i / 24;
         const u = 1 - t;
         out.push([
-          u * u * u * x0 + 3 * u * u * t * x1 + 3 * u * t * t * x2 + t * t * t * x3,
-          u * u * u * y0 + 3 * u * u * t * y1 + 3 * u * t * t * y2 + t * t * t * y3,
+          u * u * u * x0 +
+            3 * u * u * t * x1 +
+            3 * u * t * t * x2 +
+            t * t * t * x3,
+          u * u * u * y0 +
+            3 * u * u * t * y1 +
+            3 * u * t * t * y2 +
+            t * t * t * y3,
         ]);
       }
       cur = [x3, y3];

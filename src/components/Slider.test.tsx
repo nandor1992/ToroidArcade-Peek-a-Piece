@@ -7,9 +7,7 @@ import ReactTestRenderer, { act } from 'react-test-renderer';
 import { Slider } from './Slider';
 
 function findTrack(root: ReactTestRenderer.ReactTestInstance) {
-  return root.findAll(
-    node => node.props.accessibilityRole === 'adjustable',
-  )[0];
+  return root.findAll(node => node.props.accessibilityRole === 'adjustable')[0];
 }
 
 test('dragging within the track reports a proportional value', async () => {

@@ -15,10 +15,7 @@ jest.mock('react-native-image-picker', () => ({
 
 const mockedLaunchImageLibrary = launchImageLibrary as jest.Mock;
 
-function findByLabel(
-  root: ReactTestRenderer.ReactTestInstance,
-  label: string,
-) {
+function findByLabel(root: ReactTestRenderer.ReactTestInstance, label: string) {
   return root.findAll(node => node.props.accessibilityLabel === label)[0];
 }
 
