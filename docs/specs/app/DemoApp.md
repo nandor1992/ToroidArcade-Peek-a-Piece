@@ -36,8 +36,10 @@ without the parent branches:
   picker, and no `onOpenParentArea` — which is why `HomeScreen` hides its
   corner parent button when that prop is absent, rather than showing a dead
   one.
-- [[MemoryScreen]], the Family Memory placeholder, with `onBack` to the
-  picker.
+- [[MemoryScreen]], playing the memory game over `STARTER_PUZZLES` at
+  `DEFAULT_MEMORY_SIZE` (6 pictures), with `onBack` to the picker. The
+  demo has no Settings screen, so the count is fixed — the same reason
+  its music volume is.
 - [[PuzzleScreen]] at `DEFAULT_PUZZLE_SIZE` (2x2), wired to `markCompleted` /
   `clearCompleted` so the green ticks behave exactly as on native.
 
@@ -90,8 +92,8 @@ manually in a browser (`pnpm web:start`):
 
 1. The demo opens on the game picker; tapping "Family Puzzle" shows the
    eight starter puzzles under a "Family Puzzle" header and **no** parent
-   button, and its Back button returns to the picker. "Family Memory" opens
-   the placeholder screen and backs out the same way.
+   button, and its Back button returns to the picker. "Family Memory" deals a
+   twelve-card board and backs out the same way.
 2. Opening a puzzle shows "Retrieving Memories…" then a playable board.
 3. Drag / snap / merge works with both mouse and touch.
 4. Solving shows "🎉 Great job!" and a green tick on Home.

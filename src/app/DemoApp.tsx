@@ -9,6 +9,7 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { usePersistentPuzzles } from '../hooks/usePersistentPuzzles';
 import { DEFAULT_PUZZLE_SIZE } from '../games/puzzle/puzzleSizes';
+import { DEFAULT_MEMORY_SIZE } from '../games/memory/memorySizes';
 
 // Same reason as App.tsx: SafeAreaProvider renders no children until it has
 // real insets, so seed it with zeroes for an immediate first paint.
@@ -83,7 +84,15 @@ export default function DemoApp() {
       />
     );
   } else if (screen.name === 'memory') {
-    content = <MemoryScreen onBack={goGames} />;
+    content = (
+      // The demo has no Settings screen, so the memory game plays at the
+      // default six pictures over the bundled starter set.
+      <MemoryScreen
+        pictures={STARTER_PUZZLES}
+        pictureCount={DEFAULT_MEMORY_SIZE.pictures}
+        onBack={goGames}
+      />
+    );
   } else {
     content = (
       <GameSelectScreen

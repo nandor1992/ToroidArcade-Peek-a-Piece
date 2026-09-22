@@ -10,6 +10,10 @@ import {
   DEFAULT_PUZZLE_SIZE,
   PUZZLE_SIZES,
 } from '../games/puzzle/puzzleSizes';
+import {
+  DEFAULT_MEMORY_SIZE,
+  MEMORY_SIZES,
+} from '../games/memory/memorySizes';
 
 function findByLabel(
   root: ReactTestRenderer.ReactTestInstance,
@@ -28,6 +32,8 @@ function baseProps() {
     onChangeTimerMinutes: jest.fn(),
     puzzleSize: DEFAULT_PUZZLE_SIZE,
     onChangePuzzleSize: jest.fn(),
+    memorySize: DEFAULT_MEMORY_SIZE,
+    onChangeMemorySize: jest.fn(),
     onBack: jest.fn(),
   };
 }
@@ -287,4 +293,39 @@ test('back button calls onBack', async () => {
   });
 
   expect(props.onBack).toHaveBeenCalledTimes(1);
+});
+
+test('offers every memory picture count, with the current one selected', async () => {
+  const props = baseProps();
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...props} />);
+  });
+
+  for (const size of MEMORY_SIZES) {
+    const chip = findByLabel(root!.root, `${size.label} pictures`);
+    expect(chip).toBeDefined();
+    expect(chip.props.accessibilityState.selected).toBe(
+      size.label === DEFAULT_MEMORY_SIZE.label,
+    );
+  }
+});
+
+test('picking a memory picture count reports it', async () => {
+  const props = baseProps();
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...props} />);
+  });
+
+  const eight = MEMORY_SIZES.find(size => size.pictures === 8)!;
+  await act(() => {
+    findByLabel(root!.root, `${eight.label} pictures`).props.onPress();
+  });
+
+  expect(props.onChangeMemorySize).toHaveBeenCalledWith(eight);
+});
+
+test('defaults to six pictures — a twelve-card board', () => {
+  expect(DEFAULT_MEMORY_SIZE.pictures).toBe(6);
 });

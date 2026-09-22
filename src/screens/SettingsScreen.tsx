@@ -12,6 +12,7 @@ import { colors } from '../theme/colors';
 import { Slider } from '../components/Slider';
 import { Icon } from '../components/Icon';
 import { PUZZLE_SIZES, type PuzzleSize } from '../games/puzzle/puzzleSizes';
+import { MEMORY_SIZES, type MemorySize } from '../games/memory/memorySizes';
 
 export interface TimerPreset {
   label: string;
@@ -62,6 +63,8 @@ export interface SettingsScreenProps {
   onChangeTimerMinutes: (minutes: number | null) => void;
   puzzleSize: PuzzleSize;
   onChangePuzzleSize: (size: PuzzleSize) => void;
+  memorySize: MemorySize;
+  onChangeMemorySize: (size: MemorySize) => void;
   onBack?: () => void;
 }
 
@@ -74,6 +77,8 @@ export function SettingsScreen({
   onChangeTimerMinutes,
   puzzleSize,
   onChangePuzzleSize,
+  memorySize,
+  onChangeMemorySize,
   onBack,
 }: SettingsScreenProps) {
   const [aboutVisible, setAboutVisible] = useState(false);
@@ -134,6 +139,38 @@ export function SettingsScreen({
                 accessibilityLabel={size.label}
                 accessibilityState={{ selected }}
                 onPress={() => onChangePuzzleSize(size)}
+                style={({ pressed }) => [
+                  styles.presetChip,
+                  selected && styles.presetChipSelected,
+                  pressed && styles.presetChipPressed,
+                ]}>
+                <Text
+                  style={[
+                    styles.presetLabel,
+                    selected && styles.presetLabelSelected,
+                  ]}>
+                  {size.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={[styles.section, styles.sectionCentered]}>
+        <Text style={styles.sectionLabel}>Memory Pictures</Text>
+        {/* Each picture is dealt onto two cards, so this is also the
+            number of pairs to find — 6 pictures means a 12-card board. */}
+        <View style={[styles.presetsRow, styles.presetsRowCentered]}>
+          {MEMORY_SIZES.map(size => {
+            const selected = size.label === memorySize.label;
+            return (
+              <Pressable
+                key={size.label}
+                accessibilityRole="button"
+                accessibilityLabel={`${size.label} pictures`}
+                accessibilityState={{ selected }}
+                onPress={() => onChangeMemorySize(size)}
                 style={({ pressed }) => [
                   styles.presetChip,
                   selected && styles.presetChipSelected,

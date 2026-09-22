@@ -49,6 +49,13 @@ in `scripts/generate-game-marks.js`, which emits
 size. **If the brand mark changes, re-run that script** rather than editing
 the generated file. See [[GameMark]] and [[gameMarkGeometry]].
 
+**Two games, one photo pool.** Family Puzzle and Family Memory both deal
+from the same list — uploaded photos first, then whichever starter
+pictures are switched on — so a photo a parent adds shows up in both
+without any per-game import step. Each game owns its own folder under
+`src/games/`, and neither reaches into the other; the screens above them
+(`PuzzleScreen`, `MemoryScreen`) are what hold the shared pool.
+
 **Colour.** Warm, high-contrast, chosen to stay distinguishable under the
 most common forms of colour blindness (the palette differs in lightness as
 well as hue, not just hue):

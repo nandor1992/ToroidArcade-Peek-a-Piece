@@ -23,6 +23,10 @@ import {
   DEFAULT_PUZZLE_SIZE,
   type PuzzleSize,
 } from './src/games/puzzle/puzzleSizes';
+import {
+  DEFAULT_MEMORY_SIZE,
+  type MemorySize,
+} from './src/games/memory/memorySizes';
 
 // Lets the app render immediately with zero insets instead of nothing at
 // all, since SafeAreaProvider otherwise renders no children until a real
@@ -69,6 +73,7 @@ function App() {
   const [soundMuted, setSoundMuted] = useState(false);
   const [timerMinutes, setTimerMinutes] = useState<number | null>(null);
   const [puzzleSize, setPuzzleSize] = useState<PuzzleSize>(DEFAULT_PUZZLE_SIZE);
+  const [memorySize, setMemorySize] = useState<MemorySize>(DEFAULT_MEMORY_SIZE);
   const [locked, setLocked] = useState(false);
 
   const stockPuzzles = defaultImagesEnabled ? STARTER_PUZZLES : [];
@@ -121,7 +126,15 @@ function App() {
       />
     );
   } else if (screen.name === 'memory') {
-    content = <MemoryScreen onBack={goGames} />;
+    content = (
+      // Same pool as the jigsaw: uploaded photos first, then whichever
+      // starter pictures are switched on.
+      <MemoryScreen
+        pictures={puzzles}
+        pictureCount={memorySize.pictures}
+        onBack={goGames}
+      />
+    );
   } else if (screen.name === 'puzzle') {
     content = (
       <PuzzleScreen
@@ -164,6 +177,8 @@ function App() {
         onChangeTimerMinutes={setTimerMinutes}
         puzzleSize={puzzleSize}
         onChangePuzzleSize={setPuzzleSize}
+        memorySize={memorySize}
+        onChangeMemorySize={setMemorySize}
         onBack={() => setScreen({ name: 'parent' })}
       />
     );

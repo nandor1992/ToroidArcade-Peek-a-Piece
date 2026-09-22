@@ -60,7 +60,8 @@ top showing the app name and **no** back button — this is the top of the
 stack.
 
 `App.tsx` renders it as the initial screen (`{ name: 'games' }`) and routes
-`onSelectPuzzles` to `HomeScreen` and `onSelectMemory` to `MemoryScreen`.
+`onSelectPuzzles` to `HomeScreen` and `onSelectMemory` to `MemoryScreen`,
+which now hosts the real [[MemoryBoard]] game.
 `DemoApp.tsx` (the web demo) does the same.
 
 ## Interface
@@ -113,7 +114,7 @@ viewport.
    tile.
 2. Tap "Family Puzzle" → the puzzle grid opens, headed "Family Puzzle".
 3. From the puzzle grid, tap Back → the game picker again.
-4. Tap "Family Memory" → the Family Memory screen opens.
+4. Tap "Family Memory" → the memory game opens, dealt face-down.
 5. From Family Memory, tap Back → the game picker again.
 6. On the game picker, look for a Back control → there is none.
 7. Lay out a tile at 400x400 → its mark is sized 356 (400 − `LABEL_SPACE`).
