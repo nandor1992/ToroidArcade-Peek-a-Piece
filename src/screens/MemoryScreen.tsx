@@ -5,8 +5,7 @@ import { colors } from '../theme/colors';
 import { AppHeader } from '../components/AppHeader';
 import { Icon } from '../components/Icon';
 import { MemoryBoard } from '../games/memory/components/MemoryBoard';
-import { DEFAULT_MEMORY_SIZE } from '../games/memory/memorySizes';
-import type { Puzzle } from '../types/puzzle';
+import type { MemoryGroup } from '../games/memory/logic/buildMemoryGroups';
 
 // Pale washes behind the board, the same idea as PuzzleScreen's — a tint
 // that sets the cards off without competing with the photos on them.
@@ -19,55 +18,89 @@ const BACKGROUND_PLACEHOLDERS = [
 ] as const;
 
 export interface MemoryScreenProps {
-  /** The pool to deal from — uploaded photos and starter pictures alike. */
-  pictures?: Puzzle[];
-  /** How many distinct pictures to deal; each appears on two cards. */
-  pictureCount?: number;
+  /** Every round, from `buildMemoryGroups` — what next/previous page through. */
+  groups: MemoryGroup[];
+  /** The round picked on the landing page. */
+  initialGroupId: string;
+  /** Back to the memory landing page. */
   onBack?: () => void;
 }
 
 /**
- * Hosts the Family Memory game: header, a Reset button, and the board.
- * Deliberately thin — the rules live in [[MemoryBoard]], the deal in
- * [[buildMemoryDeck]], matching how PuzzleScreen sits over PuzzleBoard.
+ * Plays one round of Family Memory, with next/previous paging between
+ * rounds — the memory counterpart of [[PuzzleScreen]], and laid out the
+ * same way: header, floating Home and Reset, side arrows, board beneath.
+ *
+ * Deliberately thin: the rules live in [[MemoryBoard]] and the deal in
+ * [[buildMemoryDeck]].
  * See docs/specs/screens/MemoryScreen.md.
  */
 export function MemoryScreen({
-  pictures = [],
-  pictureCount = DEFAULT_MEMORY_SIZE.pictures,
+  groups,
+  initialGroupId,
   onBack,
 }: MemoryScreenProps) {
-  // Bumping this re-deals in place — same mechanism as the puzzle's Reset.
+  const [index, setIndex] = useState(() => {
+    const found = groups.findIndex(group => group.id === initialGroupId);
+    return found === -1 ? 0 : found;
+  });
+  // Bumping this re-deals in place — the same mechanism as the puzzle's
+  // Reset, and it also drives the background colour so a new round
+  // visibly starts afresh.
   const [resetCount, setResetCount] = useState(0);
   const [solved, setSolved] = useState(false);
 
-  // A new deal is never already solved, and changing the count deals anew.
+  const group = groups[index];
+
+  // A new round, or a re-deal of this one, is never already solved.
   useEffect(() => {
     setSolved(false);
-  }, [resetCount, pictureCount]);
+  }, [group?.id, resetCount]);
 
+  if (!group) {
+    return null;
+  }
+
+  const goPrev = () =>
+    setIndex(current => (current - 1 + groups.length) % groups.length);
+  const goNext = () => setIndex(current => (current + 1) % groups.length);
   const background =
-    BACKGROUND_PLACEHOLDERS[resetCount % BACKGROUND_PLACEHOLDERS.length];
+    BACKGROUND_PLACEHOLDERS[
+      (index + resetCount) % BACKGROUND_PLACEHOLDERS.length
+    ];
 
   return (
     <SafeAreaView
       style={[styles.container, { backgroundColor: background }]}
       edges={['top', 'bottom']}>
-      <AppHeader title="Family Memory" onBack={onBack} />
+      <AppHeader title="Family Memory" />
 
       <View style={styles.playArea}>
-        <View style={styles.boardLayer}>
+        <View style={styles.boardLayer} accessibilityLabel={group.title}>
           <MemoryBoard
-            pictures={pictures}
-            pictureCount={pictureCount}
+            // Keyed on the round, so switching rounds remounts with a
+            // clean slate rather than carrying turned cards across.
+            key={group.id}
+            pictures={group.pictures}
+            pictureCount={group.pictures.length}
             resetSignal={resetCount}
             onSolved={() => setSolved(true)}
           />
         </View>
 
-        {/* Floats over the board. `box-none` so taps between the buttons
-            still reach the cards underneath. */}
+        {/* Controls float over the board. `box-none` so taps between the
+            buttons still reach the cards underneath. */}
         <View style={styles.topControls} pointerEvents="box-none">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Home"
+            onPress={onBack}
+            style={({ pressed }) => [
+              styles.navButton,
+              pressed && styles.navButtonPressed,
+            ]}>
+            <Icon name="home" size={28} color={colors.navy} />
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="New game"
@@ -79,6 +112,29 @@ export function MemoryScreen({
             <Icon name="reset" size={26} color={colors.navy} />
           </Pressable>
         </View>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Previous set"
+          onPress={goPrev}
+          style={({ pressed }) => [
+            styles.sideButton,
+            styles.sideButtonLeft,
+            pressed && styles.navButtonPressed,
+          ]}>
+          <Icon name="previous" size={32} color={colors.navy} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Next set"
+          onPress={goNext}
+          style={({ pressed }) => [
+            styles.sideButton,
+            styles.sideButtonRight,
+            pressed && styles.navButtonPressed,
+          ]}>
+          <Icon name="next" size={32} color={colors.navy} />
+        </Pressable>
 
         {solved && (
           <View style={styles.solvedBanner} pointerEvents="none">
@@ -103,9 +159,10 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    // Leaves the Reset button a clear corner to sit in.
-    padding: 16,
+    // Keeps the cards clear of the floating controls on every edge.
     paddingTop: 76,
+    paddingBottom: 16,
+    paddingHorizontal: 76,
   },
   topControls: {
     position: 'absolute',
@@ -113,7 +170,7 @@ const styles = StyleSheet.create({
     left: 12,
     right: 12,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
   },
   navButton: {
     width: 56,
@@ -126,6 +183,24 @@ const styles = StyleSheet.create({
   },
   navButtonPressed: {
     opacity: 0.6,
+  },
+  sideButton: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -28,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: colors.cream,
+    opacity: 0.9,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sideButtonLeft: {
+    left: 8,
+  },
+  sideButtonRight: {
+    right: 8,
   },
   solvedBanner: {
     position: 'absolute',

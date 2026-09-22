@@ -5,11 +5,12 @@
  * @format
  */
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Dimensions, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GameSelectScreen } from './src/screens/GameSelectScreen';
 import { HomeScreen, STARTER_PUZZLES } from './src/screens/HomeScreen';
+import { MemoryHomeScreen } from './src/screens/MemoryHomeScreen';
 import { MemoryScreen } from './src/screens/MemoryScreen';
 import { PuzzleScreen } from './src/screens/PuzzleScreen';
 import { ParentGateScreen } from './src/screens/ParentGateScreen';
@@ -27,6 +28,7 @@ import {
   DEFAULT_MEMORY_SIZE,
   type MemorySize,
 } from './src/games/memory/memorySizes';
+import { buildMemoryGroups } from './src/games/memory/logic/buildMemoryGroups';
 
 // Lets the app render immediately with zero insets instead of nothing at
 // all, since SafeAreaProvider otherwise renders no children until a real
@@ -47,7 +49,8 @@ const FALLBACK_SAFE_AREA_METRICS = {
 type Screen =
   | { name: 'games' }
   | { name: 'home' }
-  | { name: 'memory' }
+  | { name: 'memoryHome' }
+  | { name: 'memory'; groupId: string }
   | { name: 'puzzle'; puzzleId: string }
   | { name: 'parentGate' }
   | { name: 'parent' }
@@ -80,8 +83,16 @@ function App() {
 
   const stockPuzzles = defaultImagesEnabled ? STARTER_PUZZLES : [];
   const puzzles = [...userPuzzles, ...stockPuzzles];
+  // The memory rounds, recomputed only when the pool or the chosen set
+  // size actually changes — the tiles have to stay put between renders.
+  const memoryGroups = useMemo(
+    () => buildMemoryGroups(puzzles, memorySize.pictures),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [userPuzzles, stockPuzzles, memorySize.pictures],
+  );
   const goHome = () => setScreen({ name: 'home' });
   const goGames = () => setScreen({ name: 'games' });
+  const goMemoryHome = () => setScreen({ name: 'memoryHome' });
   // The parent area is reachable from more than one child screen now, so
   // remember which one to come back to — otherwise backing out of the gate
   // from the game picker would drop you on the puzzle grid instead.
@@ -96,6 +107,7 @@ function App() {
   const inChildSession =
     screen.name === 'games' ||
     screen.name === 'home' ||
+    screen.name === 'memoryHome' ||
     screen.name === 'memory' ||
     screen.name === 'puzzle';
   // Music also plays on the Settings screen so the volume slider and mute
@@ -135,14 +147,23 @@ function App() {
         onBack={goGames}
       />
     );
+  } else if (screen.name === 'memoryHome') {
+    content = (
+      <MemoryHomeScreen
+        groups={memoryGroups}
+        onSelectGroup={group =>
+          setScreen({ name: 'memory', groupId: group.id })
+        }
+        onOpenParentArea={openParentGate}
+        onBack={goGames}
+      />
+    );
   } else if (screen.name === 'memory') {
     content = (
-      // Same pool as the jigsaw: uploaded photos first, then whichever
-      // starter pictures are switched on.
       <MemoryScreen
-        pictures={puzzles}
-        pictureCount={memorySize.pictures}
-        onBack={goGames}
+        groups={memoryGroups}
+        initialGroupId={screen.groupId}
+        onBack={goMemoryHome}
       />
     );
   } else if (screen.name === 'puzzle') {
@@ -196,7 +217,7 @@ function App() {
     content = (
       <GameSelectScreen
         onSelectPuzzles={goHome}
-        onSelectMemory={() => setScreen({ name: 'memory' })}
+        onSelectMemory={goMemoryHome}
         onOpenParentArea={openParentGate}
       />
     );

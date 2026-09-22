@@ -242,3 +242,74 @@ test('the parent area still returns to the puzzle grid when opened from there', 
   // A starter puzzle tile is on screen, so this is the grid, not the picker.
   expect(findByLabel(root!.root, 'Meadow')).toBeDefined();
 });
+
+test('the memory game runs picker -> sets -> a round -> next -> back', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<App />);
+  });
+  await act(async () => {});
+
+  // Picker -> the memory landing page. Eight starter pictures at the
+  // default six-per-round gives two rounds (6 + 2).
+  await act(() => {
+    findByLabel(root!.root, 'Family Memory').props.onPress();
+  });
+  expect(findByLabel(root!.root, 'Set 1')).toBeDefined();
+  expect(findByLabel(root!.root, 'Set 2')).toBeDefined();
+
+  // Into a round. The board layer carries the round's title.
+  await act(() => {
+    findByLabel(root!.root, 'Set 1').props.onPress();
+  });
+  expect(currentPuzzleLabel(root!.root)).toBe('Set 1');
+
+  // Next pages to the other round without going back to the grid.
+  await act(() => {
+    findByLabel(root!.root, 'Next set').props.onPress();
+  });
+  expect(currentPuzzleLabel(root!.root)).toBe('Set 2');
+
+  // Home returns to the memory landing page, not the game picker.
+  await act(() => {
+    findByLabel(root!.root, 'Home').props.onPress();
+  });
+  expect(findByLabel(root!.root, 'Set 1')).toBeDefined();
+
+  // And Back from there reaches the picker.
+  await act(() => {
+    findByLabel(root!.root, 'Back').props.onPress();
+  });
+  expect(findByLabel(root!.root, 'Family Puzzle')).toBeDefined();
+});
+
+test('turning starter pictures off leaves the memory game with no rounds', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<App />);
+  });
+  await act(async () => {});
+
+  await act(() => {
+    findByLabel(root!.root, 'Parent controls').props.onPress();
+  });
+  await solveMathGate(root!.root);
+  const starterPuzzlesSwitch = root!.root.findAll(
+    node => node.props.accessibilityLabel === 'Show starter puzzles',
+  )[0];
+  await act(() => {
+    starterPuzzlesSwitch.props.onValueChange(false);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'Back').props.onPress(); // back to the picker
+  });
+
+  await act(() => {
+    findByLabel(root!.root, 'Family Memory').props.onPress();
+  });
+
+  const copy = root!.root
+    .findAll(node => typeof node.props.children === 'string')
+    .map(node => node.props.children as string);
+  expect(copy).toContain('No pictures yet');
+});

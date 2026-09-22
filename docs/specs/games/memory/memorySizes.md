@@ -15,6 +15,11 @@ default. The direct counterpart of [[puzzleSizes]], and the single place
 the difficulty ladder is defined so Settings and the game can't disagree
 about it.
 
+Since the memory game gained a landing page, this is also the **round
+size**: it's what [[buildMemoryGroups]] chunks the photo pool by, so
+changing it re-groups the pool and changes the tiles on
+[[MemoryHomeScreen]], not just the size of one game.
+
 ## How it works
 
 A frozen list of `{ label, pictures }`. `pictures` is the number of
@@ -51,8 +56,9 @@ genuinely clearable by a two-year-old, and the highest one still legible.
 
 - `findMemorySize` with an unknown label → `DEFAULT_MEMORY_SIZE`.
 - `DEFAULT_MEMORY_SIZE.pictures` is 6.
-- A board may end up smaller than the chosen count if the photo pool is
-  short — see [[buildMemoryDeck]].
+- A round may end up smaller than the chosen count when the pool doesn't
+  divide evenly, or larger by one when a single picture would otherwise be
+  orphaned — see [[buildMemoryGroups]].
 
 ## Test scenarios
 
@@ -69,4 +75,4 @@ and [[MemoryBoard]]'s count tests.
 ## Related
 
 - Code: `src/games/memory/memorySizes.ts`
-- Related specs: [[MemoryBoard]], [[buildMemoryDeck]], [[SettingsScreen]], [[puzzleSizes]]
+- Related specs: [[MemoryBoard]], [[buildMemoryGroups]], [[buildMemoryDeck]], [[MemoryHomeScreen]], [[SettingsScreen]], [[puzzleSizes]]

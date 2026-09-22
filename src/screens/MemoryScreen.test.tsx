@@ -5,8 +5,9 @@
 import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { MemoryScreen } from './MemoryScreen';
-import { MemoryBoard, MATCH_PAUSE_MS } from '../games/memory/components/MemoryBoard';
+import { MATCH_PAUSE_MS } from '../games/memory/components/MemoryBoard';
 import { MemoryCard } from '../games/memory/components/MemoryCard';
+import { buildMemoryGroups } from '../games/memory/logic/buildMemoryGroups';
 import type { Puzzle } from '../types/puzzle';
 
 function stock(n: number): Puzzle[] {
@@ -17,6 +18,9 @@ function stock(n: number): Puzzle[] {
     imageAsset: 100 + i,
   }));
 }
+
+/** Three rounds of three pictures each. */
+const GROUPS = buildMemoryGroups(stock(9), 3);
 
 let randomSpy: jest.SpyInstance<number, []>;
 
@@ -29,15 +33,8 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-async function render(props: Partial<React.ComponentProps<typeof MemoryScreen>> = {}) {
-  let root: ReactTestRenderer.ReactTestRenderer;
-  await act(() => {
-    root = ReactTestRenderer.create(
-      <MemoryScreen pictures={stock(8)} pictureCount={3} {...props} />,
-    );
-  });
-  // The board sizes its cards from a measured layout.
-  const board = root!.root.findAll(
+async function layOutBoard(root: ReactTestRenderer.ReactTestRenderer) {
+  const board = root.root.findAll(
     node => typeof node.props.onLayout === 'function',
   )[0];
   await act(() => {
@@ -45,6 +42,18 @@ async function render(props: Partial<React.ComponentProps<typeof MemoryScreen>> 
       nativeEvent: { layout: { width: 600, height: 600 } },
     });
   });
+}
+
+async function render(
+  props: Partial<React.ComponentProps<typeof MemoryScreen>> = {},
+) {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <MemoryScreen groups={GROUPS} initialGroupId="set-1" {...props} />,
+    );
+  });
+  await layOutBoard(root!);
   return root!;
 }
 
@@ -69,100 +78,156 @@ function cards(root: ReactTestRenderer.ReactTestRenderer) {
   return root.root.findAllByType(MemoryCard);
 }
 
-test('names the game and deals a board', async () => {
+/** Which round is on screen — the board layer is labelled with its title. */
+function currentSet(root: ReactTestRenderer.ReactTestRenderer): string {
+  return root.root.findAll(
+    node =>
+      typeof node.props.accessibilityLabel === 'string' &&
+      node.props.accessibilityRole !== 'button',
+  )[0].props.accessibilityLabel;
+}
+
+async function press(root: ReactTestRenderer.ReactTestRenderer, label: string) {
+  await act(() => {
+    findByLabel(root.root, label).props.onPress();
+  });
+  await layOutBoard(root);
+}
+
+async function clearBoard(root: ReactTestRenderer.ReactTestRenderer) {
+  const pictures = [
+    ...new Set(cards(root).map(card => card.props.card.pictureId)),
+  ];
+  for (const picture of pictures) {
+    for (const which of [0, 1]) {
+      const card = cards(root).filter(
+        c => c.props.card.pictureId === picture,
+      )[which];
+      await act(() => {
+        card.props.onPress(card.props.card);
+      });
+    }
+    await act(async () => {
+      jest.advanceTimersByTime(MATCH_PAUSE_MS);
+    });
+  }
+}
+
+test('opens the round it was asked for', async () => {
+  const root = await render({ initialGroupId: 'set-2' });
+
+  expect(currentSet(root)).toBe('Set 2');
+  expect(cards(root)).toHaveLength(6); // 3 pictures, 2 cards each
+});
+
+test('falls back to the first round when the id is unknown', async () => {
+  const root = await render({ initialGroupId: 'nope' });
+
+  expect(currentSet(root)).toBe('Set 1');
+});
+
+test('names the game in the header', async () => {
   const root = await render();
 
   expect(texts(root.root)).toContain('Family Memory');
-  expect(cards(root)).toHaveLength(6);
 });
 
-test('passes the picture count straight through to the board', async () => {
-  const root = await render({ pictureCount: 4 });
+test('Next and Previous page through the rounds', async () => {
+  const root = await render({ initialGroupId: 'set-1' });
 
-  expect(root.root.findByType(MemoryBoard).props.pictureCount).toBe(4);
-  expect(cards(root)).toHaveLength(8);
+  await press(root, 'Next set');
+  expect(currentSet(root)).toBe('Set 2');
+  await press(root, 'Next set');
+  expect(currentSet(root)).toBe('Set 3');
+
+  await press(root, 'Previous set');
+  expect(currentSet(root)).toBe('Set 2');
 });
 
-test('defaults to six pictures when the host does not say', async () => {
-  let root: ReactTestRenderer.ReactTestRenderer;
+test('Next wraps round from the last set to the first', async () => {
+  const root = await render({ initialGroupId: 'set-3' });
+
+  await press(root, 'Next set');
+  expect(currentSet(root)).toBe('Set 1');
+});
+
+test('Previous wraps round from the first set to the last', async () => {
+  const root = await render({ initialGroupId: 'set-1' });
+
+  await press(root, 'Previous set');
+  expect(currentSet(root)).toBe('Set 3');
+});
+
+test('switching rounds deals a clean board', async () => {
+  jest.useFakeTimers();
+  const root = await render();
+
+  const [first] = [
+    ...new Set(cards(root).map(card => card.props.card.pictureId)),
+  ];
+  const card = cards(root).filter(c => c.props.card.pictureId === first)[0];
   await act(() => {
-    root = ReactTestRenderer.create(<MemoryScreen pictures={stock(8)} />);
+    card.props.onPress(card.props.card);
   });
+  expect(cards(root).filter(c => c.props.faceUp)).toHaveLength(1);
 
-  expect(root!.root.findByType(MemoryBoard).props.pictureCount).toBe(6);
+  await press(root, 'Next set');
+
+  expect(cards(root).filter(c => c.props.faceUp)).toHaveLength(0);
 });
 
-test('the back button calls onBack', async () => {
+test('Home calls onBack', async () => {
   const onBack = jest.fn();
   const root = await render({ onBack });
 
   await act(() => {
-    findByLabel(root.root, 'Back').props.onPress();
+    findByLabel(root.root, 'Home').props.onPress();
   });
 
   expect(onBack).toHaveBeenCalledTimes(1);
 });
 
-test('hides the back button when there is nowhere to go', async () => {
+test('celebrates when every pair in the round is found', async () => {
+  jest.useFakeTimers();
   const root = await render();
 
-  expect(
-    root.root.findAll(node => node.props.accessibilityLabel === 'Back'),
-  ).toHaveLength(0);
-});
-
-test('celebrates when every pair is found', async () => {
-  jest.useFakeTimers();
-  const root = await render({ pictureCount: 3 });
-
   expect(texts(root.root)).not.toContain('🎉 You found them all!');
-
-  const pictures = [
-    ...new Set(cards(root).map(card => card.props.card.pictureId)),
-  ];
-  for (const picture of pictures) {
-    for (const which of [0, 1]) {
-      const card = cards(root).filter(
-        c => c.props.card.pictureId === picture,
-      )[which];
-      await act(() => {
-        card.props.onPress(card.props.card);
-      });
-    }
-    await act(async () => {
-      jest.advanceTimersByTime(MATCH_PAUSE_MS);
-    });
-  }
-
+  await clearBoard(root);
   expect(texts(root.root)).toContain('🎉 You found them all!');
 });
 
-test('New game re-deals and clears the celebration', async () => {
+test('New game re-deals the round and clears the celebration', async () => {
   jest.useFakeTimers();
-  const root = await render({ pictureCount: 3 });
+  const root = await render();
 
-  const pictures = [
-    ...new Set(cards(root).map(card => card.props.card.pictureId)),
-  ];
-  for (const picture of pictures) {
-    for (const which of [0, 1]) {
-      const card = cards(root).filter(
-        c => c.props.card.pictureId === picture,
-      )[which];
-      await act(() => {
-        card.props.onPress(card.props.card);
-      });
-    }
-    await act(async () => {
-      jest.advanceTimersByTime(MATCH_PAUSE_MS);
-    });
-  }
+  await clearBoard(root);
   expect(texts(root.root)).toContain('🎉 You found them all!');
 
-  await act(() => {
-    findByLabel(root.root, 'New game').props.onPress();
-  });
+  await press(root, 'New game');
 
   expect(texts(root.root)).not.toContain('🎉 You found them all!');
   expect(cards(root).filter(card => card.props.faceUp)).toHaveLength(0);
+});
+
+test('moving to another round clears a celebration', async () => {
+  jest.useFakeTimers();
+  const root = await render();
+
+  await clearBoard(root);
+  expect(texts(root.root)).toContain('🎉 You found them all!');
+
+  await press(root, 'Next set');
+
+  expect(texts(root.root)).not.toContain('🎉 You found them all!');
+});
+
+test('renders nothing when there are no rounds to play', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <MemoryScreen groups={[]} initialGroupId="set-1" />,
+    );
+  });
+
+  expect(root!.toJSON()).toBeNull();
 });

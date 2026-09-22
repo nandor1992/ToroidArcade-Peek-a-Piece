@@ -26,9 +26,9 @@ never importing `ParentScreen` / `SettingsScreen` / `ParentGateScreen` /
 the bundle entirely, so only *one* real shim is needed (audio). That's what
 makes the demo cheap; a full-parity web build would have to solve all four.
 
-**What it renders.** A four-state screen union
-(`games | home | memory | puzzle`), the same pattern as `App.tsx` but
-without the parent branches:
+**What it renders.** A five-state screen union
+(`games | home | memoryHome | memory | puzzle`), the same pattern as
+`App.tsx` but without the parent branches:
 
 - [[GameSelectScreen]] as the initial screen, so the demo opens on the same
   game picker the native app does.
@@ -36,10 +36,13 @@ without the parent branches:
   picker, and no `onOpenParentArea` — which is why `HomeScreen` hides its
   corner parent button when that prop is absent, rather than showing a dead
   one.
-- [[MemoryScreen]], playing the memory game over `STARTER_PUZZLES` at
-  `DEFAULT_MEMORY_SIZE` (6 pictures), with `onBack` to the picker. The
-  demo has no Settings screen, so the count is fixed — the same reason
+- [[MemoryHomeScreen]], listing the memory rounds built once from
+  `STARTER_PUZZLES` at `DEFAULT_MEMORY_SIZE` (6 pictures) — two rounds, of
+  6 and 2 — with `onBack` to the picker and no `onOpenParentArea`. The
+  demo has no Settings screen, so the round size is fixed, the same reason
   its music volume is.
+- [[MemoryScreen]], playing a chosen round with next/previous paging, and
+  Home back to the round list.
 - [[PuzzleScreen]] at `DEFAULT_PUZZLE_SIZE` (2x2), wired to `markCompleted` /
   `clearCompleted` so the green ticks behave exactly as on native.
 
@@ -92,8 +95,9 @@ manually in a browser (`pnpm web:start`):
 
 1. The demo opens on the game picker; tapping "Family Puzzle" shows the
    eight starter puzzles under a "Family Puzzle" header and **no** parent
-   button, and its Back button returns to the picker. "Family Memory" deals a
-   twelve-card board and backs out the same way.
+   button, and its Back button returns to the picker. "Family Memory" lists two
+   rounds; opening one deals its cards, next/previous pages between them,
+   and Home and Back walk back out.
 2. Opening a puzzle shows "Retrieving Memories…" then a playable board.
 3. Drag / snap / merge works with both mouse and touch.
 4. Solving shows "🎉 Great job!" and a green tick on Home.

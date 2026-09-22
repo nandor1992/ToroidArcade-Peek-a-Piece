@@ -53,7 +53,9 @@ its left-aligned label + right-aligned mute button row.
   means a twelve-card board. The chips show the bare number but are
   labelled "<n> pictures" for screen readers, since a lone digit says
   nothing on its own. Tapping one calls `onChangeMemorySize`; `App.tsx`
-  passes the choice to `MemoryScreen` → [[MemoryBoard]].
+  chunks the photo pool by it ([[buildMemoryGroups]]) into the rounds
+  listed on [[MemoryHomeScreen]] — so this sets how many pictures are in
+  each round, and therefore how many rounds there are.
 - **Screen Time Limit**: a row of preset chips (`Off`, `5 min`, `10 min`,
   `15 min`, `20 min`, `30 min` — `TIMER_PRESETS`) rather than a free-form
   number input. Tapping one calls `onChangeTimerMinutes` with that preset's
