@@ -36,6 +36,19 @@ modern launchers show a proper masked icon, not a shrunk square. iOS uses
 a full-bleed square with no alpha channel, since iOS applies its own
 corner mask and the App Store rejects icons with transparency.
 
+**In-app game marks.** The two tiles on the game picker carry their own
+illustrated marks — a 2x2 jigsaw block for Family Puzzle, a fanned pair of
+cards for Family Memory — rather than stock glyphs, because a pre-reader
+picks a game by picture. Both are *derived* from `peekapiece-mark.svg`
+rather than drawn fresh: they reuse its eyes at its exact proportions
+(including the fraction of each eye the artwork hides) and its own bezier
+knob curve, remapped onto new seams. Unlike the native launcher icons,
+these needed no rasteriser and no hand-transcription — the derivation lives
+in `scripts/generate-game-marks.js`, which emits
+`src/components/gameMarkGeometry.ts` as vector data for Skia to draw at any
+size. **If the brand mark changes, re-run that script** rather than editing
+the generated file. See [[GameMark]] and [[gameMarkGeometry]].
+
 **Colour.** Warm, high-contrast, chosen to stay distinguishable under the
 most common forms of colour blindness (the palette differs in lightness as
 well as hue, not just hue):
