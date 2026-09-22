@@ -52,17 +52,15 @@ None — it is a test. The developer-facing surface is two npm scripts:
   than putting `>` on its own line. This is the React Native template style
   the whole codebase was written in; without it, enforcing Prettier would
   rewrite every component in the repo for no benefit.
-- **`endOfLine: 'auto'`** — this repo has **mixed line endings committed**, and
-  `core.autocrlf` is `false`, so what is on disk is what is in git. Prettier's
-  default (`'lf'`) would rewrite the endings of every CRLF file the first time
-  it ran: a diff touching every line of the codebase, bundled into a commit
-  that was supposed to be about formatting. `'auto'` keeps whatever each file
-  already uses, so a three-line edit stays a three-line diff.
+- **`endOfLine: 'lf'`** — matches `.gitattributes`, which normalises the repo
+  to LF (`* text=auto eol=lf`, with `*.bat`/`*.cmd` excepted). The two have to
+  agree: if Prettier wrote CRLF, every file it touched would come back dirty
+  the moment git normalised it again.
 
-  Normalising the repo is a **separate decision** from enforcing formatting —
-  it wants a `.gitattributes` (`* text=auto eol=lf`) and its own renormalise
-  commit, so `git blame` has one obvious line to skip. If that happens, change
-  this option to `'lf'` at the same time.
+  `core.autocrlf` is `false` here, so before `.gitattributes` existed whatever
+  an editor or script wrote landed in git verbatim — which is how CRLF reached
+  fourteen files and made one-line edits read as whole-file diffs. That is now
+  git's job to prevent rather than a matter of discipline.
 
 ## Toddler UX constraints
 
