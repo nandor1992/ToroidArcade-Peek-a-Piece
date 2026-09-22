@@ -58,21 +58,17 @@ export function useBackgroundMusic({
     // (there's no queue — play() before then just no-ops). So all the
     // initial setup has to run from inside this load callback, once
     // `isLoaded()` is true, rather than immediately after `new Sound()`.
-    const sound = new Sound(
-      BACKGROUND_MUSIC_FILE,
-      Sound.MAIN_BUNDLE,
-      error => {
-        if (error || released) {
-          return;
-        }
-        sound.setNumberOfLoops(-1);
-        const desired = desiredRef.current;
-        sound.setVolume(desired.muted ? 0 : desired.volume);
-        if (desired.shouldPlay) {
-          sound.play();
-        }
-      },
-    );
+    const sound = new Sound(BACKGROUND_MUSIC_FILE, Sound.MAIN_BUNDLE, error => {
+      if (error || released) {
+        return;
+      }
+      sound.setNumberOfLoops(-1);
+      const desired = desiredRef.current;
+      sound.setVolume(desired.muted ? 0 : desired.volume);
+      if (desired.shouldPlay) {
+        sound.play();
+      }
+    });
     soundRef.current = sound;
     return () => {
       released = true;

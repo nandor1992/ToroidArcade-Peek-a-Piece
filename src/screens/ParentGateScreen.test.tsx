@@ -6,10 +6,7 @@ import React from 'react';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { ParentGateScreen } from './ParentGateScreen';
 
-function findByLabel(
-  root: ReactTestRenderer.ReactTestInstance,
-  label: string,
-) {
+function findByLabel(root: ReactTestRenderer.ReactTestInstance, label: string) {
   return root.findAll(node => node.props.accessibilityLabel === label)[0];
 }
 
@@ -111,9 +108,9 @@ test('a custom title overrides the default', async () => {
     );
   });
 
-  const titles = root!.root
-    .findAll(node => node.props.children === "Time's Up!")
-    .length;
+  const titles = root!.root.findAll(
+    node => node.props.children === "Time's Up!",
+  ).length;
 
   expect(titles).toBeGreaterThan(0);
 });

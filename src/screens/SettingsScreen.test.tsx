@@ -6,19 +6,11 @@ import React from 'react';
 import { Linking } from 'react-native';
 import ReactTestRenderer, { act } from 'react-test-renderer';
 import { SettingsScreen } from './SettingsScreen';
-import {
-  DEFAULT_PUZZLE_SIZE,
-  PUZZLE_SIZES,
-} from '../games/puzzle/puzzleSizes';
-import {
-  DEFAULT_MEMORY_SIZE,
-  MEMORY_SIZES,
-} from '../games/memory/memorySizes';
+import { DEFAULT_PUZZLE_SIZE, PUZZLE_SIZES } from '../games/puzzle/puzzleSizes';
+import { DEFAULT_MEMORY_SIZE, MEMORY_SIZES } from '../games/memory/memorySizes';
+import { COPYRIGHT_LINE, LEGAL_DOCUMENTS } from '../legal/legalDocuments';
 
-function findByLabel(
-  root: ReactTestRenderer.ReactTestInstance,
-  label: string,
-) {
+function findByLabel(root: ReactTestRenderer.ReactTestInstance, label: string) {
   return root.findAll(node => node.props.accessibilityLabel === label)[0];
 }
 
@@ -230,8 +222,7 @@ test('About button opens a popup with app info, and Close dismisses it', async (
 
   expect(findModal().props.visible).toBe(true);
   expect(
-    root!.root.findAll(node => node.props.children === 'Peek-a-Piece')
-      .length,
+    root!.root.findAll(node => node.props.children === 'Peek-a-Piece').length,
   ).toBeGreaterThan(0);
 
   await act(() => {
@@ -364,4 +355,96 @@ test('picking a memory picture count reports it', async () => {
 
 test('defaults to six pictures — a twelve-card board', () => {
   expect(DEFAULT_MEMORY_SIZE.pictures).toBe(6);
+});
+
+test('the About popup offers all three legal documents', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  for (const document of LEGAL_DOCUMENTS) {
+    expect(findByLabel(root!.root, document.title)).toBeDefined();
+  }
+});
+
+test('the About popup carries a copyright notice', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  const hasText = (text: string) =>
+    root!.root.findAll(n => n.props.children === text).length > 0;
+  expect(hasText(COPYRIGHT_LINE)).toBe(true);
+});
+
+test('tapping a legal document shows its text, and Back returns to About', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+  await act(() => {
+    findByLabel(root!.root, 'About').props.onPress();
+  });
+
+  const terms = LEGAL_DOCUMENTS.find(d => d.id === 'terms')!;
+  await act(() => {
+    findByLabel(root!.root, terms.title).props.onPress();
+  });
+
+  const hasText = (text: string) =>
+    root!.root.findAll(n => n.props.children === text).length > 0;
+
+  // The document has replaced the About card rather than stacking on it.
+  expect(hasText(terms.title)).toBe(true);
+  expect(hasText('Built with love for Julia and Vincent')).toBe(false);
+  // And its actual content is rendered, not just the heading.
+  const firstHeading = terms.blocks.find(b => b.heading != null)!.heading!;
+  expect(hasText(firstHeading)).toBe(true);
+
+  await act(() => {
+    findByLabel(root!.root, 'Back to About').props.onPress();
+  });
+
+  expect(hasText('Built with love for Julia and Vincent')).toBe(true);
+  expect(hasText(firstHeading)).toBe(false);
+});
+
+test('closing About from a document returns to the card, not the document', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(<SettingsScreen {...baseProps()} />);
+  });
+
+  const open = async () => {
+    await act(() => {
+      findByLabel(root!.root, 'About').props.onPress();
+    });
+  };
+
+  await open();
+  const privacy = LEGAL_DOCUMENTS.find(d => d.id === 'privacy')!;
+  await act(() => {
+    findByLabel(root!.root, privacy.title).props.onPress();
+  });
+  // Android back out of the document, then out of the popup entirely.
+  await act(() => {
+    findByLabel(root!.root, 'Back to About').props.onPress();
+  });
+  await act(() => {
+    findByLabel(root!.root, 'Close').props.onPress();
+  });
+
+  // Reopening lands on the About card, never mid-policy.
+  await open();
+  const hasText = (text: string) =>
+    root!.root.findAll(n => n.props.children === text).length > 0;
+  expect(hasText('Built with love for Julia and Vincent')).toBe(true);
 });

@@ -70,7 +70,9 @@ function topEdgePlateauY(path: PathCommand[]): number {
   const topEdgeCommands = path.slice(1, 6);
   const plateau = topEdgeCommands[2];
   if (plateau.op !== 'lineTo') {
-    throw new Error('Expected the middle command of a non-flat edge to be the plateau lineTo');
+    throw new Error(
+      'Expected the middle command of a non-flat edge to be the plateau lineTo',
+    );
   }
   return plateau.y;
 }

@@ -4,7 +4,13 @@
     // The base RN config omits "dom", but the web build's platform files
     // (src/**/*.web.ts, web/) use Audio, document and window. Note this makes
     // DOM globals visible to native files too — they must not be used there.
-    "lib": ["esnext", "dom"]
+    "lib": ["esnext", "dom"],
+    // The base RN config narrows "types" to ["jest"]. src/formatting.test.ts
+    // reads the source tree through node's fs/path, and node's globals are
+    // invisible without this. Same caveat as "dom" above: it makes them
+    // visible to app code too, which must not use them — nothing outside a
+    // test can, since the bundler has no node runtime.
+    "types": ["jest", "node"]
   },
   "include": ["**/*.ts", "**/*.tsx"],
   "exclude": ["**/node_modules", "**/Pods", "web/dist"]

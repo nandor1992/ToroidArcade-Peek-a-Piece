@@ -49,9 +49,7 @@ export class ErrorBoundary extends React.Component<
       <View style={styles.container}>
         <Text style={styles.emoji}>🧩</Text>
         <Text style={styles.title}>Something went wrong</Text>
-        <Text style={styles.body}>
-          Please hand this back to a grown-up.
-        </Text>
+        <Text style={styles.body}>Please hand this back to a grown-up.</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Try again"

@@ -10,9 +10,24 @@ test('produces rows * columns pieces with correct ids and target positions', () 
 
   expect(pieces).toHaveLength(6);
   const byId = new Map(pieces.map(p => [p.id, p]));
-  expect(byId.get('0-0')).toMatchObject({ row: 0, column: 0, targetX: 0, targetY: 0 });
-  expect(byId.get('0-2')).toMatchObject({ row: 0, column: 2, targetX: 200, targetY: 0 });
-  expect(byId.get('1-1')).toMatchObject({ row: 1, column: 1, targetX: 100, targetY: 100 });
+  expect(byId.get('0-0')).toMatchObject({
+    row: 0,
+    column: 0,
+    targetX: 0,
+    targetY: 0,
+  });
+  expect(byId.get('0-2')).toMatchObject({
+    row: 0,
+    column: 2,
+    targetX: 200,
+    targetY: 0,
+  });
+  expect(byId.get('1-1')).toMatchObject({
+    row: 1,
+    column: 1,
+    targetX: 100,
+    targetY: 100,
+  });
 });
 
 test('outer border edges are always flat', () => {

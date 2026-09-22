@@ -61,7 +61,8 @@ its left-aligned label + right-aligned mute button row.
   number input. Tapping one calls `onChangeTimerMinutes` with that preset's
   `minutes` (`null` for `Off`); the chip matching the current
   `timerMinutes` is highlighted.
-- **About**: local UI state (`aboutVisible`), nothing `App.tsx` owns.
+- **About**: local UI state (`aboutVisible` and `legalDocument`), nothing
+  `App.tsx` owns.
   Tapping the button opens a `Modal` (`transparent`, `animationType="fade"`,
   `maxWidth: 460` card with an even `gap` between every element) showing,
   top to bottom: the app name; the dedication *"Built with love for Julia
@@ -71,11 +72,22 @@ its left-aligned label + right-aligned mute button row.
   `https://www.imagetocartoon.com/`); the music attribution *"Music by
   Dmitrii Kolesnikov from Pixabay"* (both names are link spans to their
   Pixabay URLs). Every link is an `accessibilityRole="link"` `Text` span
-  that `Linking.openURL`s. Then the version string and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
-  (hand-maintained in this file — see Non-goals). `onRequestClose`
-  (Android back / iOS swipe) also dismisses it. These credit links are the
+  that `Linking.openURL`s. Then a second rule; a row of three chips —
+  **Privacy**, **Terms of Use**, **Copyright** — opening the bundled legal
+  documents; the version string; the copyright notice (`COPYRIGHT_LINE`);
+  and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
+  (hand-maintained in this file — see Non-goals). These credit links are the
   app's only external links, fine here because Settings sits behind the
   parent gate.
+- **Legal documents**: tapping a chip sets `legalDocument`, and the *same*
+  modal renders [[LegalDocumentView]] in place of the About card — one modal
+  with two faces, rather than a second `Modal` stacked on the first, which
+  Android handles unreliably. Its Back button clears `legalDocument` and
+  returns to the card.
+  `onRequestClose` (Android back / iOS swipe) unwinds one step at a time:
+  out of a document back to About, out of About to dismiss. `closeAbout`
+  clears both pieces of state together, so reopening About never drops the
+  parent into the middle of a policy they had finished reading.
 
 ## Interface
 
@@ -124,6 +136,12 @@ its left-aligned label + right-aligned mute button row.
 7. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
    → `Linking.openURL` is called with the matching Pixabay URL.
 8. Press Back → `onBack` is called.
+9. In the open About popup, all three of `LEGAL_DOCUMENTS` are present by
+   `title`, and `COPYRIGHT_LINE` is shown.
+10. Tap **Terms of Use** → its title and first heading render and the
+   dedication is gone; tap **Back to About** → the reverse.
+11. Open a document → Back to About → Close → reopen About → the About card,
+   not the document.
 
 ## Non-goals / known limitations
 
@@ -143,9 +161,13 @@ its left-aligned label + right-aligned mute button row.
   string, kept verbatim.
 - `puzzleSize` isn't persisted — resets to `2x2` on restart, like every
   other setting.
+- The legal documents' in-app text is a tightened version of the canonical
+  files under `docs/legal/`, kept in sync **by hand** — see
+  [[legalDocuments]]. Their contact address and effective date are still
+  `PLACEHOLDER_*` tokens and must be filled in before the first release.
 
 ## Related
 
 - Code: `src/screens/SettingsScreen.tsx`
 - Tests: `src/screens/SettingsScreen.test.tsx`
-- Related specs: [[Slider]], [[Icon]], [[puzzleSizes]], [[ParentScreen]], [[SessionLockOverlay]], [[useBackgroundMusic]]
+- Related specs: [[Slider]], [[Icon]], [[puzzleSizes]], [[ParentScreen]], [[SessionLockOverlay]], [[useBackgroundMusic]], [[LegalDocumentView]], [[legalDocuments]]

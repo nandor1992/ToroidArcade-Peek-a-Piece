@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  type GestureResponderEvent,
-} from 'react-native';
+import { StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import { colors } from '../theme/colors';
 
 const THUMB_SIZE = 28;
@@ -48,10 +44,7 @@ export function Slider({
       <View style={styles.trackBackground} />
       <View style={[styles.fill, { width: percent }]} />
       <View
-        style={[
-          styles.thumb,
-          { left: percent, marginLeft: -THUMB_SIZE / 2 },
-        ]}
+        style={[styles.thumb, { left: percent, marginLeft: -THUMB_SIZE / 2 }]}
       />
     </View>
   );

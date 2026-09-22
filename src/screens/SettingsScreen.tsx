@@ -13,6 +13,12 @@ import { Slider } from '../components/Slider';
 import { Icon } from '../components/Icon';
 import { PUZZLE_SIZES, type PuzzleSize } from '../games/puzzle/puzzleSizes';
 import { MEMORY_SIZES, type MemorySize } from '../games/memory/memorySizes';
+import { LegalDocumentView } from '../components/LegalDocumentView';
+import {
+  COPYRIGHT_LINE,
+  LEGAL_DOCUMENTS,
+  type LegalDocument,
+} from '../legal/legalDocuments';
 
 export interface TimerPreset {
   label: string;
@@ -88,6 +94,19 @@ export function SettingsScreen({
   onBack,
 }: SettingsScreenProps) {
   const [aboutVisible, setAboutVisible] = useState(false);
+  // Which legal document the About sheet is showing instead of itself, or
+  // null for the About card. One modal with two faces — stacking a second
+  // Modal on top of the first is what Android handles unreliably.
+  const [legalDocument, setLegalDocument] = useState<LegalDocument | null>(
+    null,
+  );
+
+  // Always lands back on the About card, so reopening About never drops the
+  // parent into the middle of a policy they'd finished reading.
+  const closeAbout = () => {
+    setAboutVisible(false);
+    setLegalDocument(null);
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -242,59 +261,93 @@ export function SettingsScreen({
         visible={aboutVisible}
         transparent
         animationType="fade"
-        onRequestClose={() => setAboutVisible(false)}>
+        onRequestClose={
+          // Android back: out of a document returns to About, out of About
+          // closes the sheet — one step at a time, as the key implies.
+          legalDocument != null ? () => setLegalDocument(null) : closeAbout
+        }>
         <View style={styles.modalScrim}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{ABOUT_INFO.appName}</Text>
-            <Text style={styles.modalDedication}>{DEDICATION}</Text>
-            <View style={styles.modalRule} />
-            <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
-            <Text style={styles.modalBody}>
-              Images generated with{' '}
-              <Text
-                accessibilityRole="link"
-                style={styles.modalLink}
-                onPress={() => Linking.openURL(ABOUT_INFO.starterArt.toolUrl)}>
-                {ABOUT_INFO.starterArt.toolName}
-              </Text>{' '}
-              using our family photos
-            </Text>
-            <Text style={styles.modalBody}>
-              Music by{' '}
-              <Text
-                accessibilityRole="link"
-                style={styles.modalLink}
-                onPress={() => Linking.openURL(ABOUT_INFO.music.artistUrl)}>
-                {ABOUT_INFO.music.artist}
-              </Text>{' '}
-              from{' '}
-              <Text
-                accessibilityRole="link"
-                style={styles.modalLink}
-                onPress={() => Linking.openURL(ABOUT_INFO.music.sourceUrl)}>
-                {ABOUT_INFO.music.sourceName}
-              </Text>
-            </Text>
-            <Text
-              accessibilityRole="link"
-              accessibilityLabel={ABOUT_INFO.sourceCode.label}
-              style={[styles.modalBody, styles.modalLink]}
-              onPress={() => Linking.openURL(ABOUT_INFO.sourceCode.url)}>
-              {ABOUT_INFO.sourceCode.label}
-            </Text>
-            <Text style={styles.modalVersion}>
-              Version {ABOUT_INFO.version}
-            </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Close"
-              onPress={() => setAboutVisible(false)}
-              style={({ pressed }) => [
-                styles.submitButton,
-                pressed && styles.submitButtonPressed,
-              ]}>
-              <Text style={styles.submitLabel}>Close</Text>
-            </Pressable>
+            {legalDocument != null ? (
+              <LegalDocumentView
+                document={legalDocument}
+                onBack={() => setLegalDocument(null)}
+              />
+            ) : (
+              <>
+                <Text style={styles.modalTitle}>{ABOUT_INFO.appName}</Text>
+                <Text style={styles.modalDedication}>{DEDICATION}</Text>
+                <View style={styles.modalRule} />
+                <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
+                <Text style={styles.modalBody}>
+                  Images generated with{' '}
+                  <Text
+                    accessibilityRole="link"
+                    style={styles.modalLink}
+                    onPress={() =>
+                      Linking.openURL(ABOUT_INFO.starterArt.toolUrl)
+                    }>
+                    {ABOUT_INFO.starterArt.toolName}
+                  </Text>{' '}
+                  using our family photos
+                </Text>
+                <Text style={styles.modalBody}>
+                  Music by{' '}
+                  <Text
+                    accessibilityRole="link"
+                    style={styles.modalLink}
+                    onPress={() => Linking.openURL(ABOUT_INFO.music.artistUrl)}>
+                    {ABOUT_INFO.music.artist}
+                  </Text>{' '}
+                  from{' '}
+                  <Text
+                    accessibilityRole="link"
+                    style={styles.modalLink}
+                    onPress={() => Linking.openURL(ABOUT_INFO.music.sourceUrl)}>
+                    {ABOUT_INFO.music.sourceName}
+                  </Text>
+                </Text>
+                <Text
+                  accessibilityRole="link"
+                  accessibilityLabel={ABOUT_INFO.sourceCode.label}
+                  style={[styles.modalBody, styles.modalLink]}
+                  onPress={() => Linking.openURL(ABOUT_INFO.sourceCode.url)}>
+                  {ABOUT_INFO.sourceCode.label}
+                </Text>
+                <View style={styles.modalRule} />
+                <View style={styles.legalRow}>
+                  {LEGAL_DOCUMENTS.map(document => (
+                    <Pressable
+                      key={document.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={document.title}
+                      onPress={() => setLegalDocument(document)}
+                      style={({ pressed }) => [
+                        styles.legalChip,
+                        pressed && styles.legalChipPressed,
+                      ]}>
+                      <Text style={styles.legalChipLabel}>
+                        {document.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+                <Text style={styles.modalVersion}>
+                  Version {ABOUT_INFO.version}
+                </Text>
+                <Text style={styles.modalCopyright}>{COPYRIGHT_LINE}</Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Close"
+                  onPress={closeAbout}
+                  style={({ pressed }) => [
+                    styles.submitButton,
+                    pressed && styles.submitButtonPressed,
+                  ]}>
+                  <Text style={styles.submitLabel}>Close</Text>
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
       </Modal>
@@ -413,6 +466,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     // Even spacing between every line / element in the card.
     gap: 14,
+    // A legal document runs far taller than the About card — cap the sheet
+    // and let LegalDocumentView scroll inside it rather than growing off
+    // the bottom of the screen.
+    maxHeight: '100%',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  legalChip: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: colors.navy,
+  },
+  legalChipPressed: {
+    opacity: 0.7,
+  },
+  legalChipLabel: {
+    color: colors.navy,
+    fontWeight: '600',
+    fontSize: 14,
   },
   modalTitle: {
     fontSize: 22,
@@ -447,6 +526,12 @@ const styles = StyleSheet.create({
     color: colors.navy,
     opacity: 0.6,
     marginTop: 4,
+  },
+  modalCopyright: {
+    fontSize: 13,
+    color: colors.navy,
+    opacity: 0.6,
+    textAlign: 'center',
   },
   submitButton: {
     backgroundColor: colors.teal,

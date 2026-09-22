@@ -117,7 +117,9 @@ test('markCompleted / clearCompleted update the set and persist', async () => {
   });
   expect([...hook.completedIds]).toEqual(['stock-1']);
   expect(
-    JSON.parse((await storage.getItem('@peekapiece/completedPuzzleIds')) ?? '[]'),
+    JSON.parse(
+      (await storage.getItem('@peekapiece/completedPuzzleIds')) ?? '[]',
+    ),
   ).toEqual(['stock-1']);
 
   await act(async () => {
@@ -125,7 +127,9 @@ test('markCompleted / clearCompleted update the set and persist', async () => {
   });
   expect([...hook.completedIds]).toEqual([]);
   expect(
-    JSON.parse((await storage.getItem('@peekapiece/completedPuzzleIds')) ?? '[]'),
+    JSON.parse(
+      (await storage.getItem('@peekapiece/completedPuzzleIds')) ?? '[]',
+    ),
   ).toEqual([]);
 });
 

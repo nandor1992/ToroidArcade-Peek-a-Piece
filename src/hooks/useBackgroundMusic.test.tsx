@@ -48,12 +48,13 @@ test('backgrounding the app pauses playback; returning to the foreground resumes
   const playSpy = jest.spyOn(Sound.prototype, 'play');
   const pauseSpy = jest.spyOn(Sound.prototype, 'pause');
   let changeHandler: ((state: string) => void) | undefined;
-  const addSpy = jest
-    .spyOn(AppState, 'addEventListener')
-    .mockImplementation(((_event: string, handler: (s: string) => void) => {
-      changeHandler = handler;
-      return { remove: jest.fn() };
-    }) as typeof AppState.addEventListener);
+  const addSpy = jest.spyOn(AppState, 'addEventListener').mockImplementation(((
+    _event: string,
+    handler: (s: string) => void,
+  ) => {
+    changeHandler = handler;
+    return { remove: jest.fn() };
+  }) as typeof AppState.addEventListener);
 
   let root: ReactTestRenderer.ReactTestRenderer;
   await act(() => {
