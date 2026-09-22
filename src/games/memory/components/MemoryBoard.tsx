@@ -16,9 +16,11 @@ import { MemoryCard } from './MemoryCard';
  */
 export const MATCH_PAUSE_MS = 600;
 /**
- * How long a mismatched pair stays face-up before turning back. Deliberately
- * longer than {@link MATCH_PAUSE_MS} — this is the only chance the child has
- * to memorise where the two pictures were, and it's the whole game.
+ * How long a mismatched pair stays face-up before turning back on its own.
+ * Deliberately longer than {@link MATCH_PAUSE_MS} — this is the only chance
+ * the child has to memorise where the two pictures were, and it's the whole
+ * game. It's an upper bound, not a wait: tapping the next card turns them
+ * back at once.
  */
 export const MISMATCH_PAUSE_MS = 1300;
 
@@ -62,6 +64,21 @@ export function gridColumns(
     }
   }
   return best;
+}
+
+/**
+ * The picture the two turned cards share, or null if they're a mismatch (or
+ * fewer than two cards are up). Both resolving a pair and deciding what a
+ * tap during the reveal means hang on this same question.
+ */
+function pairedPicture(deck: CardData[], turned: string[]): string | null {
+  if (turned.length < 2) {
+    return null;
+  }
+  const [first, second] = turned.map(id => deck.find(c => c.id === id));
+  return first != null && second != null && first.pictureId === second.pictureId
+    ? first.pictureId
+    : null;
 }
 
 /**
@@ -109,17 +126,15 @@ export function MemoryBoard({
     if (turned.length < 2) {
       return;
     }
-    const [first, second] = turned.map(id => deck.find(c => c.id === id));
-    const isMatch =
-      first != null && second != null && first.pictureId === second.pictureId;
+    const match = pairedPicture(deck, turned);
     const timeout = setTimeout(
       () => {
-        if (isMatch && first) {
-          setMatched(current => [...current, first.pictureId]);
+        if (match != null) {
+          setMatched(current => [...current, match]);
         }
         setTurned([]);
       },
-      isMatch ? MATCH_PAUSE_MS : MISMATCH_PAUSE_MS,
+      match != null ? MATCH_PAUSE_MS : MISMATCH_PAUSE_MS,
     );
     return () => clearTimeout(timeout);
   }, [turned, deck]);
@@ -134,12 +149,22 @@ export function MemoryBoard({
   }, [matched, deck, onSolved]);
 
   const handlePress = (card: CardData) => {
-    // Every one of these is a legitimate toddler tap, and every one of them
-    // does nothing rather than being an error: a third card while two are
-    // showing, the same card twice, or a pair already found.
     if (turned.length >= 2) {
+      // Two cards are already showing. A matching pair is left to settle on
+      // its own — it's only up for a moment, and it's about to stay up
+      // anyway. A mismatched pair turns back the instant the next card is
+      // tapped: the child has looked and moved on, so sitting out the rest
+      // of the pause just reads as the board ignoring them.
+      if (pairedPicture(deck, turned) != null) {
+        return;
+      }
+      const startsAnew =
+        !turned.includes(card.id) && !matched.includes(card.pictureId);
+      setTurned(startsAnew ? [card.id] : []);
       return;
     }
+    // Both of these are legitimate toddler taps, and both do nothing rather
+    // than being an error: the same card twice, or a pair already found.
     if (turned.includes(card.id) || matched.includes(card.pictureId)) {
       return;
     }

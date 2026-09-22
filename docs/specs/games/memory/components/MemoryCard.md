@@ -28,7 +28,7 @@ halves of the turn in step. Cross-fading two opacities — the obvious
 alternative — shows a moment of both faces at once mid-turn, which reads
 as a dissolve, not a flip.
 
-`turn` animates to `faceUp ? 1 : 0` over `FLIP_MS` (260ms) whenever
+`turn` animates to `faceUp ? 1 : 0` over `FLIP_MS` (182ms) whenever
 `faceUp` changes, on the native driver. It's initialised to the current
 `faceUp`, so a card that mounts face-up doesn't animate in from the back.
 
@@ -57,8 +57,8 @@ Also exports `FLIP_MS`.
 
 - The whole card is the touch target, sized by the board to fill its share
   of the grid — always far beyond the minimum.
-- The flip takes 260ms: fast enough to feel responsive, slow enough to
-  read as a turn rather than a jump.
+- The flip takes 182ms: fast enough that the board keeps up with a child
+  tapping quickly, slow enough to read as a turn rather than a jump.
 - `onPress` is always wired, even when the board will ignore the tap, so a
   card never feels dead under the finger.
 - Face-down cards all carry the same accessibility label, "Hidden card" —

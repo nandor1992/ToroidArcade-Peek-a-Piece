@@ -49,6 +49,19 @@ Either way `turned` clears, which is also what re-opens the board to taps.
 The timer is cleaned up on unmount, so a player leaving mid-reveal doesn't
 land a state update on an unmounted board.
 
+**Cutting a mismatch reveal short.** `MISMATCH_PAUSE_MS` is an upper
+bound, not a wait. A tap while a mismatched pair is showing replaces
+`turned` immediately — with the tapped card if it's a fresh one, or with
+nothing if it's one of the two on show or an already-matched card. The
+effect's cleanup cancels the pending timer, so the pair turns back the
+instant the child moves on rather than making them sit out the rest of the
+pause. A *matching* pair is exempt: it's only up for `MATCH_PAUSE_MS` and
+is about to stay up anyway, so taps during it are ignored.
+
+Both the effect and the tap handler ask the same question — "do these two
+cards share a picture?" — through the module-level `pairedPicture` helper,
+which returns the shared picture id or null.
+
 The two delays differ on purpose. The mismatch reveal is the only chance
 the child gets to memorise where those two pictures were — it *is* the
 game — so it's more than twice as long as the match pause, which only has
@@ -84,10 +97,13 @@ Also exports `gridColumns`, `MATCH_PAUSE_MS` and `MISMATCH_PAUSE_MS`.
 
 - Every interaction is a single tap on a card that fills its share of the
   grid — no dragging, no precision, no double-tap.
-- Mis-taps are silently ignored: a third card mid-reveal, the same card
-  twice, an already-matched card. Nothing shows an error.
+- Mis-taps are silently ignored: the same card twice, an already-matched
+  card, anything during a matching pair's brief pause. Nothing shows an
+  error.
 - The mismatch pause (1300ms) is long enough to look at both pictures
-  before they turn back.
+  before they turn back — but a child who has already looked doesn't wait
+  it out: their next tap turns them back at once, so the board never feels
+  like it's ignoring them.
 - Matched cards stay face-up and visibly settle (see [[MemoryCard]]), so
   progress is always on screen and what's left is what stands out.
 - No timer, no score, no fail state — the round ends only by being
@@ -124,7 +140,11 @@ Also exports `gridColumns`, `MATCH_PAUSE_MS` and `MISMATCH_PAUSE_MS`.
 5. Tap one card of each of two pictures, advance `MISMATCH_PAUSE_MS` →
    both face-down, nothing matched.
 6. Same, advanced to just *before* the pause elapses → both still face-up.
-7. Tap a third card mid-reveal → still only two face-up.
+7. Tap a third card while a mismatched pair shows → only that card is
+   face-up, the pair has turned back with no wait.
+7a. Tap one of the two showing cards instead → none face-up.
+7b. Tap a third card while a *matching* pair shows → still two face-up,
+   and the pair still lands as matched after `MATCH_PAUSE_MS`.
 8. Tap the same card twice → one face-up; its real partner still pairs.
 9. Tap a matched card then a fresh one → three face-up, still two matched.
 10. Clear every pair → `onSolved` called exactly once, all cards matched.
