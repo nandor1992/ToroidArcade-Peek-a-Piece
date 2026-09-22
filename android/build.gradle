@@ -19,3 +19,35 @@ buildscript {
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Windows only: relocate every module's native (CMake/ninja) build-staging
+// directory to a short path.
+//
+// Each module's `.cxx` staging dir defaults to a spot under the module's own
+// directory. For modules in node_modules/ — @shopify/react-native-skia above
+// all — that base path is already ~113 characters, and the generated
+// object-file paths beneath it
+// (`.cxx/RelWithDebInfo/<hash>/<abi>/CMakeFiles/rnskia.dir/.../Foo.cpp.o`) run
+// straight into Windows' 260-character limit: arm64-v8a peaks at 248,
+// armeabi-v7a tips over. Once ninja can't stat its own outputs it regenerates
+// build.ninja, still finds it dirty, and fails with
+// "manifest 'build.ninja' still dirty after 100 tries".
+//
+// Moving the staging root to C:/rnb/<module> takes ~80 characters off every
+// path. Guarded to Windows so macOS/Linux and CI keep Gradle's default
+// in-tree location. The durable fix is enabling Windows long paths
+// (LongPathsEnabled) — a machine setting the build can't apply itself.
+//
+// `:app` is handled separately in app/build.gradle: its object paths already
+// peak near the limit, so it stays at the bare "C:/rnb" root with no
+// per-module subdirectory.
+if (System.getProperty("os.name").toLowerCase().contains("windows")) {
+    subprojects { sub ->
+        sub.plugins.withId("com.android.library") {
+            sub.extensions.configure("android") { android ->
+                android.externalNativeBuild.cmake.buildStagingDirectory =
+                    new File("C:/rnb/${sub.name}")
+            }
+        }
+    }
+}
