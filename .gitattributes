@@ -1,0 +1,38 @@
+# Line endings.
+#
+# `core.autocrlf` is false on this machine, so whatever an editor or script
+# writes is what lands in git. That let CRLF creep into a handful of files
+# and turned one-line edits into whole-file diffs. This file makes the
+# answer automatic instead of a matter of discipline.
+#
+# LF everywhere, in the repository and in the working tree. Node, Gradle,
+# Android Studio and VS Code all handle LF on Windows without complaint.
+# Prettier is set to `endOfLine: 'lf'` to match — see docs/specs/formatting.md.
+* text=auto eol=lf
+
+# Exceptions: things that genuinely need a specific ending.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf
+gradlew text eol=lf
+
+# Binary: never convert, never diff as text.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.mp3 binary
+*.wav binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
+*.jar binary
+*.keystore binary
+*.jks binary
+*.pdf binary
+*.zip binary
+*.aab binary
+*.apk binary
