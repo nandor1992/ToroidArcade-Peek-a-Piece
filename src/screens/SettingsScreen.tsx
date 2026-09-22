@@ -12,6 +12,7 @@ import { colors } from '../theme/colors';
 import { Slider } from '../components/Slider';
 import { Icon } from '../components/Icon';
 import { PUZZLE_SIZES, type PuzzleSize } from '../games/puzzle/puzzleSizes';
+import { MEMORY_SIZES, type MemorySize } from '../games/memory/memorySizes';
 
 export interface TimerPreset {
   label: string;
@@ -35,7 +36,13 @@ const ABOUT_INFO = {
   appName: 'Peek-a-Piece',
   version: '0.0.1',
   credit: 'Created by ToroidSystems / ToroidArcade',
-  starterArt: 'Generated with imagetocartoon.com using our family photos',
+  // The bundled starter pictures are cartoon renders of our own family
+  // photos, so the tool gets a credit and a link the same way the music
+  // does.
+  starterArt: {
+    toolName: 'imagetocartoon.com',
+    toolUrl: 'https://www.imagetocartoon.com/',
+  },
   // Pixabay Content License attribution for the bundled background track
   // (resources/the_mountain-children.mp3). utm params are the referral
   // attribution Pixabay asks linkers to keep.
@@ -62,6 +69,8 @@ export interface SettingsScreenProps {
   onChangeTimerMinutes: (minutes: number | null) => void;
   puzzleSize: PuzzleSize;
   onChangePuzzleSize: (size: PuzzleSize) => void;
+  memorySize: MemorySize;
+  onChangeMemorySize: (size: MemorySize) => void;
   onBack?: () => void;
 }
 
@@ -74,6 +83,8 @@ export function SettingsScreen({
   onChangeTimerMinutes,
   puzzleSize,
   onChangePuzzleSize,
+  memorySize,
+  onChangeMemorySize,
   onBack,
 }: SettingsScreenProps) {
   const [aboutVisible, setAboutVisible] = useState(false);
@@ -153,6 +164,38 @@ export function SettingsScreen({
       </View>
 
       <View style={[styles.section, styles.sectionCentered]}>
+        <Text style={styles.sectionLabel}>Memory Pictures</Text>
+        {/* Each picture is dealt onto two cards, so this is also the
+            number of pairs to find — 6 pictures means a 12-card board. */}
+        <View style={[styles.presetsRow, styles.presetsRowCentered]}>
+          {MEMORY_SIZES.map(size => {
+            const selected = size.label === memorySize.label;
+            return (
+              <Pressable
+                key={size.label}
+                accessibilityRole="button"
+                accessibilityLabel={`${size.label} pictures`}
+                accessibilityState={{ selected }}
+                onPress={() => onChangeMemorySize(size)}
+                style={({ pressed }) => [
+                  styles.presetChip,
+                  selected && styles.presetChipSelected,
+                  pressed && styles.presetChipPressed,
+                ]}>
+                <Text
+                  style={[
+                    styles.presetLabel,
+                    selected && styles.presetLabelSelected,
+                  ]}>
+                  {size.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View style={[styles.section, styles.sectionCentered]}>
         <Text style={styles.sectionLabel}>Screen Time Limit</Text>
         <View style={[styles.presetsRow, styles.presetsRowCentered]}>
           {TIMER_PRESETS.map(preset => {
@@ -206,7 +249,16 @@ export function SettingsScreen({
             <Text style={styles.modalDedication}>{DEDICATION}</Text>
             <View style={styles.modalRule} />
             <Text style={styles.modalBody}>{ABOUT_INFO.credit}</Text>
-            <Text style={styles.modalBody}>{ABOUT_INFO.starterArt}</Text>
+            <Text style={styles.modalBody}>
+              Images generated with{' '}
+              <Text
+                accessibilityRole="link"
+                style={styles.modalLink}
+                onPress={() => Linking.openURL(ABOUT_INFO.starterArt.toolUrl)}>
+                {ABOUT_INFO.starterArt.toolName}
+              </Text>{' '}
+              using our family photos
+            </Text>
             <Text style={styles.modalBody}>
               Music by{' '}
               <Text

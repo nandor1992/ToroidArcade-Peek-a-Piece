@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors } from '../theme/colors';
 import { AppHeader } from '../components/AppHeader';
 import { GameMark, type GameMarkName } from '../components/GameMark';
+import { Icon } from '../components/Icon';
 
 // The app's landing screen: one tile per game. Adding a third game means
 // adding a row here (and a screen for it) — nothing else on this screen
@@ -91,6 +92,7 @@ function GameTile({ game, onPress }: GameTileProps) {
 export interface GameSelectScreenProps {
   onSelectPuzzles?: () => void;
   onSelectMemory?: () => void;
+  onOpenParentArea?: () => void;
 }
 
 /**
@@ -101,6 +103,7 @@ export interface GameSelectScreenProps {
 export function GameSelectScreen({
   onSelectPuzzles,
   onSelectMemory,
+  onOpenParentArea,
 }: GameSelectScreenProps) {
   const { width, height } = useWindowDimensions();
   const portrait = height > width;
@@ -137,6 +140,25 @@ export function GameSelectScreen({
             />
           ))}
         </View>
+        {/* Same corner affordance as HomeScreen, and deliberately the same
+            low contrast — the parent-only entry point, not something a
+            toddler should be drawn to tap. Here as well as on the game
+            screens so a grown-up can reach Settings from the app's first
+            screen instead of having to enter a game first. Omitted
+            entirely when there's no parent area to open (the web demo),
+            rather than left as a dead button. */}
+        {onOpenParentArea && (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Parent controls"
+            onPress={onOpenParentArea}
+            style={({ pressed }) => [
+              styles.parentButton,
+              pressed && styles.parentButtonPressed,
+            ]}>
+            <Icon name="parents" size={50} color={colors.navy} />
+          </Pressable>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -195,6 +217,21 @@ const styles = StyleSheet.create({
   },
   tilePressed: {
     opacity: 0.7,
+  },
+  parentButton: {
+    position: 'absolute',
+    right: 12,
+    bottom: 12,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.cream,
+    opacity: 0.55,
+  },
+  parentButtonPressed: {
+    opacity: 0.85,
   },
   tileLabel: {
     fontSize: 22,

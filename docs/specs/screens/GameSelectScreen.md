@@ -59,8 +59,23 @@ the two read as one app) under a `SafeAreaView`, with `AppHeader` at the
 top showing the app name and **no** back button — this is the top of the
 stack.
 
+In the bottom-right corner sits the same "Parent controls" button
+`HomeScreen` carries, at the same deliberately low contrast
+(`opacity: 0.55` at rest) so it doesn't invite a toddler's tap. It's here
+as well as on the game screens so a grown-up can reach Settings from the
+app's first screen rather than having to enter a game first. Like
+`HomeScreen`'s, it's omitted entirely when `onOpenParentArea` is absent,
+rather than left as a dead button.
+
+Because the parent area now has more than one way in, `App.tsx` records
+the screen it was opened from and returns there when the gate is
+cancelled or the parent area is closed — otherwise backing out from here
+would drop the parent on the puzzle grid.
+
 `App.tsx` renders it as the initial screen (`{ name: 'games' }`) and routes
-`onSelectPuzzles` to `HomeScreen` and `onSelectMemory` to `MemoryScreen`.
+`onSelectPuzzles` to `HomeScreen` and `onSelectMemory` to
+[[MemoryHomeScreen]]. Both games now open on a landing page that lists
+what there is to play, rather than dropping straight into a round.
 `DemoApp.tsx` (the web demo) does the same.
 
 ## Interface
@@ -69,6 +84,7 @@ stack.
 |------|------|----------|-------|
 | `onSelectPuzzles` | `() => void` | no | Fired by the "Family Puzzle" tile. Absent → the tile absorbs taps silently. |
 | `onSelectMemory` | `() => void` | no | Fired by the "Family Memory" tile. Same fallback. |
+| `onOpenParentArea` | `() => void` | no | Fired by the corner parent button. Omitted → no button renders at all (the web demo has no parent area). |
 
 No props control appearance; the layout is derived entirely from the
 viewport.
@@ -113,18 +129,21 @@ viewport.
    tile.
 2. Tap "Family Puzzle" → the puzzle grid opens, headed "Family Puzzle".
 3. From the puzzle grid, tap Back → the game picker again.
-4. Tap "Family Memory" → the Family Memory screen opens.
-5. From Family Memory, tap Back → the game picker again.
+4. Tap "Family Memory" → the memory landing page opens, listing one tile
+   per round.
+5. From the memory landing page, tap Back → the game picker again.
 6. On the game picker, look for a Back control → there is none.
+6a. Tap the corner parent button → `onOpenParentArea` is called. With it
+   omitted, no "Parent controls" node is in the tree.
+6b. Open the parent area from the picker, solve the gate, then Back →
+   back on the picker (both game tiles present, no starter-puzzle tile).
+   Doing the same from the puzzle grid returns to the grid.
 7. Lay out a tile at 400x400 → its mark is sized 356 (400 − `LABEL_SPACE`).
 8. At 393x852 the container is inset by 39 on all sides; at 1180x820 by 82
    — 10% of the shorter side in both cases.
 
 ## Non-goals / known limitations
 
-- No parent-area entry point here; the parent button still lives on
-  `HomeScreen` (one extra tap from launch). Worth revisiting once there are
-  parent settings that aren't puzzle-specific.
 - No per-game progress, badges, or "last played" — the tiles are static.
 - Game order is hard-coded, not configurable from the parent area.
 - The marks cannot be made much larger without dropping the text labels or

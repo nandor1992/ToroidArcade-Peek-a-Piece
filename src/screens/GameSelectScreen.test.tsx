@@ -78,6 +78,28 @@ test('tapping a tile with no handler does nothing', async () => {
   expect(pressable(root.root, 'Family Puzzle')).toBeDefined();
 });
 
+test('offers a parent-area button, quietly', async () => {
+  const onOpenParentArea = jest.fn();
+  const root = await render({ onOpenParentArea });
+
+  const button = pressable(root.root, 'Parent controls');
+  await act(() => {
+    button.props.onPress();
+  });
+
+  expect(onOpenParentArea).toHaveBeenCalledTimes(1);
+});
+
+test('hides the parent button when there is no parent area', async () => {
+  const root = await render();
+
+  expect(
+    root.root.findAll(
+      node => node.props.accessibilityLabel === 'Parent controls',
+    ),
+  ).toHaveLength(0);
+});
+
 test('has no back button — it is the top of the stack', async () => {
   const root = await render();
 

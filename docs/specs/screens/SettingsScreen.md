@@ -3,7 +3,7 @@ name: SettingsScreen
 type: screen
 source: src/screens/SettingsScreen.tsx
 status: draft
-last_verified: 2026-08-30
+last_verified: 2026-09-22
 ---
 
 # SettingsScreen
@@ -37,8 +37,8 @@ The back button is a chevron [[Icon]] (`back`).
   *playing* while this screen is open (unlike other parent screens) so the
   slider and mute button have something audible to affect — see
   [[useBackgroundMusic]].
-The **Puzzle Size**, **Screen Time Limit**, and **About** sections all
-have their label and their controls centred; **Background Music** keeps
+The **Puzzle Size**, **Memory Pictures**, **Screen Time Limit**, and
+**About** sections all have their label and their controls centred; **Background Music** keeps
 its left-aligned label + right-aligned mute button row.
 
 - **Puzzle Size**: a row of preset chips from `PUZZLE_SIZES` (see
@@ -47,6 +47,15 @@ its left-aligned label + right-aligned mute button row.
   chip whose `label` equals `puzzleSize.label` is highlighted
   (`accessibilityState={{ selected }}`). `App.tsx` passes the choice to
   `PuzzleScreen` → [[PuzzleBoard]].
+- **Memory Pictures**: the same chip row, from `MEMORY_SIZES` (see
+  [[memorySizes]]) — `3`, `4`, `6`, `8`, `10`. Each is a count of
+  *distinct pictures*, and every picture is dealt onto two cards, so `6`
+  means a twelve-card board. The chips show the bare number but are
+  labelled "<n> pictures" for screen readers, since a lone digit says
+  nothing on its own. Tapping one calls `onChangeMemorySize`; `App.tsx`
+  chunks the photo pool by it ([[buildMemoryGroups]]) into the rounds
+  listed on [[MemoryHomeScreen]] — so this sets how many pictures are in
+  each round, and therefore how many rounds there are.
 - **Screen Time Limit**: a row of preset chips (`Off`, `5 min`, `10 min`,
   `15 min`, `20 min`, `30 min` — `TIMER_PRESETS`) rather than a free-form
   number input. Tapping one calls `onChangeTimerMinutes` with that preset's
@@ -57,14 +66,15 @@ its left-aligned label + right-aligned mute button row.
   `maxWidth: 460` card with an even `gap` between every element) showing,
   top to bottom: the app name; the dedication *"Built with love for Julia
   and Vincent"* (italic); a faint divider rule; the credit line; the
-  starter-art attribution *"Generated with imagetocartoon.com using our
-  family photos"*; the music attribution *"Music by Dmitrii Kolesnikov
-  from Pixabay"* (the two names are `accessibilityRole="link"` `Text`
-  spans that `Linking.openURL` their Pixabay URLs); the version string;
-  and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
+  starter-art attribution *"Images generated with imagetocartoon.com using
+  our family photos"* (the tool's name is a link span to
+  `https://www.imagetocartoon.com/`); the music attribution *"Music by
+  Dmitrii Kolesnikov from Pixabay"* (both names are link spans to their
+  Pixabay URLs). Every link is an `accessibilityRole="link"` `Text` span
+  that `Linking.openURL`s. Then the version string and a Close button. All the strings come from `ABOUT_INFO` / `DEDICATION`
   (hand-maintained in this file — see Non-goals). `onRequestClose`
-  (Android back / iOS swipe) also dismisses it. The Pixabay links are the
-  app's only external link, fine here because Settings sits behind the
+  (Android back / iOS swipe) also dismisses it. These credit links are the
+  app's only external links, fine here because Settings sits behind the
   parent gate.
 
 ## Interface
@@ -79,6 +89,8 @@ its left-aligned label + right-aligned mute button row.
 | `onChangeTimerMinutes` | `(minutes: number \| null) => void` | Yes | Called with the tapped preset's value. |
 | `puzzleSize` | `PuzzleSize` | Yes | Current jigsaw grid ([[puzzleSizes]]). |
 | `onChangePuzzleSize` | `(size: PuzzleSize) => void` | Yes | Called with the tapped size chip's `PuzzleSize`. |
+| `memorySize` | `MemorySize` | Yes | Current Family Memory picture count — see [[memorySizes]]. |
+| `onChangeMemorySize` | `(size: MemorySize) => void` | Yes | Fired when a picture-count chip is tapped. |
 | `onBack` | `() => void` | No | Called when the back button is pressed. No-op if omitted. |
 
 ## Edge cases & expected behavior
@@ -100,12 +112,18 @@ its left-aligned label + right-aligned mute button row.
    "Off" → `onChangeTimerMinutes(null)`.
 4. Tap a puzzle-size chip (e.g. "4x4") → `onChangePuzzleSize` is called
    with that `PuzzleSize`. The chip matching `puzzleSize` renders selected.
-5. The dedication text is *not* on the screen until the About popup is
+5. Every `MEMORY_SIZES` option renders as a chip labelled "<n> pictures",
+   with the one matching `memorySize` selected; tapping the `8` chip calls
+   `onChangeMemorySize` with that `MemorySize`. `DEFAULT_MEMORY_SIZE` is 6
+   pictures.
+6. The dedication text is *not* on the screen until the About popup is
    opened; tapping About shows it along with the app name, the
    imagetocartoon.com line, and the music credit. Tap Close → hidden.
-6. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
+6a. In the open About popup, tap "imagetocartoon.com" → `Linking.openURL`
+   is called with `https://www.imagetocartoon.com/`.
+7. In the open About popup, tap the "Dmitrii Kolesnikov" / "Pixabay" links
    → `Linking.openURL` is called with the matching Pixabay URL.
-7. Press Back → `onBack` is called.
+8. Press Back → `onBack` is called.
 
 ## Non-goals / known limitations
 

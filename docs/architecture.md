@@ -49,6 +49,21 @@ in `scripts/generate-game-marks.js`, which emits
 size. **If the brand mark changes, re-run that script** rather than editing
 the generated file. See [[GameMark]] and [[gameMarkGeometry]].
 
+**Two games, one photo pool.** Family Puzzle and Family Memory both deal
+from the same list — uploaded photos first, then whichever starter
+pictures are switched on — so a photo a parent adds shows up in both
+without any per-game import step. Each game owns its own folder under
+`src/games/`, and neither reaches into the other; the screens above them
+hold the shared pool.
+
+Both games have the same three-level shape: the game picker, a landing
+page listing what there is to play, then the game itself with
+next/previous paging between entries. The jigsaw's unit is one photo; the
+memory game's is a *round* of several, so it has a grouping step
+(`buildMemoryGroups`) where the jigsaw lists photos directly. Everything
+above that — the grid, the breakpoints, the paging, the corner parent
+button — is deliberately identical between the two.
+
 **Colour.** Warm, high-contrast, chosen to stay distinguishable under the
 most common forms of colour blindness (the palette differs in lightness as
 well as hue, not just hue):

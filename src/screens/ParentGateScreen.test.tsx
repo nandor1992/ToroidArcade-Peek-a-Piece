@@ -117,3 +117,25 @@ test('a custom title overrides the default', async () => {
 
   expect(titles).toBeGreaterThan(0);
 });
+
+test('the back button sits at the left edge, not stretched across the screen', async () => {
+  let root: ReactTestRenderer.ReactTestRenderer;
+  await act(() => {
+    root = ReactTestRenderer.create(
+      <ParentGateScreen onSuccess={jest.fn()} onBack={jest.fn()} />,
+    );
+  });
+
+  const back = root!.root.findAll(
+    node =>
+      node.props.accessibilityLabel === 'Back' &&
+      typeof node.props.style === 'function',
+  )[0];
+  const style = [back.props.style({ pressed: false })].flat(2);
+
+  // Without alignSelf the Pressable inherits the container's `stretch` and
+  // spans the full width, which centres the arrow mid-screen.
+  expect(style).toContainEqual(
+    expect.objectContaining({ alignSelf: 'flex-start' }),
+  );
+});

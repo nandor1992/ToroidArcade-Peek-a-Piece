@@ -3,7 +3,7 @@ name: PuzzleBoard
 type: game
 source: src/games/puzzle/components/PuzzleBoard.tsx
 status: draft
-last_verified: 2026-08-30
+last_verified: 2026-09-22
 ---
 
 # PuzzleBoard
@@ -73,9 +73,11 @@ piece draws a teal outline around it as a "ready to snap" cue.
 (same choice as [[Slider]]), one responder for the whole board:
 
 - `onResponderGrant`: hit-tests the touch against each piece's rectangular
-  bounding box, from the end of the array backward (topmost first),
-  skipping any piece that's `placed`. The whole grabbed *group* is moved
-  to the end of the array so it renders on top.
+  bounding box, walking `drawOrder` backward (topmost first) and skipping
+  any piece that's `placed`. Walking the paint order rather than the raw
+  array means "topmost" means the same thing to the finger as to the eye.
+  The whole grabbed *group* is moved to the end of the array so it paints
+  above the other loose pieces.
 - `onResponderMove`: translates every piece in the dragged group by the
   delta since the last touch point.
 - `onResponderRelease`: `bestSnap` finds the smallest translation (within
@@ -98,6 +100,20 @@ piece draws a teal outline around it as a "ready to snap" cue.
 hit-testing — it can't be picked up again. Building outward from a placed
 piece therefore locks each addition as it snaps home. A group that's only
 snapped to *floating* neighbours (none on target) stays fully draggable.
+
+**Painting order.** `drawOrder` is derived from `pieces`: every `placed`
+piece first, then every loose one, each keeping its relative order. Loose
+pieces therefore always paint above the assembled picture.
+
+This matters because grabbing a piece moves it to the front of the array.
+Without the split, a piece that was dragged to the front and then locked
+home *stays* in front — so a loose piece dropped over it is hidden
+underneath. And since hit-testing skips locked pieces, the buried piece is
+not merely invisible but unreachable: the child sees a piece vanish into
+the picture with no way to get it back, and the only escape is Reset.
+Sinking placed pieces guarantees every loose piece stays both visible and
+grabbable. When nothing is placed yet — the common case early on — the
+array is returned unchanged rather than copied.
 Reset (or a remount) is the only way to unstick everything.
 
 **Reset.** `resetSignal` is a number prop; when it changes, the build
@@ -147,6 +163,10 @@ parent state update.
   before they let go.
 - A piece that's home is locked, so it can't be knocked back out by a
   stray drag; only the Reset button scatters everything again.
+- Loose pieces always paint on top of the finished part of the picture, so
+  a piece dropped onto the assembled area can never disappear behind it.
+  A toddler drops pieces anywhere; a piece they can see but not reach is a
+  dead end they can't reason their way out of.
 - Reset is instant — it re-scatters in place rather than reloading the
   photo, so there's no "Retrieving Memories…" wait after the first open.
 - Hit-testing uses each piece's rectangular bounding box, not its exact
@@ -158,6 +178,10 @@ parent state update.
 ## Edge cases & expected behavior
 
 - Grabbing empty space, or a spot where only `placed` pieces sit → no-op.
+- A loose piece dropped on top of a `placed` one → the loose piece paints
+  above it and a grab in that area picks up the loose piece, not the
+  locked one underneath.
+- No piece placed yet → paint order is the piece array unchanged.
 - Dropping a group with nothing in snap range → it stays exactly where
   dropped, still draggable.
 - Placing a piece on its exact target → it's locked; a further drag from
@@ -182,10 +206,16 @@ parent state update.
    800x800 play area so the `(0,0)` pile sits comfortably outside the snap
    radius of the corner piece's home (a cramped area would auto-merge it
    early).
-2. A piece placed on its target is locked: dragging from its location does
+2. With nothing placed, paint order is generation order (`0-0`, `0-1`,
+   `1-0`, `1-1`). After placing `1-1`, it paints first and the other three
+   follow — the locked piece has sunk to the back.
+3. Place two pieces, then drop a third onto the assembled area: it paints
+   last, and grabbing there picks it up again so the puzzle can still be
+   finished.
+4. A piece placed on its target is locked: dragging from its location does
    nothing, and the puzzle still completes with the other pieces (proving
    it didn't move).
-3. A piece dropped far from everything doesn't connect — proven by placing
+5. A piece dropped far from everything doesn't connect — proven by placing
    it correctly afterward and `onSolved` still firing once.
 
 Tests run against `__mocks__/@shopify/react-native-skia.js` (see

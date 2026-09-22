@@ -1,14 +1,17 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Dimensions, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GameSelectScreen } from '../screens/GameSelectScreen';
 import { HomeScreen, STARTER_PUZZLES } from '../screens/HomeScreen';
+import { MemoryHomeScreen } from '../screens/MemoryHomeScreen';
 import { MemoryScreen } from '../screens/MemoryScreen';
 import { PuzzleScreen } from '../screens/PuzzleScreen';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { useBackgroundMusic } from '../hooks/useBackgroundMusic';
 import { usePersistentPuzzles } from '../hooks/usePersistentPuzzles';
 import { DEFAULT_PUZZLE_SIZE } from '../games/puzzle/puzzleSizes';
+import { DEFAULT_MEMORY_SIZE } from '../games/memory/memorySizes';
+import { buildMemoryGroups } from '../games/memory/logic/buildMemoryGroups';
 
 // Same reason as App.tsx: SafeAreaProvider renders no children until it has
 // real insets, so seed it with zeroes for an immediate first paint.
@@ -30,7 +33,8 @@ const DEMO_VOLUME = 0.6;
 type Screen =
   | { name: 'games' }
   | { name: 'home' }
-  | { name: 'memory' }
+  | { name: 'memoryHome' }
+  | { name: 'memory'; groupId: string }
   | { name: 'puzzle'; puzzleId: string };
 
 /**
@@ -47,6 +51,12 @@ type Screen =
 export default function DemoApp() {
   const [screen, setScreen] = useState<Screen>({ name: 'games' });
   const goGames = () => setScreen({ name: 'games' });
+  const goMemoryHome = () => setScreen({ name: 'memoryHome' });
+  // The starter set never changes here, so this is computed once.
+  const memoryGroups = useMemo(
+    () => buildMemoryGroups(STARTER_PUZZLES, DEFAULT_MEMORY_SIZE.pictures),
+    [],
+  );
   const { completedIds, markCompleted, clearCompleted } =
     usePersistentPuzzles();
 
@@ -82,13 +92,31 @@ export default function DemoApp() {
         onBack={goGames}
       />
     );
+  } else if (screen.name === 'memoryHome') {
+    // No `onOpenParentArea` — the demo has no parent area, so the tile
+    // grid hides the corner button just as HomeScreen does.
+    content = (
+      <MemoryHomeScreen
+        groups={memoryGroups}
+        onSelectGroup={group =>
+          setScreen({ name: 'memory', groupId: group.id })
+        }
+        onBack={goGames}
+      />
+    );
   } else if (screen.name === 'memory') {
-    content = <MemoryScreen onBack={goGames} />;
+    content = (
+      <MemoryScreen
+        groups={memoryGroups}
+        initialGroupId={screen.groupId}
+        onBack={goMemoryHome}
+      />
+    );
   } else {
     content = (
       <GameSelectScreen
         onSelectPuzzles={() => setScreen({ name: 'home' })}
-        onSelectMemory={() => setScreen({ name: 'memory' })}
+        onSelectMemory={goMemoryHome}
       />
     );
   }
