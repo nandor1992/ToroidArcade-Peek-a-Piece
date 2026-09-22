@@ -3,7 +3,7 @@ name: ParentGateScreen
 type: screen
 source: src/screens/ParentGateScreen.tsx
 status: draft
-last_verified: 2026-08-25
+last_verified: 2026-09-22
 ---
 
 # ParentGateScreen
@@ -24,6 +24,12 @@ The addition-problem logic itself lives in [[MathGateForm]] (extracted so
 `ParentGateScreen` is that chrome: a `SafeAreaView`, an optional back
 button, a title, and the form.
 
+The back button is pinned to the top-left with `alignSelf: 'flex-start'`.
+Without it the `Pressable` inherits the `SafeAreaView`'s default
+`alignItems: 'stretch'` and spans the whole width, which centres the arrow
+in the middle of the screen — it still worked, but it didn't read as a
+back control.
+
 The back button only renders when `onBack` is provided — used for the
 `HomeScreen` → gate flow (cancel back out without solving), but omitted
 when this screen's caller wants no escape route besides solving it.
@@ -39,6 +45,8 @@ when this screen's caller wants no escape route besides solving it.
 ## Edge cases & expected behavior
 
 - `onBack` omitted → no back button renders (not merely a disabled one).
+- With `onBack` given → the button carries `alignSelf: 'flex-start'`, so
+  it sits at the left edge rather than stretching across the screen.
 - Answer correctness/retry behavior is `MathGateForm`'s — see its spec.
 
 ## Test scenarios
@@ -47,9 +55,10 @@ when this screen's caller wants no escape route besides solving it.
 2. Answer the displayed problem incorrectly → `onSuccess` is not called;
    answering the newly-issued problem correctly does succeed.
 3. Press Back → `onBack` is called.
-4. No `onBack` passed → no element with the "Back" accessibility label
+4. The back button's resolved style includes `alignSelf: 'flex-start'`.
+5. No `onBack` passed → no element with the "Back" accessibility label
    renders at all.
-5. A custom `title` is passed → it replaces the default "Parents Only".
+6. A custom `title` is passed → it replaces the default "Parents Only".
 
 ## Non-goals / known limitations
 

@@ -43,6 +43,11 @@ const styles = StyleSheet.create({
     backgroundColor: colors.cream,
   },
   backButton: {
+    // Without this the Pressable inherits the SafeAreaView's default
+    // `alignItems: 'stretch'` and spans the full width, which centred the
+    // arrow in the middle of the screen instead of putting it in the
+    // top-left corner where a back control belongs.
+    alignSelf: 'flex-start',
     margin: 16,
     minWidth: 56,
     minHeight: 56,
