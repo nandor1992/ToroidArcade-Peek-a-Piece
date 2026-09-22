@@ -75,6 +75,22 @@ test('drops pictures with no artwork — a blank card cannot be matched by sight
   expect(deck.map(c => c.pictureId)).not.toContain('blank');
 });
 
+test('deals a repeated picture only once', () => {
+  // Four cards of one picture would leave two of them with no partner, so
+  // the round could never be finished. Rounds deliberately reuse pictures
+  // from earlier rounds, so this guard is load-bearing.
+  const [picture] = stock(1);
+
+  const deck = buildMemoryDeck([picture, picture, ...stock(2)], 4, noShuffle);
+
+  expect(deck.filter(c => c.pictureId === picture.id)).toHaveLength(2);
+  const counts = new Map<string, number>();
+  for (const card of deck) {
+    counts.set(card.pictureId, (counts.get(card.pictureId) ?? 0) + 1);
+  }
+  expect([...counts.values()].every(n => n === 2)).toBe(true);
+});
+
 test('plays with what there is when there are fewer pictures than asked for', () => {
   const deck = buildMemoryDeck(stock(2), 6, noShuffle);
 

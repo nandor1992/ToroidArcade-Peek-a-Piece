@@ -30,6 +30,13 @@ function shuffle<T>(items: T[], random: () => number): T[] {
  * matched by looking at it, so leaving one in would make the game
  * unwinnable by sight — and this game is nothing but looking.
  *
+ * Repeats are dropped for a harder reason: one picture dealt twice makes
+ * four identical cards, and matching two of them leaves the other two
+ * stranded with no partner, so the round can never be finished. Rounds
+ * deliberately reuse pictures from earlier rounds (see
+ * {@link buildMemoryGroups}), which makes a duplicate slipping through a
+ * plausible mistake rather than a theoretical one.
+ *
  * The *selection* is shuffled as well as the deal, so a parent with more
  * photos than the chosen count gets a different set each round rather than
  * always the first six.
@@ -44,9 +51,14 @@ export function buildMemoryDeck(
   if (pictureCount <= 0) {
     return [];
   }
-  const usable = pictures.filter(
-    picture => puzzleImageSource(picture) !== undefined,
-  );
+  const seen = new Set<string>();
+  const usable = pictures.filter(picture => {
+    if (puzzleImageSource(picture) === undefined || seen.has(picture.id)) {
+      return false;
+    }
+    seen.add(picture.id);
+    return true;
+  });
   // Fewer photos than asked for → play with what there is, rather than
   // repeating a picture across two different pairs (which would make two
   // pairs indistinguishable and the game unwinnable).

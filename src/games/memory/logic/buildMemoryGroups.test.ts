@@ -25,27 +25,76 @@ test('splits the pool into rounds of the requested size', () => {
   expect(groups.map(g => g.title)).toEqual(['Set 1', 'Set 2']);
 });
 
-test('keeps a short final round when it is still playable', () => {
+test('tops a short final round up from the start of the pool', () => {
   const groups = buildMemoryGroups(stock(14), 6);
 
-  expect(sizes(groups)).toEqual([6, 6, 2]);
+  expect(sizes(groups)).toEqual([6, 6, 6]);
+  // The two left over, then back round to the beginning for four more.
+  expect(groups[2].pictures.map(p => p.id)).toEqual([
+    'p12',
+    'p13',
+    'p0',
+    'p1',
+    'p2',
+    'p3',
+  ]);
 });
 
-test('folds a one-picture remainder into the round before it', () => {
-  // 13 pictures at 6 would leave a single picture — a round won by
-  // tapping twice. It joins the previous round instead.
+test('fills even a one-picture remainder to a full round', () => {
+  // 13 at 6 would otherwise leave a single picture — a round won by
+  // tapping twice.
   const groups = buildMemoryGroups(stock(13), 6);
 
-  expect(sizes(groups)).toEqual([6, 7]);
+  expect(sizes(groups)).toEqual([6, 6, 6]);
+  expect(groups[2].pictures.map(p => p.id)).toEqual([
+    'p12',
+    'p0',
+    'p1',
+    'p2',
+    'p3',
+    'p4',
+  ]);
+});
+
+test('the eight starter pictures make two full rounds of six', () => {
+  const groups = buildMemoryGroups(stock(8), 6);
+
+  expect(sizes(groups)).toEqual([6, 6]);
   expect(groups[1].pictures.map(p => p.id)).toEqual([
     'p6',
     'p7',
-    'p8',
-    'p9',
-    'p10',
-    'p11',
-    'p12',
+    'p0',
+    'p1',
+    'p2',
+    'p3',
   ]);
+});
+
+test('never repeats a picture within one round', () => {
+  // Four cards of one picture would leave two of them with no partner, so
+  // the round could not be finished. Checked across a spread of pools
+  // that all leave awkward remainders.
+  for (const total of [7, 8, 9, 10, 11, 13, 14, 17, 21]) {
+    for (const size of [3, 4, 6, 8, 10]) {
+      for (const group of buildMemoryGroups(stock(total), size)) {
+        const ids = group.pictures.map(p => p.id);
+        expect(new Set(ids).size).toBe(ids.length);
+      }
+    }
+  }
+});
+
+test('every round is the requested size once the pool exceeds one round', () => {
+  for (const total of [7, 9, 13, 14, 17, 21]) {
+    for (const size of [3, 4, 6]) {
+      if (total <= size) {
+        continue;
+      }
+      expect(sizes(buildMemoryGroups(stock(total), size))).toEqual(
+        Array(Math.ceil(total / size)).fill(size),
+      );
+    }
+  }
 });
 
 test('preserves pool order, so uploaded photos come first', () => {
@@ -82,8 +131,13 @@ test('drops pictures with no artwork before grouping', () => {
   );
 });
 
-test('a pool smaller than one round still makes a single playable round', () => {
+test('a pool smaller than one round stays short — there is nothing to borrow', () => {
+  // Topping up here could only repeat a picture already in the round,
+  // which would break matching. A 3-picture round it is.
   expect(sizes(buildMemoryGroups(stock(3), 6))).toEqual([3]);
+  expect(sizes(buildMemoryGroups(stock(2), 6))).toEqual([2]);
+  // Exactly one round's worth divides evenly and needs no filling.
+  expect(sizes(buildMemoryGroups(stock(6), 6))).toEqual([6]);
 });
 
 test('gives no rounds when there is nothing playable', () => {
@@ -100,10 +154,12 @@ test('refuses a group size that could not make a real round', () => {
   expect(buildMemoryGroups(stock(10), 0)).toEqual([]);
 });
 
-test('every picture in the pool lands in exactly one round', () => {
+test('every picture in the pool appears in at least one round', () => {
   const groups = buildMemoryGroups(stock(17), 4);
-  const ids = groups.flatMap(g => g.pictures.map(p => p.id));
+  const ids = new Set(groups.flatMap(g => g.pictures.map(p => p.id)));
 
-  expect(ids).toHaveLength(17);
-  expect(new Set(ids).size).toBe(17);
+  expect(ids.size).toBe(17);
+  // 17 at 4 is five rounds, the last topped up from the start — so more
+  // slots than pictures, by design.
+  expect(groups.flatMap(g => g.pictures)).toHaveLength(20);
 });

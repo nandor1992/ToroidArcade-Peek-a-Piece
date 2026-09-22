@@ -124,8 +124,9 @@ test('a tile is badged with how many pairs the round holds', async () => {
         typeof node.props.children === 'number',
     )
     .map(node => node.props.children as number);
-  // Rounds of 4, 4 and 2.
-  expect(badges).toEqual([4, 4, 2]);
+  // Three rounds of 4 — the last one topped up from the start of the pool
+  // rather than left as a short round of 2.
+  expect(badges).toEqual([4, 4, 4]);
 });
 
 test('tapping a tile with no handler does nothing', async () => {

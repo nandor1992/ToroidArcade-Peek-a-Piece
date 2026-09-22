@@ -19,7 +19,8 @@ made unwinnable — are testable without rendering anything.
 ## How it works
 
 1. `pictureCount <= 0` → empty deck, nothing else runs.
-2. Drops any picture with no artwork, via `puzzleImageSource`.
+2. Drops any picture with no artwork, via `puzzleImageSource`, and any
+   repeat of a picture id already kept.
 3. Shuffles the survivors (Fisher-Yates, back to front, with the injected
    `random`) and takes the first `pictureCount`.
 4. Emits two cards per chosen picture, ids suffixed `-a` / `-b`, both
@@ -34,6 +35,13 @@ value of having uploaded the photos.
 **Why blank pictures are dropped.** A card with no artwork can't be matched
 by looking at it, and looking is the entire game — one blank pair would
 make the round unwinnable by sight.
+
+**Why repeats are dropped.** One picture dealt twice makes four identical
+cards; matching two of them leaves the other two stranded with no partner,
+so the round can never be finished. [[buildMemoryGroups]] deliberately
+reuses pictures from earlier rounds to fill a short final round, which
+makes a duplicate reaching here a plausible slip rather than a theoretical
+one — and the resulting board would look fine while being unwinnable.
 
 **Why a short pool isn't padded.** With fewer pictures than requested, the
 deck is just smaller. Reusing one picture across two different pairs would
@@ -75,6 +83,7 @@ puzzle's asset module or URI.
 - `pictureCount <= 0`, or `pictures` empty → `[]`.
 - A picture with neither `imageAsset` nor `imageUri` → dropped; it never
   appears in the deck.
+- The same picture passed twice → dealt once, as a single pair.
 - Fewer usable pictures than `pictureCount` → a deck of
   `usable.length * 2` cards, every `pictureId` distinct.
 - A starter picture → `source` is the bundled asset module (a number).
@@ -90,10 +99,12 @@ puzzle's asset module or URI.
 3. Both cards of a pair carry the picture's asset and title.
 4. An uploaded photo resolves to `{ uri: 'file:///a.jpg' }`.
 5. A picture with no artwork is excluded from the deck.
-6. 2 pictures, count 6 → 4 cards, 2 distinct pictures — never a reused
+6. A pool containing the same picture twice deals exactly two cards for
+   it, and every picture in the deck has exactly two cards.
+7. 2 pictures, count 6 → 4 cards, 2 distinct pictures — never a reused
    picture.
-7. Empty pool, count 0, and negative count all give `[]`.
-8. Two deals with a varying `random` differ in both selection and order.
+8. Empty pool, count 0, and negative count all give `[]`.
+9. Two deals with a varying `random` differ in both selection and order.
 
 ## Non-goals / known limitations
 

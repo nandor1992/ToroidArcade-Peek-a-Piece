@@ -45,12 +45,33 @@ export function buildMemoryGroups(
   for (let i = 0; i < usable.length; i += groupSize) {
     chunks.push(usable.slice(i, i + groupSize));
   }
-  // A trailing chunk of one picture would be a one-pair round — a tile
-  // that's won the instant it's opened. Fold it into the round before it
-  // instead, leaving that one slightly larger.
-  if (chunks.length > 1 && chunks[chunks.length - 1].length < MIN_GROUP) {
-    const orphan = chunks.pop() as Puzzle[];
-    chunks[chunks.length - 1] = [...chunks[chunks.length - 1], ...orphan];
+
+  // A pool that doesn't divide evenly leaves a short final round — at
+  // worst a single picture, a tile won the instant it's opened. Top it up
+  // by coming back round to the start of the pool, so every round is the
+  // size the parent chose.
+  //
+  // Pictures already in that round are skipped: a picture appearing twice
+  // in one round would deal four identical cards, and matching two of them
+  // would leave the other two stranded with no partner. Repeating *across*
+  // rounds is fine — each round is dealt on its own.
+  //
+  // Only possible when the pool is bigger than one round. If it isn't,
+  // there's a single round holding everything and nothing to borrow from,
+  // so it stays short.
+  const last = chunks[chunks.length - 1];
+  if (chunks.length > 1 && last.length < groupSize) {
+    const taken = new Set(last.map(picture => picture.id));
+    for (const picture of usable) {
+      if (last.length >= groupSize) {
+        break;
+      }
+      if (taken.has(picture.id)) {
+        continue;
+      }
+      taken.add(picture.id);
+      last.push(picture);
+    }
   }
 
   return chunks.map((group, index) => ({
